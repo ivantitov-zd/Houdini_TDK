@@ -16,7 +16,6 @@ import hou
 
 class FilterField(QLineEdit):
     # Signals
-    downPressed = Signal()
     accepted = Signal()
 
     def __init__(self):
@@ -28,8 +27,6 @@ class FilterField(QLineEdit):
         key = event.key()
         if key == Qt.Key_Escape:
             self.clear()
-        elif key == Qt.Key_Down:
-            self.downPressed.emit()
         elif key == Qt.Key_Enter or key == Qt.Key_Return:
             self.accepted.emit()
         else:
