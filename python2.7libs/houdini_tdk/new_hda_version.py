@@ -89,6 +89,7 @@ class NewVersionDialog(QWidget):
         self.node.changeNodeType(new_name, keep_network_contents=False)
         hou.ui.setStatusMessage('HDA version successfully incremented',
                                 hou.severityType.ImportantMessage)
+        self.close()
 
 
 def incrementHdaVersion(**kwargs):
