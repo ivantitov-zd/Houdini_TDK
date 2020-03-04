@@ -85,6 +85,7 @@ class FuzzyFilterProxyModel(QSortFilterProxyModel):
 
         self.__filter_pattern = ''
         self.setDynamicSortFilter(True)
+        self.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
     def setFilterPattern(self, pattern):
         self.beginResetModel()
@@ -181,6 +182,6 @@ class FindIconWindow(QWidget):
         layout.addWidget(self.icon_list_view)
 
 
-def findIcon():
+def findIcon(**kwargs):
     window = FindIconWindow(hou.qt.mainWindow())
     window.show()

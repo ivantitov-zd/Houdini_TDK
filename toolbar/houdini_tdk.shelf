@@ -7,13 +7,25 @@
 
   <toolshelf name="houdini_tdk" label="Tool Development Kit">
     <memberTool name="houdini_tdk::find_icon::1.0"/>
+    <memberTool name="houdini_tdk::generate_code::1.0"/>
   </toolshelf>
 
   <tool name="houdini_tdk::find_icon::1.0" label="Find Icon" icon="MISC_m">
+    <helpText><![CDATA["""Show Find Icon window"""]]></helpText>
     <script scriptType="python"><![CDATA[import houdini_tdk.find_icon as fi
 reload(fi)
 
-fi.findIcon()
+fi.findIcon(**kwargs)
+]]></script>
+  </tool>
+
+  <tool name="houdini_tdk::generate_code::1.0" label="Generate Code" icon="MISC_python">
+    <helpText><![CDATA["""Generate Python code for selected nodes and copy to clipboard"""
+]]></helpText>
+    <script scriptType="python"><![CDATA[import houdini_tdk.gen_code as gc
+reload(gc)
+
+gc.generateCode(**kwargs)
 ]]></script>
   </tool>
 </shelfDocument>
