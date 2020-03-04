@@ -119,9 +119,6 @@ class IconListModel(QAbstractListModel):
     def rowCount(self, parent):
         return len(self.__data)
 
-    def flags(self, index):
-        return Qt.ItemIsEnabled | Qt.ItemIsSelectable
-
     def data(self, index, role):
         icon_name = self.__data[index.row()]
         if role == Qt.DisplayRole:
