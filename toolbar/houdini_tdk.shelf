@@ -9,6 +9,7 @@
     <memberTool name="houdini_tdk::find_icon::1.0"/>
     <memberTool name="houdini_tdk::generate_code::1.0"/>
     <memberTool name="houdini_tdk::increment_hda_version::1.0"/>
+    <memberTool name="houdini_tdk::show_node_user_data::1.0"/>
   </toolshelf>
 
   <tool name="houdini_tdk::find_icon::1.0" label="Find Icon" icon="MISC_m">
