@@ -8,6 +8,7 @@
   <toolshelf name="houdini_tdk" label="Tool Development Kit">
     <memberTool name="houdini_tdk::find_icon::1.0"/>
     <memberTool name="houdini_tdk::generate_code::1.0"/>
+    <memberTool name="houdini_tdk::increment_hda_version::1.0"/>
   </toolshelf>
 
   <tool name="houdini_tdk::find_icon::1.0" label="Find Icon" icon="MISC_m">
@@ -26,6 +27,14 @@ fi.findIcon(**kwargs)
 reload(gc)
 
 gc.generateCode(**kwargs)
+]]></script>
+  </tool>
+
+  <tool name="houdini_tdk::increment_hda_version::1.0" label="Increment HDA Version" icon="BUTTONS_list_add">
+    <script scriptType="python"><![CDATA[import houdini_tdk.new_hda_version as nhv
+reload(nhv)
+
+nhv.incrementHdaVersion(**kwargs)
 ]]></script>
   </tool>
 </shelfDocument>
