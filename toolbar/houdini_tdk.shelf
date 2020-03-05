@@ -32,6 +32,7 @@ gc.generateCode(**kwargs)
   </tool>
 
   <tool name="houdini_tdk::increment_hda_version::1.0" label="Increment HDA Version" icon="BUTTONS_list_add">
+    <helpText><![CDATA["""Increment HDA version of the selected node"""]]></helpText>
     <script scriptType="python"><![CDATA[import houdini_tdk.new_hda_version as nhv
 reload(nhv)
 
