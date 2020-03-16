@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menuDocument>
+    <menu>
+
+        <addScriptItem id="opmenu.tdk_open_hda_location">
+            <label>Open HDA Location...</label>
+            <parent>root_menu</parent>
+            <insertAfter>opmenu.optypemanager</insertAfter>
+            <context>
+                <expression>
+                    node = kwargs['node']
+                    return node.type().definition() is not None
+                </expression>
+            </context>
+            <scriptCode>
+import os
+import webbrowser
+
+node = kwargs['node']
+path = node.type().definition().libraryFilePath()
+webbrowser.open('file:///' + os.path.dirname(path))
+            </scriptCode>
+        </addScriptItem>
+
+    </menu>
+</menuDocument>

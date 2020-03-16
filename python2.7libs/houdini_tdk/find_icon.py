@@ -40,7 +40,10 @@ class FilterField(QLineEdit):
 
 
 class IconCache:
-    default_icon = hou.qt.Icon('MISC_tier_one', 48, 48)
+    # Icons
+    DEFAULT_ICON = hou.qt.Icon('MISC_tier_one', 48, 48)
+
+    # Data
     data = {}
 
     @staticmethod
@@ -49,7 +52,7 @@ class IconCache:
             try:
                 IconCache.data[name] = hou.qt.Icon(name, 48, 48)
             except hou.OperationFailed:
-                IconCache.data[name] = IconCache.default_icon
+                IconCache.data[name] = IconCache.DEFAULT_ICON
         return IconCache.data[name]
 
 
@@ -79,31 +82,29 @@ def fuzzyMatch(pattern, word):
 class FuzzyFilterProxyModel(QSortFilterProxyModel):
     def __init__(self, parent=None):
         super(FuzzyFilterProxyModel, self).__init__(parent)
-
-        self.__filter_pattern = ''
         self.setDynamicSortFilter(True)
         self.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
+        self.pattern = ''
+
     def setFilterPattern(self, pattern):
         self.beginResetModel()
-        if self.filterCaseSensitivity() == Qt.CaseInsensitive:
-            self.__filter_pattern = pattern.lower()
-        else:
-            self.__filter_pattern = pattern
+        self.pattern = pattern.lower()
         self.endResetModel()
 
     def filterAcceptsRow(self, source_row, source_parent):
         source_model = self.sourceModel()
-        text = source_model.data(source_model.index(source_row, 0, source_parent), Qt.UserRole)
-        matches, weight = fuzzyMatch(self.__filter_pattern, text if self.filterCaseSensitivity() == Qt.CaseSensitive else text.lower())
+        text = source_model.data(source_model.index(source_row, 0, source_parent),
+                                 Qt.UserRole)
+        matches, weight = fuzzyMatch(self.pattern, text.lower())
         return matches
 
     def lessThan(self, source_left, source_right):
         text1 = source_left.data(Qt.UserRole)
-        _, weight1 = fuzzyMatch(self.__filter_pattern, text1 if self.filterCaseSensitivity() == Qt.CaseSensitive else text1.lower())
+        _, weight1 = fuzzyMatch(self.pattern, text1.lower())
 
         text2 = source_right.data(Qt.UserRole)
-        _, weight2 = fuzzyMatch(self.__filter_pattern, text2 if self.filterCaseSensitivity() == Qt.CaseSensitive else text2.lower())
+        _, weight2 = fuzzyMatch(self.pattern, text2.lower())
 
         return weight1 < weight2
 
@@ -113,8 +114,8 @@ class IconListModel(QAbstractListModel):
         super(IconListModel, self).__init__(parent)
 
         # Data
-        icon_index_file = hou.expandString('$HFS/houdini/config/Icons/SVGIcons.index')
-        self.__data = sorted(hou.loadIndexDataFromFile(icon_index_file).keys())
+        ICON_INDEX_FILE = hou.expandString('$HFS/houdini/config/Icons/SVGIcons.index')
+        self.__data = sorted(hou.loadIndexDataFromFile(ICON_INDEX_FILE).keys())
 
     def rowCount(self, parent):
         return len(self.__data)
@@ -135,7 +136,6 @@ class IconListModel(QAbstractListModel):
 class IconListView(QListView):
     def __init__(self):
         super(IconListView, self).__init__()
-
         self.setViewMode(QListView.IconMode)
         self.setResizeMode(QListView.Adjust)
         self.setDragDropMode(QAbstractItemView.NoDragDrop)
@@ -145,7 +145,30 @@ class IconListView(QListView):
         self.setSpacing(15)
         self.setIconSize(QSize(48, 48))
         self.setUniformItemSizes(True)
+
+        # Menu
         self.setContextMenuPolicy(Qt.CustomContextMenu)
+
+        self.menu = QMenu(self)
+        self.menu.addAction('Copy', self.copySelectedIconName, QKeySequence.Copy)
+
+        self.customContextMenuRequested.connect(self.showMenu)
+
+    def copySelectedIconName(self):
+        names = []
+        for index in self.selectedIndexes():
+            names.append(index.data(Qt.ToolTipRole))
+        QApplication.clipboard().setText('\n'.join(names))
+
+    def showMenu(self, pos):
+        if self.selectedIndexes():
+            self.menu.exec_(self.mapToGlobal(pos))
+
+    def keyPressEvent(self, event):
+        if event.matches(QKeySequence.Copy):
+            self.copySelectedIconName()
+        else:
+            super(IconListView, self).keyPressEvent(event)
 
 
 class FindIconWindow(QWidget):
@@ -174,6 +197,13 @@ class FindIconWindow(QWidget):
         self.icon_list_view = IconListView()
         self.icon_list_view.setModel(self.filter_proxy_model)
         layout.addWidget(self.icon_list_view)
+
+    def keyPressEvent(self, event):
+        if event.matches(QKeySequence.Find) or event.key() == Qt.Key_F3:
+            self.filter_field.setFocus()
+            self.filter_field.selectAll()
+        else:
+            super(FindIconWindow, self).keyPressEvent(event)
 
 
 def findIcon(**kwargs):
