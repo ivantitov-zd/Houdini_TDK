@@ -2,12 +2,12 @@
 
 ## Tools
 #### Find Icon
-A tool to quickly find available icons.
+Allows you to quickly find the icon for your tool.
 
 ![Find Icon](/images/find_icon.png)
 
 #### Generate Code
-Applies `.asCode()` to selected nodes. Then copies the resulting code to the clipboard.
+Applies `.asCode()` to selected nodes. Then copies the resulting code to the clipboard or shows in code editor.
 
 #### Increment HDA Version
 Increments the HDA version of the selected node. You can select the version type (major, minor, build, etc.).
