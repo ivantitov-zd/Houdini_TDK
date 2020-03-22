@@ -2,7 +2,7 @@
 
 ## Tools
 #### Find Icon
-Allows you to quickly find the icon for your tool.
+Allows you to quickly find an icon for your tools.
 
 ![Find Icon](/images/find_icon.png)
 
