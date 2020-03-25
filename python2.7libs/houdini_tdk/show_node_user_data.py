@@ -16,8 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from __future__ import print_function
-
 try:
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
@@ -42,11 +40,15 @@ class UserDataModel(QAbstractListModel):
 
     def updateDataFromNode(self, node, cached=False):
         self.beginResetModel()
-        if cached:
-            self.__data = node.cachedUserDataDict()
+        if node is None:
+            self.__data = {}
+            self.__keys = ()
         else:
-            self.__data = node.userDataDict()
-        self.__keys = tuple(self.__data.keys())
+            if cached:
+                self.__data = node.cachedUserDataDict()
+            else:
+                self.__data = node.userDataDict()
+            self.__keys = tuple(self.__data.keys())
         self.endResetModel()
 
     def rowCount(self, parent):
@@ -68,15 +70,18 @@ class UserDataListView(QListView):
 
 
 class UserDataWindow(QWidget):
-    def __init__(self, node, parent=None):
+    def __init__(self, parent=None):
         super(UserDataWindow, self).__init__(parent, Qt.Window)
 
-        self.setWindowTitle('Node User Data: ' + node.path())
-
         # Layout
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(4, 4, 4, 4)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(4, 4, 4, 4)
+        main_layout.setSpacing(4)
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
+        main_layout.addLayout(layout)
 
         # Key List
         self.user_data_model = UserDataModel()
@@ -92,10 +97,23 @@ class UserDataWindow(QWidget):
         self.user_data_view = QTextEdit()
         layout.addWidget(self.user_data_view)
 
+        # Data
+        self.node = None
+
+        # Update
+        update_button = QPushButton('Update from Node')
+        update_button.clicked.connect(lambda: self.setCurrentNode(self.node))
+        main_layout.addWidget(update_button)
+
     def _readData(self):
         selection_model = self.user_data_list.selectionModel()
         value = selection_model.currentIndex().data(Qt.UserRole)
         self.user_data_view.setText(str(value))
+
+    def setCurrentNode(self, node, cached=False):
+        self.node = node
+        self.user_data_model.updateDataFromNode(node, cached)
+        self.setWindowTitle('Node User Data: ' + node.path())
 
 
 def showNodeUserData(node=None, cached=False, **kwargs):
@@ -106,6 +124,6 @@ def showNodeUserData(node=None, cached=False, **kwargs):
         elif len(nodes) > 1:
             raise hou.Error('Too much nodes selected')
         node = nodes[0]
-    window = UserDataWindow(node, hou.qt.mainWindow())
-    window.user_data_model.updateDataFromNode(node, cached)
+    window = UserDataWindow(hou.qt.mainWindow())
+    window.setCurrentNode(node, cached)
     window.show()
