@@ -16,8 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from __future__ import print_function
-
 try:
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
@@ -31,30 +29,7 @@ except ImportError:
 
 import hou
 
-
-class FilterField(QLineEdit):
-    # Signals
-    accepted = Signal()
-
-    def __init__(self):
-        super(FilterField, self).__init__()
-
-        self.setPlaceholderText('Type to Filter...')
-
-    def keyPressEvent(self, event):
-        key = event.key()
-        if key == Qt.Key_Escape:
-            self.clear()
-        elif key == Qt.Key_Enter or key == Qt.Key_Return:
-            self.accepted.emit()
-        else:
-            super(FilterField, self).keyPressEvent(event)
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.MiddleButton and \
-                event.modifiers() == Qt.ControlModifier:
-            self.clear()
-        super(FilterField, self).mousePressEvent(event)
+from .filter_field import FilterField
 
 
 class IconCache:
