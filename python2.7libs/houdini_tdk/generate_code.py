@@ -27,7 +27,7 @@ def generateCode(**kwargs):
     if not nodes:
         raise hou.Error('No node selected')
     code = ''.join(node.asCode(brief=True) for node in nodes)
-    if kwargs['ctrlclick']:
+    if kwargs['ctrlclick'] or kwargs['shiftclick']:
         path = tempfile.mktemp('.py')
         with open(path, 'w') as file:
             file.write(code)
@@ -35,7 +35,10 @@ def generateCode(**kwargs):
             title = nodes[0].path()
         else:
             title = os.path.dirname(nodes[0].path())
-        hou.ui.openFileEditor(title, path)
+        if kwargs['ctrlclick']:
+            hou.ui.openFileEditor(title, path)
+        else:
+            os.startfile(path)
     else:
         hou.ui.copyTextToClipboard(code)
         hou.ui.setStatusMessage('Code was generated and copied',

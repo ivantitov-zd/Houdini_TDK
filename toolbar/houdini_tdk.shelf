@@ -23,7 +23,8 @@ fi.findIcon(**kwargs)
 
   <tool name="houdini_tdk::generate_code::1.0" label="Generate Code" icon="MISC_python">
     <helpText><![CDATA["""Generate Python code for selected nodes and copy to clipboard.
-Use Ctrl+Click to show generated code in Code Editor instead of coping."""]]></helpText>
+Use Ctrl+Click to show generated code in Code Editor instead of coping.
+Use Shift+Click to show in your default Code Editor."""]]></helpText>
     <script scriptType="python"><![CDATA[import houdini_tdk.generate_code as gc
 reload(gc)
 
