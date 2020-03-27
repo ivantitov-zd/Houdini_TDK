@@ -9,6 +9,8 @@ Allows you to quickly find an icon for your tool.
 #### Generate Code
 Applies `.asCode()` to selected nodes. Then copies the resulting code to the clipboard or shows in code editor.
 
+![Generate Code](/images/generate_code.png)
+
 #### Increment HDA Version
 Increments the HDA version of the selected node. You can select the version type (major, minor, build, etc.).
 
