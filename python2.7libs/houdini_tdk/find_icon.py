@@ -82,6 +82,7 @@ class FuzzyFilterProxyModel(QSortFilterProxyModel):
         super(FuzzyFilterProxyModel, self).__init__(parent)
         self.setDynamicSortFilter(True)
         self.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.sort(0, Qt.DescendingOrder)
 
         self.pattern = ''
 
