@@ -16,8 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from __future__ import print_function
-
 try:
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
@@ -31,30 +29,7 @@ except ImportError:
 
 import hou
 
-
-class FilterField(QLineEdit):
-    # Signals
-    accepted = Signal()
-
-    def __init__(self):
-        super(FilterField, self).__init__()
-
-        self.setPlaceholderText('Type to Filter...')
-
-    def keyPressEvent(self, event):
-        key = event.key()
-        if key == Qt.Key_Escape:
-            self.clear()
-        elif key == Qt.Key_Enter or key == Qt.Key_Return:
-            self.accepted.emit()
-        else:
-            super(FilterField, self).keyPressEvent(event)
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.MiddleButton and \
-                event.modifiers() == Qt.ControlModifier:
-            self.clear()
-        super(FilterField, self).mousePressEvent(event)
+from .filter_field import FilterField
 
 
 class IconCache:
@@ -74,13 +49,19 @@ class IconCache:
         return IconCache.data[name]
 
 
-def fuzzyMatch(pattern, word):
-    if pattern == word:
+def fuzzyMatch(pattern, text):
+    if pattern == text:
         return True, 999999
+    try:
+        pattern_start = text.index(pattern)
+        pattern_length = len(pattern)
+        return True, pattern_length * pattern_length + (1 - pattern_start / 500.0)
+    except ValueError:
+        pass
     weight = 0
     count = 0
     index = 0
-    for char in word:
+    for char in text:
         try:
             if char == pattern[index]:
                 count += 1
@@ -90,11 +71,10 @@ def fuzzyMatch(pattern, word):
                 count = 0
         except IndexError:
             pass
-    if count != 0:
-        weight += count * count
+    weight += count * count
     if index < len(pattern):
         return False, weight
-    return True, weight
+    return True, weight + (1 - text.index(pattern[0]) / 500.0)
 
 
 class FuzzyFilterProxyModel(QSortFilterProxyModel):
@@ -102,26 +82,32 @@ class FuzzyFilterProxyModel(QSortFilterProxyModel):
         super(FuzzyFilterProxyModel, self).__init__(parent)
         self.setDynamicSortFilter(True)
         self.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.sort(0, Qt.DescendingOrder)
 
         self.pattern = ''
 
     def setFilterPattern(self, pattern):
-        self.beginResetModel()
         self.pattern = pattern.lower()
-        self.endResetModel()
+        self.invalidate()
 
     def filterAcceptsRow(self, source_row, source_parent):
+        if not self.pattern:
+            return True
+
         source_model = self.sourceModel()
         text = source_model.data(source_model.index(source_row, 0, source_parent),
                                  Qt.UserRole)
-        matches, weight = fuzzyMatch(self.pattern, text.lower())
+        matches, _ = fuzzyMatch(self.pattern, text.lower())
         return matches
 
     def lessThan(self, source_left, source_right):
-        text1 = source_left.data(Qt.UserRole)
+        if not self.pattern:
+            return source_left.row() < source_right.row()
+
+        text1 = source_left.data(Qt.DisplayRole)
         _, weight1 = fuzzyMatch(self.pattern, text1.lower())
 
-        text2 = source_right.data(Qt.UserRole)
+        text2 = source_right.data(Qt.DisplayRole)
         _, weight2 = fuzzyMatch(self.pattern, text2.lower())
 
         return weight1 < weight2
@@ -133,7 +119,7 @@ class IconListModel(QAbstractListModel):
 
         # Data
         ICON_INDEX_FILE = hou.expandString('$HFS/houdini/config/Icons/SVGIcons.index')
-        self.__data = sorted(hou.loadIndexDataFromFile(ICON_INDEX_FILE).keys())
+        self.__data = tuple(sorted(hou.loadIndexDataFromFile(ICON_INDEX_FILE).keys()))
 
     def rowCount(self, parent):
         return len(self.__data)
