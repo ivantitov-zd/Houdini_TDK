@@ -1,4 +1,4 @@
-# Tool Development Kit 
+# Tool Development Kit for SideFX Houdini
 
 ## Tools
 #### Find Icon
@@ -20,6 +20,11 @@ Increments the HDA version of the selected node. You can select the version type
 Shows user data and cached user data of the selected node.
 
 ![Show Node User Data](/images/show_node_user_data.png)
+
+## Installation (todo)
+- Package Manager (Recommended)
+- Package file (17.5+)
+- Environment file
 
 ## License
 ```
