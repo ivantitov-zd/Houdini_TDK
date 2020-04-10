@@ -30,6 +30,7 @@ Shows user data and cached user data of the selected node.
 ```
 Tool Development Kit for SideFX Houdini
 Copyright (C) 2020  Ivan Titov
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
