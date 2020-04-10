@@ -21,25 +21,70 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 <menuDocument>
     <menu>
 
-        <addScriptItem id="opmenu.tdk_open_hda_location">
-            <label>Open HDA Location...</label>
+        <subMenu id="opmenu.tdk_actions_menu">
+
+            <label>TDK Actions</label>
             <parent>root_menu</parent>
-            <insertAfter>opmenu.optypemanager</insertAfter>
+            <insertAfter>opmenu.actions_menu</insertAfter>
             <context>
                 <expression>
                     node = kwargs['node']
                     return node.type().definition() is not None
                 </expression>
             </context>
-            <scriptCode>
+
+            <scriptItem id="opmenu.tdk_generate_code">
+                <label>Generate Code...</label>
+                <scriptCode>
+import houdini_tdk.generate_code as gc
+reload(gc)
+
+gc.generateCode(**kwargs)
+                </scriptCode>
+            </scriptItem>
+
+            <scriptItem id="opmenu.tdk_show_node_user_data">
+                <label>Show Node User Data...</label>
+                <scriptCode>
+import houdini_tdk.show_node_user_data as snud
+reload(snud)
+
+snud.showNodeUserData(cached=kwargs['shiftclick'])
+                </scriptCode>
+            </scriptItem>
+
+            <separatorItem/>
+
+            <scriptItem id="opmenu.tdk_open_hda_location">
+                <label>Open HDA Location...</label>
+                <scriptCode>
 import os
 import webbrowser
 
 node = kwargs['node']
 path = node.type().definition().libraryFilePath()
 webbrowser.open('file:///' + os.path.dirname(path))
-            </scriptCode>
-        </addScriptItem>
+                </scriptCode>
+            </scriptItem>
+
+            <scriptItem id="opmenu.tdk_increment_hda_version">
+                <label>Increment HDA Version...</label>
+                <scriptCode>
+import houdini_tdk.new_hda_version as nhv
+reload(nhv)
+
+nhv.incrementHdaVersion(**kwargs)
+                </scriptCode>
+            </scriptItem>
+
+            <scriptItem id="opmenu.tdk_save_as_new_hda">
+                <label>Save as new HDA...</label>
+                <scriptCode>
+raise NotImplementedError
+                </scriptCode>
+            </scriptItem>
+
+        </subMenu>
 
     </menu>
 </menuDocument>
