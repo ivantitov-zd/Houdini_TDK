@@ -42,7 +42,7 @@ nhv.incrementHdaVersion(**kwargs)
   </tool>
 
   <tool name="houdini_tdk::show_node_user_data::1.0" label="Show Node User Data" icon="TOP_jsondata">
-    <helpText><![CDATA["""Use Shift+Click to show Cached User Data"""
+    <helpText><![CDATA["""Use Shift+Click to show Cached User Data of the selected node"""
 ]]></helpText>
     <script scriptType="python"><![CDATA[import houdini_tdk.show_node_user_data as snud
 reload(snud)
