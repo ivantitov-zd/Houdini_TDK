@@ -49,7 +49,7 @@ gc.generateCode(**kwargs)
 import houdini_tdk.show_node_user_data as snud
 reload(snud)
 
-snud.showNodeUserData(cached=kwargs['shiftclick'])
+snud.showNodeUserData(cached=kwargs['shiftclick'], **kwargs)
                 </scriptCode>
             </scriptItem>
 

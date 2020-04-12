@@ -23,7 +23,10 @@ import hou
 
 
 def generateCode(**kwargs):
-    nodes = hou.selectedNodes()
+    if 'node' in kwargs:
+        nodes = kwargs['node'],
+    else:
+        nodes = hou.selectedNodes()
     if not nodes:
         raise hou.Error('No node selected')
     code = ''.join(node.asCode(brief=True) for node in nodes)
