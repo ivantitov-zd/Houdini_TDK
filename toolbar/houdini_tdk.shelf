@@ -10,11 +10,30 @@
     <memberTool name="houdini_tdk::generate_code::1.0"/>
     <memberTool name="houdini_tdk::increment_hda_version::1.0"/>
     <memberTool name="houdini_tdk::show_node_user_data::1.0"/>
+    <memberTool name="houdini_tdk::hda_from_template::1.0"/>
   </toolshelf>
 
   <tool name="houdini_tdk::find_icon::1.0" label="Find Icon" icon="MISC_m">
     <helpText><![CDATA["""Show Find Icon window"""]]></helpText>
-    <script scriptType="python"><![CDATA[import houdini_tdk.find_icon as fi
+    <script scriptType="python"><![CDATA["""
+Tool Development Kit for SideFX Houdini
+Copyright (C) 2020  Ivan Titov
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+import houdini_tdk.find_icon as fi
 reload(fi)
 
 fi.findIcon(**kwargs)
@@ -25,7 +44,25 @@ fi.findIcon(**kwargs)
     <helpText><![CDATA["""Generate Python code for selected nodes and copy to clipboard.
 Use Ctrl+Click to show generated code in Code Editor instead of coping.
 Use Shift+Click to show in your default Code Editor."""]]></helpText>
-    <script scriptType="python"><![CDATA[import houdini_tdk.generate_code as gc
+    <script scriptType="python"><![CDATA["""
+Tool Development Kit for SideFX Houdini
+Copyright (C) 2020  Ivan Titov
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+import houdini_tdk.generate_code as gc
 reload(gc)
 
 gc.generateCode(**kwargs)
@@ -34,7 +71,25 @@ gc.generateCode(**kwargs)
 
   <tool name="houdini_tdk::increment_hda_version::1.0" label="Increment HDA Version" icon="BUTTONS_list_add">
     <helpText><![CDATA["""Increment HDA version of the selected node"""]]></helpText>
-    <script scriptType="python"><![CDATA[import houdini_tdk.new_hda_version as nhv
+    <script scriptType="python"><![CDATA["""
+Tool Development Kit for SideFX Houdini
+Copyright (C) 2020  Ivan Titov
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+import houdini_tdk.new_hda_version as nhv
 reload(nhv)
 
 nhv.incrementHdaVersion(**kwargs)
@@ -44,10 +99,51 @@ nhv.incrementHdaVersion(**kwargs)
   <tool name="houdini_tdk::show_node_user_data::1.0" label="Show Node User Data" icon="TOP_jsondata">
     <helpText><![CDATA["""Use Shift+Click to show Cached User Data of the selected node"""
 ]]></helpText>
-    <script scriptType="python"><![CDATA[import houdini_tdk.show_node_user_data as snud
+    <script scriptType="python"><![CDATA["""
+Tool Development Kit for SideFX Houdini
+Copyright (C) 2020  Ivan Titov
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+import houdini_tdk.show_node_user_data as snud
 reload(snud)
 
 snud.showNodeUserData(cached=kwargs['shiftclick'])
+]]></script>
+  </tool>
+
+  <tool name="houdini_tdk::hda_from_template::1.0" label="HDA from Template" icon="NODEFLAGS_template">
+    <script scriptType="python"><![CDATA["""
+Tool Development Kit for SideFX Houdini
+Copyright (C) 2020  Ivan Titov
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+pass
 ]]></script>
   </tool>
 </shelfDocument>
