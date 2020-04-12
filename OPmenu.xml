@@ -73,14 +73,7 @@ webbrowser.open('file:///' + os.path.dirname(path))
 import houdini_tdk.new_hda_version as nhv
 reload(nhv)
 
-nhv.incrementHdaVersion(**kwargs)
-                </scriptCode>
-            </scriptItem>
-
-            <scriptItem id="opmenu.tdk_save_as_new_hda">
-                <label>Save as new HDA...</label>
-                <scriptCode>
-raise NotImplementedError
+nhv.showNewVersionDialog(**kwargs)
                 </scriptCode>
             </scriptItem>
 
