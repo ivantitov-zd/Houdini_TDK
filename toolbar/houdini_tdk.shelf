@@ -124,7 +124,7 @@ houdini_tdk.showNodeUserData(cached=kwargs['shiftclick'])
 ]]></script>
   </tool>
 
-  <tool name="houdini_tdk::hda_from_template::1.0" label="HDA from Template" icon="NODEFLAGS_template">
+  <tool name="houdini_tdk::hda_from_template::1.0" label="Make HDA from Template" icon="NODEFLAGS_template">
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
 Copyright (C) 2020  Ivan Titov
@@ -143,7 +143,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-pass
+import houdini_tdk
+reload(houdini_tdk)
+
+houdini_tdk.showMakeHDAFromTemplateDialog(**kwargs)
 ]]></script>
   </tool>
 </shelfDocument>
