@@ -30,20 +30,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
             <scriptItem id="opmenu.tdk_generate_code">
                 <label>Generate Code...</label>
                 <scriptCode>
-import houdini_tdk.generate_code as gc
-reload(gc)
+import houdini_tdk
+reload(houdini_tdk)
 
-gc.generateCode(**kwargs)
+houdini_tdk.generateCode(**kwargs)
                 </scriptCode>
             </scriptItem>
 
             <scriptItem id="opmenu.tdk_show_node_user_data">
                 <label>Show Node User Data...</label>
                 <scriptCode>
-import houdini_tdk.show_node_user_data as snud
-reload(snud)
+import houdini_tdk
+reload(houdini_tdk)
 
-snud.showNodeUserData(cached=kwargs['shiftclick'], **kwargs)
+houdini_tdk.showNodeUserData(cached=kwargs['shiftclick'], **kwargs)
                 </scriptCode>
             </scriptItem>
 
@@ -76,10 +76,10 @@ webbrowser.open('file:///' + os.path.dirname(path))
                     </expression>
                 </context>
                 <scriptCode>
-import houdini_tdk.new_hda_version as nhv
-reload(nhv)
+import houdini_tdk
+reload(houdini_tdk)
 
-nhv.showNewVersionDialog(**kwargs)
+houdini_tdk.showNewVersionDialog(**kwargs)
                 </scriptCode>
             </scriptItem>
 
