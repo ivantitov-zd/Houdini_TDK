@@ -33,10 +33,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import houdini_tdk.find_icon as fi
-reload(fi)
+import houdini_tdk
+reload(houdini_tdk)
 
-fi.findIcon(**kwargs)
+houdini_tdk.findIcon(**kwargs)
 ]]></script>
   </tool>
 
@@ -62,10 +62,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import houdini_tdk.generate_code as gc
-reload(gc)
+import houdini_tdk
+reload(houdini_tdk)
 
-gc.generateCode(**kwargs)
+houdini_tdk.generateCode(**kwargs)
 ]]></script>
   </tool>
 
@@ -89,10 +89,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import houdini_tdk.new_hda_version as nhv
-reload(nhv)
+import houdini_tdk
+reload(houdini_tdk)
 
-nhv.showNewVersionDialog(**kwargs)
+houdini_tdk.showNewVersionDialog(**kwargs)
 ]]></script>
   </tool>
 
@@ -117,10 +117,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import houdini_tdk.show_node_user_data as snud
-reload(snud)
+import houdini_tdk
+reload(houdini_tdk)
 
-snud.showNodeUserData(cached=kwargs['shiftclick'])
+houdini_tdk.showNodeUserData(cached=kwargs['shiftclick'])
 ]]></script>
   </tool>
 
