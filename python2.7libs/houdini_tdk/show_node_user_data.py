@@ -73,6 +73,8 @@ class UserDataWindow(QWidget):
     def __init__(self, parent=None):
         super(UserDataWindow, self).__init__(parent, Qt.Window)
 
+        self.setWindowIcon(hou.qt.Icon('TOP_jsondata', 16, 16))
+
         # Layout
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(4, 4, 4, 4)
@@ -113,7 +115,7 @@ class UserDataWindow(QWidget):
     def setCurrentNode(self, node, cached=False):
         self.node = node
         self.user_data_model.updateDataFromNode(node, cached)
-        self.setWindowTitle('Node User Data: ' + node.path())
+        self.setWindowTitle('TDK: Node User Data: ' + node.path())
 
 
 def showNodeUserData(node=None, cached=False, **kwargs):

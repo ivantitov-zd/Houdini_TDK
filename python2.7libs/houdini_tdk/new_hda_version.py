@@ -61,6 +61,7 @@ def incrementHDAVersion(node, component):
     node_type = node.type()
     name = node_type.name()
     version = nextVersion(versionByTypeName(name), component)
+
     split_count = name.count('::')
     definition = node_type.definition()
     if split_count == 2:
@@ -69,12 +70,13 @@ def incrementHDAVersion(node, component):
         new_type_name = name.split('::')[0]
     else:
         new_type_name = name
+
     new_type_name += '::' + version
+
     file = definition.libraryFilePath()
     ext = os.path.splitext(file)[-1]
     new_file_name = new_type_name.replace(':', '_').replace('.', '_') + ext
     new_file = os.path.join(os.path.dirname(file), new_file_name).replace('\\', '/')
-    print(new_file)
     definition.copyToHDAFile(new_file, new_type_name)
     hou.hda.installFile(new_file)
     new_definition = hou.hda.definitionsInFile(new_file)[0]
@@ -86,7 +88,8 @@ class NewVersionDialog(QWidget):
     def __init__(self, node, parent=None):
         super(NewVersionDialog, self).__init__(parent, Qt.Window)
 
-        self.setWindowTitle('New HDA Version')
+        self.setWindowTitle('TDK: New HDA Version')
+        self.setWindowIcon(hou.qt.Icon('BUTTONS_list_add', 16, 16))
 
         # Data
         self.node = node

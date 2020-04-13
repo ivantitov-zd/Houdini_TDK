@@ -175,21 +175,22 @@ class IconListView(QListView):
             super(IconListView, self).keyPressEvent(event)
 
 
-class FindIconWindow(QWidget):
+class FindIconDialog(QDialog):
     def __init__(self, parent=None):
-        super(FindIconWindow, self).__init__(parent, Qt.Window)
+        super(FindIconDialog, self).__init__(parent, Qt.Window)
 
         self.setWindowTitle('TDK: Find Icon')
+        self.setWindowIcon(hou.qt.Icon('MISC_m', 16, 16))
         self.resize(820, 500)
 
         # Layout
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(4, 4, 4, 4)
-        layout.setSpacing(4)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(4, 4, 4, 4)
+        main_layout.setSpacing(4)
 
         # Filter
         self.filter_field = FilterField()
-        layout.addWidget(self.filter_field)
+        main_layout.addWidget(self.filter_field)
 
         # Icon List
         self.icon_list_model = IconListModel(self)
@@ -200,16 +201,39 @@ class FindIconWindow(QWidget):
 
         self.icon_list_view = IconListView()
         self.icon_list_view.setModel(self.filter_proxy_model)
-        layout.addWidget(self.icon_list_view)
+        main_layout.addWidget(self.icon_list_view)
+
+        # Buttons
+        buttons_layout = QHBoxLayout()
+        main_layout.addLayout(buttons_layout)
+
+        spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Ignored)
+        buttons_layout.addSpacerItem(spacer)
+
+        ok_button = QPushButton('OK')
+        ok_button.clicked.connect(self.accept)
+        buttons_layout.addWidget(ok_button)
+
+        cancel_button = QPushButton('Cancel')
+        cancel_button.clicked.connect(self.reject)
+        buttons_layout.addWidget(cancel_button)
 
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.Find) or event.key() == Qt.Key_F3:
             self.filter_field.setFocus()
             self.filter_field.selectAll()
         else:
-            super(FindIconWindow, self).keyPressEvent(event)
+            super(FindIconDialog, self).keyPressEvent(event)
+
+    @classmethod
+    def getIconName(cls, parent=hou.qt.mainWindow(), title='Find Icon'):
+        window = FindIconDialog(parent)
+        window.setWindowTitle('TDK: ' + title)
+        window.icon_list_view.setSelectionMode(QAbstractItemView.SingleSelection)
+        if window.exec_() and window.icon_list_view.currentIndex().isValid():
+            return window.icon_list_view.currentIndex().data(Qt.UserRole)
 
 
 def findIcon(**kwargs):
-    window = FindIconWindow(hou.qt.mainWindow())
+    window = FindIconDialog(hou.qt.mainWindow())
     window.show()
