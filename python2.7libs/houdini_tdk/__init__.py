@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from .find_icon import FindIconDialog
+from .find_icon import FindIconDialog, findIcon
 from .new_hda_version import NewVersionDialog, showNewVersionDialog
 from .show_node_user_data import UserDataWindow, showNodeUserData
+from .make_hda_from_template import MakeHDAFromTemplateDialog, showMakeHDAFromTemplateDialog
 from .generate_code import generateCode
