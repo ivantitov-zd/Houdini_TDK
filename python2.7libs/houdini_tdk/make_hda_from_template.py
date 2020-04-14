@@ -199,6 +199,7 @@ class MakeHDAFromTemplateDialog(QDialog):
         self.replace_node = QCheckBox('Replace template node')
         self.replace_node.setChecked(True)
         form_layout.addWidget(self.replace_node)
+        self.install_toggle.toggled.connect(self.replace_node.setEnabled)
 
         buttons_layout = QHBoxLayout()
         main_layout.addLayout(buttons_layout)
