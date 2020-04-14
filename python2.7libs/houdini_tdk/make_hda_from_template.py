@@ -117,14 +117,14 @@ class IconField(QWidget):
 
 
 class LocationField(QWidget):
-    def __init__(self, contents=''):
+    def __init__(self, content=''):
         super(LocationField, self).__init__()
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
-        self.edit = QLineEdit(contents)
+        self.edit = QLineEdit(content)
         layout.addWidget(self.edit)
 
         self.pick_location_button = QPushButton()
