@@ -21,25 +21,85 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 <menuDocument>
     <menu>
 
-        <addScriptItem id="opmenu.tdk_open_hda_location">
-            <label>Open HDA Location...</label>
+        <subMenu id="opmenu.tdk_actions_menu">
+
+            <label>TDK Actions</label>
             <parent>root_menu</parent>
-            <insertAfter>opmenu.optypemanager</insertAfter>
-            <context>
-                <expression>
-                    node = kwargs['node']
-                    return node.type().definition() is not None
-                </expression>
-            </context>
-            <scriptCode>
+            <insertAfter>opmenu.actions_menu</insertAfter>
+
+            <scriptItem id="opmenu.tdk_generate_code">
+                <label>Generate Code...</label>
+                <scriptCode>
+import houdini_tdk
+reload(houdini_tdk)
+
+houdini_tdk.generateCode(**kwargs)
+                </scriptCode>
+            </scriptItem>
+
+            <scriptItem id="opmenu.tdk_show_node_user_data">
+                <label>Show Node User Data...</label>
+                <scriptCode>
+import houdini_tdk
+reload(houdini_tdk)
+
+houdini_tdk.showNodeUserData(cached=kwargs['shiftclick'], **kwargs)
+                </scriptCode>
+            </scriptItem>
+
+            <separatorItem/>
+
+            <scriptItem id="opmenu.tdk_make_hda_from_template">
+                <label>Make HDA from Template...</label>
+                <context>
+                    <expression>
+                        node = kwargs['node']
+                        return node.type().name() == 'tdk::template'
+                    </expression>
+                </context>
+                <scriptCode>
+import houdini_tdk
+reload(houdini_tdk)
+
+houdini_tdk.showMakeHDAFromTemplateDialog(**kwargs)
+                </scriptCode>
+            </scriptItem>
+
+            <scriptItem id="opmenu.tdk_open_hda_location">
+                <label>Open HDA Location...</label>
+                <context>
+                    <expression>
+                        node = kwargs['node']
+                        return node.type().definition() is not None
+                    </expression>
+                </context>
+                <scriptCode>
 import os
 import webbrowser
 
 node = kwargs['node']
 path = node.type().definition().libraryFilePath()
 webbrowser.open('file:///' + os.path.dirname(path))
-            </scriptCode>
-        </addScriptItem>
+                </scriptCode>
+            </scriptItem>
+
+            <scriptItem id="opmenu.tdk_increment_hda_version">
+                <label>Increment HDA Version...</label>
+                <context>
+                    <expression>
+                        node = kwargs['node']
+                        return node.type().definition() is not None
+                    </expression>
+                </context>
+                <scriptCode>
+import houdini_tdk
+reload(houdini_tdk)
+
+houdini_tdk.showNewVersionDialog(**kwargs)
+                </scriptCode>
+            </scriptItem>
+
+        </subMenu>
 
     </menu>
 </menuDocument>
