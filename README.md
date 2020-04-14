@@ -3,7 +3,9 @@
 ## Tools
 
 #### Templates
+
 Template HDAs that allows you to quickly create your own HDAs based on them.
+
 ![Make HDA from Template](/images/make_hda_from_template.png)
 
 #### Find Icon
