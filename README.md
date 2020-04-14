@@ -1,32 +1,43 @@
 # Tool Development Kit for SideFX Houdini
 
 ## Tools
+
+#### Templates
+Template HDAs that allows you to quickly create your own HDAs based on them.
+![Make HDA from Template](/images/make_hda_from_template.png)
+
 #### Find Icon
+
 Allows you to quickly find an icon for your tool.
 
 ![Find Icon](/images/find_icon.png)
 
 #### Generate Code
+
 Applies `.asCode()` to selected nodes. Then copies the resulting code to the clipboard or shows in code editor.
 
 ![Generate Code](/images/generate_code.png)
 
 #### Increment HDA Version
+
 Increments the HDA version of the selected node. You can select the version type (major, minor, build, etc.).
 
 ![Increment HDA Version](/images/increment_hda_version.png)
 
 #### Show Node User Data
+
 Shows user data and cached user data of the selected node.
 
 ![Show Node User Data](/images/show_node_user_data.png)
 
 ## Installation (todo)
-- Package Manager (Recommended)
-- Package file (17.5+)
+
+- [16.0+] Package Manager (Recommended)
+- [17.5+] Packages (template json file included)
 - Environment file
 
 ## License
+
 ```
 Tool Development Kit for SideFX Houdini
 Copyright (C) 2020  Ivan Titov
