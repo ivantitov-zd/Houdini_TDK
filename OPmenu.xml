@@ -74,12 +74,11 @@ houdini_tdk.showMakeHDAFromTemplateDialog(**kwargs)
                     </expression>
                 </context>
                 <scriptCode>
-import os
-import webbrowser
+from houdini_tdk.utils import openFileLocation
 
 node = kwargs['node']
 path = node.type().definition().libraryFilePath()
-webbrowser.open('file:///' + os.path.dirname(path))
+openFileLocation(path)
                 </scriptCode>
             </scriptItem>
 
