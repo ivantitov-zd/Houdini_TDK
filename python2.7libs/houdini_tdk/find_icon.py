@@ -154,7 +154,11 @@ class IconListView(QListView):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
 
         self.menu = QMenu(self)
-        self.menu.addAction('Copy', self.copySelectedIconName, QKeySequence.Copy)
+        self.menu.addAction('Copy Name', self.copySelectedIconName, QKeySequence.Copy)
+        self.menu.addAction('Copy File Name', self.copySelectedIconFileName)
+        self.menu.addSeparator()
+        self.menu.addAction('Copy Image...', self.copySelectedIcon)
+        self.menu.addAction('Save Image...', self.saveSelectedIcon)
 
         self.customContextMenuRequested.connect(self.showMenu)
 
@@ -162,11 +166,30 @@ class IconListView(QListView):
         names = []
         for index in self.selectedIndexes():
             names.append(index.data(Qt.ToolTipRole))
+        QApplication.clipboard().setText('\n'.join(map(lambda n: n[:-4], names)))
+
+    def copySelectedIconFileName(self):
+        names = []
+        for index in self.selectedIndexes():
+            names.append(index.data(Qt.ToolTipRole))
         QApplication.clipboard().setText('\n'.join(names))
 
+    def copySelectedIcon(self):
+        pass
+
+    def saveSelectedIcon(self):
+        pass
+
     def showMenu(self, pos):
-        if self.selectedIndexes():
-            self.menu.exec_(self.mapToGlobal(pos))
+        selected_indices = self.selectedIndexes()
+        if selected_indices:
+            if len(selected_indices) == 1:
+                self.menu.actions()[3].setEnabled(True)
+                self.menu.actions()[4].setEnabled(True)
+            else:
+                self.menu.actions()[3].setEnabled(False)
+                self.menu.actions()[4].setEnabled(False)
+        self.menu.exec_(self.mapToGlobal(pos))
 
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.Copy):
