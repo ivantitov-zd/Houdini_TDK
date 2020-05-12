@@ -180,7 +180,7 @@ class FindIconDialog(QDialog):
         super(FindIconDialog, self).__init__(parent, Qt.Window)
 
         self.setWindowTitle('TDK: Find Icon')
-        self.setWindowIcon(hou.qt.Icon('MISC_m', 16, 16))
+        self.setWindowIcon(hou.qt.Icon('MISC_m', 32, 32))
         self.resize(820, 500)
 
         # Layout

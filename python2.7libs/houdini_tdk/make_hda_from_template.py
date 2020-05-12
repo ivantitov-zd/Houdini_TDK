@@ -155,7 +155,7 @@ class MakeHDAFromTemplateDialog(QDialog):
         self.node = node
 
         self.setWindowTitle('TDK: HDA from Template')
-        self.setWindowIcon(hou.qt.Icon('NODEFLAGS_template', 16, 16))
+        self.setWindowIcon(hou.qt.Icon('NODEFLAGS_template', 32, 32))
         self.resize(400, 250)
 
         main_layout = QVBoxLayout(self)

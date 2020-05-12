@@ -73,7 +73,7 @@ class UserDataWindow(QWidget):
     def __init__(self, parent=None):
         super(UserDataWindow, self).__init__(parent, Qt.Window)
 
-        self.setWindowIcon(hou.qt.Icon('TOP_jsondata', 16, 16))
+        self.setWindowIcon(hou.qt.Icon('TOP_jsondata', 32, 32))
 
         # Layout
         main_layout = QVBoxLayout(self)

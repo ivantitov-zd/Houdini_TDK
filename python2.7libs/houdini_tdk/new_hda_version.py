@@ -99,7 +99,7 @@ class NewVersionDialog(QDialog):
         super(NewVersionDialog, self).__init__(parent, Qt.Window)
 
         self.setWindowTitle('TDK: New HDA Version')
-        self.setWindowIcon(hou.qt.Icon('BUTTONS_list_add', 16, 16))
+        self.setWindowIcon(hou.qt.Icon('BUTTONS_list_add', 32, 32))
 
         # Data
         self.node = node
