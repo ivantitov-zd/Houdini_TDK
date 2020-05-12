@@ -196,10 +196,15 @@ class MakeHDAFromTemplateDialog(QDialog):
         self.install_toggle.setChecked(True)
         form_layout.addWidget(self.install_toggle)
 
-        self.replace_node = QCheckBox('Replace template node')
-        self.replace_node.setChecked(True)
-        form_layout.addWidget(self.replace_node)
-        self.install_toggle.toggled.connect(self.replace_node.setEnabled)
+        self.replace_node_toggle = QCheckBox('Replace template node')
+        self.replace_node_toggle.setChecked(True)
+        form_layout.addWidget(self.replace_node_toggle)
+        self.install_toggle.toggled.connect(self.replace_node_toggle.setEnabled)
+
+        self.open_type_properties_toggle = QCheckBox('Open Type Properties')
+        self.open_type_properties_toggle.setChecked(True)
+        form_layout.addWidget(self.open_type_properties_toggle)
+        self.install_toggle.toggled.connect(self.open_type_properties_toggle.setEnabled)
 
         buttons_layout = QHBoxLayout()
         main_layout.addLayout(buttons_layout)
@@ -268,9 +273,14 @@ class MakeHDAFromTemplateDialog(QDialog):
                                                     self.location_field.path())
             if self.install_toggle.isChecked():
                 hou.hda.installFile(definition.libraryFilePath())
-                if self.replace_node.isChecked():
-                    self.node.changeNodeType(definition.nodeTypeName(),
-                                             keep_network_contents=False)
+                if self.replace_node_toggle.isChecked():
+                    self.node = self.node.changeNodeType(definition.nodeTypeName(),
+                                                         keep_network_contents=False)
+                if self.open_type_properties_toggle.isChecked():
+                    if self.replace_node_toggle.isChecked():
+                        hou.ui.openTypePropertiesDialog(self.node)
+                    else:
+                        hou.ui.openTypePropertiesDialog(definition.nodeType())
         self.accept()
 
 
