@@ -29,6 +29,8 @@ except ImportError:
 
 import hou
 
+from notification import notify
+
 
 class UserDataModel(QAbstractListModel):
     def __init__(self, parent=None):
@@ -122,9 +124,11 @@ def showNodeUserData(node=None, cached=False, **kwargs):
     if node is None:
         nodes = hou.selectedNodes()
         if not nodes:
-            raise hou.Error('No node selected')
+            notify('No node selected', hou.severityType.Error)
+            return
         elif len(nodes) > 1:
-            raise hou.Error('Too much nodes selected')
+            notify('Too much nodes selected', hou.severityType.Error)
+            return
         node = nodes[0]
     window = UserDataWindow(hou.qt.mainWindow())
     window.setCurrentNode(node, cached)

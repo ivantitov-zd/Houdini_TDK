@@ -33,6 +33,8 @@ except ImportError:
 
 import hou
 
+from notification import notify
+
 
 def versionByTypeName(name):
     split_count = name.count('::')
@@ -154,8 +156,7 @@ class NewVersionDialog(QDialog):
 
     def _increment(self):
         incrementHDAVersion(self.node, self.comp_slider.value())
-        hou.ui.setStatusMessage('HDA version successfully incremented',
-                                hou.severityType.ImportantMessage)
+        notify('HDA version successfully incremented')
         self.close()
 
 
@@ -165,8 +166,10 @@ def showNewVersionDialog(**kwargs):
     else:
         nodes = hou.selectedNodes()
     if not nodes:
-        raise hou.Error('No node selected')
+        notify('No node selected', hou.severityType.Error)
+        return
     elif len(nodes) > 1:
-        raise hou.Error('Too much nodes selected')
+        notify('Too much nodes selected', hou.severityType.Error)
+        return
     window = NewVersionDialog(nodes[0], hou.qt.mainWindow())
     window.show()

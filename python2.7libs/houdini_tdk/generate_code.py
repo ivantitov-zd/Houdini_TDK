@@ -21,6 +21,8 @@ import tempfile
 
 import hou
 
+from notification import notify
+
 
 def generateCode(**kwargs):
     if 'node' in kwargs:
@@ -28,7 +30,8 @@ def generateCode(**kwargs):
     else:
         nodes = hou.selectedNodes()
     if not nodes:
-        raise hou.Error('No node selected')
+        notify('No node selected', hou.severityType.Error)
+        return
     code = ''.join(node.asCode(brief=True) for node in nodes)
     if kwargs['ctrlclick'] or kwargs['shiftclick']:
         path = tempfile.mktemp('.py')
@@ -44,5 +47,4 @@ def generateCode(**kwargs):
             os.startfile(path)
     else:
         hou.ui.copyTextToClipboard(code)
-        hou.ui.setStatusMessage('Code was generated and copied',
-                                hou.severityType.ImportantMessage)
+        notify('Code was generated and copied')

@@ -34,6 +34,7 @@ except ImportError:
 import hou
 
 from .find_icon import FindIconDialog
+from .notification import notify
 
 
 def makeNewHDAFromTemplateNode(template_node, label, name=None, namespace=None, icon=None,
@@ -290,10 +291,13 @@ def showMakeHDAFromTemplateDialog(**kwargs):
     else:
         nodes = hou.selectedNodes()
     if not nodes:
-        raise hou.Error('No node selected')
+        notify('No node selected', hou.severityType.Error)
+        return
     elif len(nodes) > 1:
-        raise hou.Error('Too much nodes selected')
+        notify('Too much nodes selected', hou.severityType.Error)
+        return
     elif nodes[0].type().name() != 'tdk::template':
-        raise hou.Error('Node is not TDK Template')
+        notify('Node is not TDK Template', hou.severityType.Error)
+        return
     window = MakeHDAFromTemplateDialog(nodes[0], hou.qt.mainWindow())
     window.show()
