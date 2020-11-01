@@ -174,11 +174,29 @@ class IconListView(QListView):
             names.append(index.data(Qt.ToolTipRole))
         QApplication.clipboard().setText('\n'.join(names))
 
+    def _selectedImage(self):
+        indexes = self.selectedIndexes()
+        if len(indexes) == 1:
+            name = indexes[0].data(Qt.UserRole)
+            return hou.qt.Icon(name, 48, 48).pixmap(48, 48)
+
     def copySelectedIcon(self):
-        pass
+        image = self._selectedImage()
+        if image:
+            clipboard = QApplication.clipboard()
+            clipboard.setPixmap(image)
 
     def saveSelectedIcon(self):
-        pass
+        indexes = self.selectedIndexes()
+        if len(indexes) != 1:
+            return
+        name = indexes[0].data(Qt.DisplayRole)
+        path, _ = QFileDialog.getSaveFileName(self, 'Save image',
+                                              name, filter='PNG (*.png)',
+                                              initialFilter=name)
+        image = self._selectedImage()
+        if path and image:
+            image.save(path)
 
     def showMenu(self, pos):
         selected_indices = self.selectedIndexes()
