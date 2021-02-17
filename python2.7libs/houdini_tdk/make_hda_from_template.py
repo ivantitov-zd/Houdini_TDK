@@ -1,6 +1,6 @@
 """
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2020  Ivan Titov
+Copyright (C) 2021  Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -38,7 +38,8 @@ from .notification import notify
 
 
 def makeNewHDAFromTemplateNode(template_node, label, name=None, namespace=None, icon=None,
-                               sections=None, version='1.0', location='$HOUDINI_USER_PREF_DIR/otls'):
+                               sections=None, version='1.0', location='$HOUDINI_USER_PREF_DIR/otls',
+                               inherit_subnetwork=True):
     template_node_type = template_node.type()
     if template_node_type.name() != 'tdk::template':
         raise TypeError
@@ -71,6 +72,9 @@ def makeNewHDAFromTemplateNode(template_node, label, name=None, namespace=None, 
     template_def.copyToHDAFile(new_hda_file_path, new_type_name)
 
     new_def = hou.hda.definitionsInFile(new_hda_file_path)[0]
+
+    if inherit_subnetwork:
+        new_def.updateFromNode(template_node)
 
     new_def.setDescription(label)
 
@@ -193,6 +197,10 @@ class MakeHDAFromTemplateDialog(QDialog):
         self.version_field = QLineEdit('1.0')
         form_layout.addRow('Version', self.version_field)
 
+        self.inherit_subnetwork_toggle = QCheckBox('Inherit subnetwork')
+        self.inherit_subnetwork_toggle.setChecked(True)
+        form_layout.addWidget(self.inherit_subnetwork_toggle)
+
         self.install_toggle = QCheckBox('Install new HDA')
         self.install_toggle.setChecked(True)
         form_layout.addWidget(self.install_toggle)
@@ -271,7 +279,8 @@ class MakeHDAFromTemplateDialog(QDialog):
                                                     self.icon_field.text(),
                                                     self.sections.text(),
                                                     self.version_field.text(),
-                                                    self.location_field.path())
+                                                    self.location_field.path(),
+                                                    self.inherit_subnetwork_toggle.isChecked())
             if self.install_toggle.isChecked():
                 hou.hda.installFile(definition.libraryFilePath())
                 if self.replace_node_toggle.isChecked():
