@@ -93,7 +93,7 @@ def incrementHDAVersion(node, component, use_original_file):
     definition.copyToHDAFile(new_file_path, new_type_name)
 
     hou.hda.installFile(new_file_path)
-    new_definition = hou.hda.definitionsInFile(new_file_path)[0]  # Todo: fix bug
+    new_definition = hou.hda.definitionsInFile(new_file_path)[0]  # Todo: fix potential bug
 
     new_definition.updateFromNode(node)
 
