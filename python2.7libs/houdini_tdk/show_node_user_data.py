@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import json
+
 try:
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
@@ -63,7 +65,7 @@ class UserDataModel(QAbstractListModel):
     def indexByKey(self, key):
         for index, data in enumerate(self.__data):
             if data.key == key:
-                return self.index(index, 0, QModelIndex())
+                return self.index(index, 0)
 
         return QModelIndex()
 
@@ -109,6 +111,7 @@ class UserDataWindow(QWidget):
 
         self.user_data_list = UserDataListView()
         self.user_data_list.setModel(self.user_data_model)
+        self.user_data_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         selection_model = self.user_data_list.selectionModel()
         selection_model.currentChanged.connect(self._readData)
         splitter.addWidget(self.user_data_list)
@@ -125,14 +128,17 @@ class UserDataWindow(QWidget):
         self._node = None
 
         # Update
-        update_layout = QHBoxLayout()
-        update_layout.setContentsMargins(0, 0, 0, 0)
-        update_layout.setSpacing(4)
-        main_layout.addLayout(update_layout)
+        bottom_layout = QHBoxLayout()
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        bottom_layout.setSpacing(4)
+        main_layout.addLayout(bottom_layout)
 
-        update_button = QPushButton('Update from Node')
+        update_button = QPushButton()
+        update_button.setToolTip('Update from Node')
+        update_button.setFixedSize(24, 24)
+        update_button.setIcon(hou.qt.Icon('NETVIEW_reload', 16, 16))
         update_button.clicked.connect(self.updateData)
-        update_layout.addWidget(update_button)
+        bottom_layout.addWidget(update_button)
 
         self.update_timer = QTimer(self)
         self.update_timer.setInterval(500)
@@ -142,7 +148,37 @@ class UserDataWindow(QWidget):
         self.auto_update_toggle.setFixedWidth(100)
         self.auto_update_toggle.setChecked(True)
         self.auto_update_toggle.toggled.connect(self._switchTimer)
-        update_layout.addWidget(self.auto_update_toggle, 0)
+        bottom_layout.addWidget(self.auto_update_toggle, 0)
+
+        bottom_layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Ignored))
+
+        self.prettify_json_button = QPushButton()
+        self.prettify_json_button.setToolTip('Prettify JSON')
+        self.prettify_json_button.setFixedSize(24, 24)
+        self.prettify_json_button.setIcon(hou.qt.Icon('TOP_jsondata', 16, 16))
+        self.prettify_json_button.clicked.connect(self._prettifyJSON)
+        bottom_layout.addWidget(self.prettify_json_button)
+
+    def _updatePrettifyJSONButtonVisibility(self):
+        text = self.user_data_view.toPlainText()
+        try:
+            data = json.loads(text)
+
+            if text == json.dumps(data, indent=4):
+                raise ValueError
+
+            self.prettify_json_button.setVisible(True)
+        except ValueError:
+            self.prettify_json_button.setVisible(False)
+
+    def _prettifyJSON(self):
+        text = self.user_data_view.toPlainText()
+        try:
+            data = json.loads(text)
+            text = json.dumps(data, indent=4)
+            self.user_data_view.setPlainText(text)
+        except ValueError:
+            return
 
     def _readData(self):
         selection_model = self.user_data_list.selectionModel()
@@ -154,6 +190,7 @@ class UserDataWindow(QWidget):
         self._current_key = index.data(Qt.DisplayRole)
         value = index.data(Qt.UserRole)
         self.user_data_view.setText(value)
+        self._updatePrettifyJSONButtonVisibility()
 
     def _switchTimer(self):
         if self.update_timer.isActive():
