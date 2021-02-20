@@ -141,6 +141,13 @@ class IconListModel(QAbstractListModel):
         elif role == Qt.UserRole or role == Qt.ToolTipRole:
             return icon_name
 
+    def indexByKey(self, key):
+        for index, name in enumerate(self.__data):
+            if name[:-4] == key:
+                return self.index(index, 0)
+
+        return QModelIndex()
+
 
 class IconListView(QListView):
     # Signals
@@ -244,7 +251,7 @@ class IconListView(QListView):
         self._save_image_action.triggered.connect(self.saveSelectedIcon)
 
     def _createContextMenu(self):
-        self._menu = QMenu(self)
+        self._menu = hou.qt.Menu()
 
         self._menu.addAction(self._copy_name_action)
         self._menu.addAction(self._copy_file_name_action)
@@ -256,13 +263,12 @@ class IconListView(QListView):
 
     def _updateContextMenu(self):
         selected_indices = self.selectedIndexes()
-        if selected_indices:
-            if len(selected_indices) == 1:
-                self._copy_image_action.setEnabled(True)
-                self._save_image_action.setEnabled(True)
-            else:
-                self._copy_image_action.setEnabled(False)
-                self._save_image_action.setEnabled(False)
+        if len(selected_indices) == 1:
+            self._copy_image_action.setEnabled(True)
+            self._save_image_action.setEnabled(True)
+        else:
+            self._copy_image_action.setEnabled(False)
+            self._save_image_action.setEnabled(False)
 
     def showContextMenu(self, local_pos):
         if not self._menu:
@@ -333,11 +339,19 @@ class FindIconDialog(QDialog):
             super(FindIconDialog, self).keyPressEvent(event)
 
     @classmethod
-    def getIconName(cls, parent=hou.qt.mainWindow(), title='Find Icon'):
+    def getIconName(cls, parent=hou.qt.mainWindow(), title='Find Icon', name=None):
         window = FindIconDialog(parent)
         window.setWindowTitle('TDK: ' + title)
         window.icon_list_view.setSelectionMode(QAbstractItemView.SingleSelection)
         window.icon_list_view.enableDoubleClickedSignal()
+
+        if name:
+            model = window.icon_list_view.model()
+            for row in range(model.rowCount()):
+                index = model.index(row, 0)
+                if index.data(Qt.UserRole) == name + '.svg':
+                    window.icon_list_view.setCurrentIndex(index)
+                    break
 
         if window.exec_() and window.icon_list_view.currentIndex().isValid():
             return window.icon_list_view.currentIndex().data(Qt.UserRole)
