@@ -116,7 +116,7 @@ class IconField(QWidget):
         return self.edit.text()
 
     def _pickIcon(self):
-        icon = FindIconDialog.getIconName(self, 'Pick Icon')
+        icon = FindIconDialog.getIconName(self, 'Pick Icon', self.edit.text())
         if icon:
             self.edit.setText(icon.replace('.svg', ''))
 
