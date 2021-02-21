@@ -7,7 +7,7 @@
 
   <toolshelf name="houdini_tdk" label="Tool Development Kit">
     <memberTool name="houdini_tdk::find_icon::1.0"/>
-    <memberTool name="houdini_tdk::generate_code::1.0"/>
+    <memberTool name="houdini_tdk::generate_code::1.1"/>
     <memberTool name="houdini_tdk::increment_hda_version::1.0"/>
     <memberTool name="houdini_tdk::show_node_user_data::1.0"/>
     <memberTool name="houdini_tdk::hda_from_template::1.0"/>
@@ -37,35 +37,6 @@ import houdini_tdk
 reload(houdini_tdk)
 
 houdini_tdk.findIcon(**kwargs)
-]]></script>
-  </tool>
-
-  <tool name="houdini_tdk::generate_code::1.0" label="Generate Code" icon="MISC_python">
-    <helpText><![CDATA["""Generate Python code for selected nodes and copy to clipboard.
-Use Ctrl+Click to show generated code in Code Editor instead of coping.
-Use Shift+Click to show in your default Code Editor."""]]></helpText>
-    <script scriptType="python"><![CDATA["""
-Tool Development Kit for SideFX Houdini
-Copyright (C) 2020  Ivan Titov
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
-import houdini_tdk
-reload(houdini_tdk)
-
-houdini_tdk.generateCode(**kwargs)
 ]]></script>
   </tool>
 
@@ -147,6 +118,36 @@ import houdini_tdk
 reload(houdini_tdk)
 
 houdini_tdk.showMakeHDAFromTemplateDialog(**kwargs)
+]]></script>
+  </tool>
+
+  <tool name="houdini_tdk::generate_code::1.1" label="Generate Code" icon="MISC_python">
+    <helpText><![CDATA["""Generate Python code for selected nodes and copy to clipboard.
+Use Ctrl+Click to show generated code in Code Editor instead of coping.
+Use Shift+Click to show in your default external Code Editor.
+Use Alt+Click to set up options."""]]></helpText>
+    <script scriptType="python"><![CDATA["""
+Tool Development Kit for SideFX Houdini
+Copyright (C) 2021  Ivan Titov
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+import houdini_tdk
+reload(houdini_tdk)
+
+houdini_tdk.showGenerateCode(**kwargs)
 ]]></script>
   </tool>
 </shelfDocument>
