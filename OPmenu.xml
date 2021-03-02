@@ -54,7 +54,7 @@ houdini_tdk.showNodeUserData(cached=kwargs['shiftclick'], **kwargs)
                 <context>
                     <expression>
                         node = kwargs['node']
-                        return node.type().name() == 'tdk::template'
+                        return node.type().name().startswith('tdk::template')
                     </expression>
                 </context>
                 <scriptCode>

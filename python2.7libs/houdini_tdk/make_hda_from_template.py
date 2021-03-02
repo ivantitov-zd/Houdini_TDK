@@ -207,13 +207,13 @@ class MakeHDAFromTemplateDialog(QDialog):
 
         self.replace_node_toggle = QCheckBox('Replace template node')
         self.replace_node_toggle.setChecked(True)
-        form_layout.addWidget(self.replace_node_toggle)
         self.install_toggle.toggled.connect(self.replace_node_toggle.setEnabled)
+        form_layout.addWidget(self.replace_node_toggle)
 
-        self.open_type_properties_toggle = QCheckBox('Open Type Properties')
+        self.open_type_properties_toggle = QCheckBox('Open type properties')
         self.open_type_properties_toggle.setChecked(True)
-        form_layout.addWidget(self.open_type_properties_toggle)
         self.install_toggle.toggled.connect(self.open_type_properties_toggle.setEnabled)
+        form_layout.addWidget(self.open_type_properties_toggle)
 
         buttons_layout = QHBoxLayout()
         main_layout.addLayout(buttons_layout)
@@ -305,7 +305,7 @@ def showMakeHDAFromTemplateDialog(**kwargs):
     elif len(nodes) > 1:
         notify('Too much nodes selected', hou.severityType.Error)
         return
-    elif nodes[0].type().name() != 'tdk::template':
+    elif not nodes[0].type().name().startswith('tdk::template'):
         notify('Node is not TDK Template', hou.severityType.Error)
         return
     window = MakeHDAFromTemplateDialog(nodes[0], hou.qt.mainWindow())
