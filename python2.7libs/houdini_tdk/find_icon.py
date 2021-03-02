@@ -323,13 +323,15 @@ class FindIconDialog(QDialog):
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Ignored)
         buttons_layout.addSpacerItem(spacer)
 
-        ok_button = QPushButton('OK')
-        ok_button.clicked.connect(self.accept)
-        buttons_layout.addWidget(ok_button)
+        self.ok_button = QPushButton('OK')
+        self.ok_button.setVisible(False)
+        self.ok_button.clicked.connect(self.accept)
+        buttons_layout.addWidget(self.ok_button)
 
-        cancel_button = QPushButton('Cancel')
-        cancel_button.clicked.connect(self.reject)
-        buttons_layout.addWidget(cancel_button)
+        self.cancel_button = QPushButton('Cancel')
+        self.cancel_button.setVisible(False)
+        self.cancel_button.clicked.connect(self.reject)
+        buttons_layout.addWidget(self.cancel_button)
 
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.Find) or event.key() == Qt.Key_F3:
@@ -338,12 +340,17 @@ class FindIconDialog(QDialog):
         else:
             super(FindIconDialog, self).keyPressEvent(event)
 
+    def enableDialogMode(self):
+        self.icon_list_view.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.icon_list_view.enableDoubleClickedSignal()
+        self.ok_button.setVisible(True)
+        self.cancel_button.setVisible(True)
+
     @classmethod
     def getIconName(cls, parent=hou.qt.mainWindow(), title='Find Icon', name=None):
         window = FindIconDialog(parent)
         window.setWindowTitle('TDK: ' + title)
-        window.icon_list_view.setSelectionMode(QAbstractItemView.SingleSelection)
-        window.icon_list_view.enableDoubleClickedSignal()
+        window.enableDialogMode()
 
         if name:
             model = window.icon_list_view.model()
