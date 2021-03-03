@@ -24,8 +24,8 @@ Allows you to quickly find an icon for your tool.
 
 Applies `.asCode()` to selected nodes. Then copies the resulting code to the clipboard or shows in code editor.
 
-![Generate Code](/images/generate_code.png)
 ![Generate Code Settings](/images/generate_code_settings.png)
+![Generate Code](/images/generate_code.png)
 
 #### New HDA Version
 
