@@ -2,11 +2,17 @@
 
 ## Tools
 
+#### HDA Doctor *Beta*
+
+Tool that allows you to test your HDA with a set of inspections that check for compliance with high standards of HDA development.
+
+![HDA Doctor](/images/hda_doctor.png)
+
 #### Templates
 
-Template HDAs that allows you to quickly create your own HDAs based on them.
+Template HDAs that allows you to quickly create new HDAs based on them.
 
-![Make HDA from Template](/images/make_hda_from_template.png)
+![Make HDA by Template](/images/make_hda_by_template.gif)
 
 #### Find Icon
 
@@ -19,12 +25,13 @@ Allows you to quickly find an icon for your tool.
 Applies `.asCode()` to selected nodes. Then copies the resulting code to the clipboard or shows in code editor.
 
 ![Generate Code](/images/generate_code.png)
+![Generate Code Settings](/images/generate_code_settings.png)
 
-#### Increment HDA Version
+#### New HDA Version
 
-Increments the HDA version of the selected node. You can select the version type (major, minor, build, etc.).
+Increments an HDA version of the selected node. You can select the version type (major, minor, build, etc.).
 
-![Increment HDA Version](/images/increment_hda_version.png)
+![New HDA Version](/images/new_hda_version.png)
 
 #### Show Node User Data
 
@@ -32,17 +39,17 @@ Shows user data and cached user data of the selected node.
 
 ![Show Node User Data](/images/show_node_user_data.png)
 
-## Installation (todo)
+## Installation
 
-- [16.0+] Package Manager (Recommended)
-- [17.5+] Packages (template json file included)
+- [16.0+] [Package Manager](https://github.com/Houdini-Packages/Houdini-Package-Manager) *Recommended*
+- [17.5+] [Packages](https://www.sidefx.com/docs/houdini/ref/plugins.html) (template json file included)
 - Environment file
 
 ## License
 
 ```
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2020  Ivan Titov
+Copyright (C) 2021  Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

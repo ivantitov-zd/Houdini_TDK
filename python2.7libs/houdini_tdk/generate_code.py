@@ -98,6 +98,7 @@ class GenerateCodeSettings(QDialog):
 
         # UI
         self.setWindowTitle('Generate Code: Settings')
+        self.setWindowIcon(hou.qt.Icon('MISC_python', 32, 32))
         self.resize(400, 200)
 
         main_layout = QVBoxLayout(self)

@@ -703,7 +703,7 @@ class HDADoctorWindow(QWidget):
     def __init__(self, parent=None):
         super(HDADoctorWindow, self).__init__(parent, Qt.Window)
 
-        self.setWindowTitle('HDA Doctor')
+        self.setWindowTitle('HDA Doctor Beta')
         self.setWindowIcon(hou.qt.Icon('SOP_polydoctor', 32, 32))
         self.resize(600, 600)
 

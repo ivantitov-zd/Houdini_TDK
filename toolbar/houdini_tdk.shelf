@@ -11,13 +11,15 @@
     <memberTool name="houdini_tdk::increment_hda_version::1.0"/>
     <memberTool name="houdini_tdk::show_node_user_data::1.0"/>
     <memberTool name="houdini_tdk::hda_from_template::1.0"/>
+    <memberTool name="show_hda_doc"/>
+    <memberTool name="Show Net Stats"/>
   </toolshelf>
 
   <tool name="houdini_tdk::find_icon::1.0" label="Find Icon" icon="MISC_m">
     <helpText><![CDATA["""Show Find Icon window"""]]></helpText>
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2020  Ivan Titov
+Copyright (C) 2021  Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -33,10 +35,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import houdini_tdk
-reload(houdini_tdk)
+import houdini_tdk as tdk
 
-houdini_tdk.findIcon(**kwargs)
+tdk.findIcon(**kwargs)
 ]]></script>
   </tool>
 
@@ -44,7 +45,7 @@ houdini_tdk.findIcon(**kwargs)
     <helpText><![CDATA["""Increment HDA version of the selected node"""]]></helpText>
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2020  Ivan Titov
+Copyright (C) 2021  Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -60,10 +61,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import houdini_tdk
-reload(houdini_tdk)
+import houdini_tdk as tdk
 
-houdini_tdk.showNewVersionDialog(**kwargs)
+tdk.showNewVersionDialog(**kwargs)
 ]]></script>
   </tool>
 
@@ -72,7 +72,7 @@ houdini_tdk.showNewVersionDialog(**kwargs)
 ]]></helpText>
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2020  Ivan Titov
+Copyright (C) 2021  Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -88,17 +88,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import houdini_tdk
-reload(houdini_tdk)
+import houdini_tdk as tdk
 
-houdini_tdk.showNodeUserData(cached=kwargs['shiftclick'])
+tdk.showNodeUserData(cached=kwargs['shiftclick'])
 ]]></script>
   </tool>
 
   <tool name="houdini_tdk::hda_from_template::1.0" label="Make HDA from Template" icon="NODEFLAGS_template">
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2020  Ivan Titov
+Copyright (C) 2021  Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -114,10 +113,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import houdini_tdk
-reload(houdini_tdk)
+import houdini_tdk as tdk
 
-houdini_tdk.showMakeHDAFromTemplateDialog(**kwargs)
+tdk.showMakeHDAFromTemplateDialog(**kwargs)
 ]]></script>
   </tool>
 
@@ -144,10 +142,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import houdini_tdk
-reload(houdini_tdk)
+import houdini_tdk as tdk
 
-houdini_tdk.showGenerateCode(**kwargs)
+tdk.showGenerateCode(**kwargs)
 ]]></script>
   </tool>
 </shelfDocument>

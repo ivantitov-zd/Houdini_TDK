@@ -30,10 +30,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
             <scriptItem id="opmenu.tdk_generate_code">
                 <label>Generate Code...</label>
                 <scriptCode>
-import houdini_tdk
-reload(houdini_tdk)
+import houdini_tdk as tdk
 
-houdini_tdk.showGenerateCode(**kwargs)
+tdk.showGenerateCode(**kwargs)
                 </scriptCode>
             </scriptItem>
 
@@ -49,8 +48,8 @@ houdini_tdk.showNodeUserData(cached=kwargs['shiftclick'], **kwargs)
 
             <separatorItem/>
 
-            <scriptItem id="opmenu.tdk_make_hda_from_template">
-                <label>Make HDA from Template...</label>
+            <scriptItem id="opmenu.tdk_make_hda_by_template">
+                <label>Make HDA by Template...</label>
                 <context>
                     <expression>
                         node = kwargs['node']
@@ -58,10 +57,9 @@ houdini_tdk.showNodeUserData(cached=kwargs['shiftclick'], **kwargs)
                     </expression>
                 </context>
                 <scriptCode>
-import houdini_tdk
-reload(houdini_tdk)
+import houdini_tdk as tdk
 
-houdini_tdk.showMakeHDAFromTemplateDialog(**kwargs)
+tdk.showMakeHDAByTemplateDialog(**kwargs)
                 </scriptCode>
             </scriptItem>
 
@@ -82,8 +80,8 @@ openFileLocation(path)
                 </scriptCode>
             </scriptItem>
 
-            <scriptItem id="opmenu.tdk_increment_hda_version">
-                <label>Increment HDA Version...</label>
+            <scriptItem id="opmenu.tdk_new_hda_version">
+                <label>New HDA Version...</label>
                 <context>
                     <expression>
                         node = kwargs['node']
@@ -91,10 +89,9 @@ openFileLocation(path)
                     </expression>
                 </context>
                 <scriptCode>
-import houdini_tdk
-reload(houdini_tdk)
+import houdini_tdk as tdk
 
-houdini_tdk.showNewVersionDialog(**kwargs)
+tdk.showNewVersionDialog(**kwargs)
                 </scriptCode>
             </scriptItem>
 

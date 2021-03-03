@@ -152,14 +152,14 @@ class LocationField(QWidget):
             self.edit.setText(path)
 
 
-class MakeHDAFromTemplateDialog(QDialog):
+class MakeHDAByTemplateDialog(QDialog):
     def __init__(self, node, parent=None):
-        super(MakeHDAFromTemplateDialog, self).__init__(parent)
+        super(MakeHDAByTemplateDialog, self).__init__(parent)
 
         # Data
         self.node = node
 
-        self.setWindowTitle('TDK: HDA from Template')
+        self.setWindowTitle('TDK: HDA by Template')
         self.setWindowIcon(hou.qt.Icon('NODEFLAGS_template', 32, 32))
         self.resize(400, 250)
 
@@ -294,7 +294,7 @@ class MakeHDAFromTemplateDialog(QDialog):
         self.accept()
 
 
-def showMakeHDAFromTemplateDialog(**kwargs):
+def showMakeHDAByTemplateDialog(**kwargs):
     if 'node' in kwargs:
         nodes = kwargs['node'],
     else:
@@ -308,5 +308,5 @@ def showMakeHDAFromTemplateDialog(**kwargs):
     elif not nodes[0].type().name().startswith('tdk::template'):
         notify('Node is not TDK Template', hou.severityType.Error)
         return
-    window = MakeHDAFromTemplateDialog(nodes[0], hou.qt.mainWindow())
+    window = MakeHDAByTemplateDialog(nodes[0], hou.qt.mainWindow())
     window.show()
