@@ -1,6 +1,6 @@
 """
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2020  Ivan Titov
+Copyright (C) 2021  Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -34,10 +34,12 @@ except ImportError:
 import hou
 
 from .find_icon import FindIconDialog
+from .notification import notify
 
 
 def makeNewHDAFromTemplateNode(template_node, label, name=None, namespace=None, icon=None,
-                               sections=None, version='1.0', location='$HOUDINI_USER_PREF_DIR/otls'):
+                               sections=None, version='1.0', location='$HOUDINI_USER_PREF_DIR/otls',
+                               inherit_subnetwork=True):
     template_node_type = template_node.type()
     if template_node_type.name() != 'tdk::template':
         raise TypeError
@@ -70,6 +72,9 @@ def makeNewHDAFromTemplateNode(template_node, label, name=None, namespace=None, 
     template_def.copyToHDAFile(new_hda_file_path, new_type_name)
 
     new_def = hou.hda.definitionsInFile(new_hda_file_path)[0]
+
+    if inherit_subnetwork:
+        new_def.updateFromNode(template_node)
 
     new_def.setDescription(label)
 
@@ -111,20 +116,20 @@ class IconField(QWidget):
         return self.edit.text()
 
     def _pickIcon(self):
-        icon = FindIconDialog.getIconName(self, 'Pick Icon')
+        icon = FindIconDialog.getIconName(self, 'Pick Icon', self.edit.text())
         if icon:
             self.edit.setText(icon.replace('.svg', ''))
 
 
 class LocationField(QWidget):
-    def __init__(self, contents=''):
+    def __init__(self, content=''):
         super(LocationField, self).__init__()
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
-        self.edit = QLineEdit(contents)
+        self.edit = QLineEdit(content)
         layout.addWidget(self.edit)
 
         self.pick_location_button = QPushButton()
@@ -147,15 +152,15 @@ class LocationField(QWidget):
             self.edit.setText(path)
 
 
-class MakeHDAFromTemplateDialog(QDialog):
+class MakeHDAByTemplateDialog(QDialog):
     def __init__(self, node, parent=None):
-        super(MakeHDAFromTemplateDialog, self).__init__(parent)
+        super(MakeHDAByTemplateDialog, self).__init__(parent)
 
         # Data
         self.node = node
 
-        self.setWindowTitle('TDK: HDA from Template')
-        self.setWindowIcon(hou.qt.Icon('NODEFLAGS_template', 16, 16))
+        self.setWindowTitle('TDK: HDA by Template')
+        self.setWindowIcon(hou.qt.Icon('NODEFLAGS_template', 32, 32))
         self.resize(400, 250)
 
         main_layout = QVBoxLayout(self)
@@ -192,14 +197,23 @@ class MakeHDAFromTemplateDialog(QDialog):
         self.version_field = QLineEdit('1.0')
         form_layout.addRow('Version', self.version_field)
 
+        self.inherit_subnetwork_toggle = QCheckBox('Inherit subnetwork')
+        self.inherit_subnetwork_toggle.setChecked(True)
+        form_layout.addWidget(self.inherit_subnetwork_toggle)
+
         self.install_toggle = QCheckBox('Install new HDA')
         self.install_toggle.setChecked(True)
         form_layout.addWidget(self.install_toggle)
 
-        self.replace_node = QCheckBox('Replace template node')
-        self.replace_node.setChecked(True)
-        form_layout.addWidget(self.replace_node)
-        self.install_toggle.toggled.connect(self.replace_node.setEnabled)
+        self.replace_node_toggle = QCheckBox('Replace template node')
+        self.replace_node_toggle.setChecked(True)
+        self.install_toggle.toggled.connect(self.replace_node_toggle.setEnabled)
+        form_layout.addWidget(self.replace_node_toggle)
+
+        self.open_type_properties_toggle = QCheckBox('Open type properties')
+        self.open_type_properties_toggle.setChecked(True)
+        self.install_toggle.toggled.connect(self.open_type_properties_toggle.setEnabled)
+        form_layout.addWidget(self.open_type_properties_toggle)
 
         buttons_layout = QHBoxLayout()
         main_layout.addLayout(buttons_layout)
@@ -265,25 +279,34 @@ class MakeHDAFromTemplateDialog(QDialog):
                                                     self.icon_field.text(),
                                                     self.sections.text(),
                                                     self.version_field.text(),
-                                                    self.location_field.path())
+                                                    self.location_field.path(),
+                                                    self.inherit_subnetwork_toggle.isChecked())
             if self.install_toggle.isChecked():
                 hou.hda.installFile(definition.libraryFilePath())
-                if self.replace_node.isChecked():
-                    self.node.changeNodeType(definition.nodeTypeName(),
-                                             keep_network_contents=False)
+                if self.replace_node_toggle.isChecked():
+                    self.node = self.node.changeNodeType(definition.nodeTypeName(),
+                                                         keep_network_contents=False)
+                if self.open_type_properties_toggle.isChecked():
+                    if self.replace_node_toggle.isChecked():
+                        hou.ui.openTypePropertiesDialog(self.node)
+                    else:
+                        hou.ui.openTypePropertiesDialog(definition.nodeType())
         self.accept()
 
 
-def showMakeHDAFromTemplateDialog(**kwargs):
+def showMakeHDAByTemplateDialog(**kwargs):
     if 'node' in kwargs:
         nodes = kwargs['node'],
     else:
         nodes = hou.selectedNodes()
     if not nodes:
-        raise hou.Error('No node selected')
+        notify('No node selected', hou.severityType.Error)
+        return
     elif len(nodes) > 1:
-        raise hou.Error('Too much nodes selected')
-    elif nodes[0].type().name() != 'tdk::template':
-        raise hou.Error('Node is not TDK Template')
-    window = MakeHDAFromTemplateDialog(nodes[0], hou.qt.mainWindow())
+        notify('Too much nodes selected', hou.severityType.Error)
+        return
+    elif not nodes[0].type().name().startswith('tdk::template'):
+        notify('Node is not TDK Template', hou.severityType.Error)
+        return
+    window = MakeHDAByTemplateDialog(nodes[0], hou.qt.mainWindow())
     window.show()

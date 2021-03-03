@@ -1,6 +1,6 @@
 """
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2020  Ivan Titov
+Copyright (C) 2021  Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,5 +19,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from .find_icon import FindIconDialog, findIcon
 from .new_hda_version import NewVersionDialog, showNewVersionDialog
 from .show_node_user_data import UserDataWindow, showNodeUserData
-from .make_hda_from_template import MakeHDAFromTemplateDialog, showMakeHDAFromTemplateDialog
-from .generate_code import generateCode
+from .make_hda_by_template import MakeHDAByTemplateDialog, showMakeHDAByTemplateDialog
+from .generate_code import showGenerateCode
+from .hda_doctor import HDADoctorWindow

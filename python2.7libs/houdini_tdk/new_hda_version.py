@@ -1,6 +1,6 @@
 """
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2020  Ivan Titov
+Copyright (C) 2021  Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -32,6 +32,9 @@ except ImportError:
     from PySide2.QtCore import *
 
 import hou
+
+from notification import notify
+from slider import Slider
 
 
 def versionByTypeName(name):
@@ -73,21 +76,24 @@ def nextVersionTypeName(name, component):
     return new_type_name
 
 
-def incrementHDAVersion(node, component):
+def incrementHDAVersion(node, component, use_original_file):
     node_type = node.type()
-    name = node_type.name()
+    type_name = node_type.name()
 
-    new_type_name = nextVersionTypeName(name, component)
+    new_type_name = nextVersionTypeName(type_name, component)
 
     definition = node_type.definition()
-    file = definition.libraryFilePath()
-    ext = os.path.splitext(file)[-1]
-    new_file_name = new_type_name.replace(':', '_').replace('.', '_') + ext
-    new_file = os.path.join(os.path.dirname(file), new_file_name).replace('\\', '/')
-    definition.copyToHDAFile(new_file, new_type_name)
+    file_path = definition.libraryFilePath()
+    if use_original_file:
+        new_file_path = file_path
+    else:
+        ext = os.path.splitext(file_path)[-1]
+        new_file_name = new_type_name.replace(':', '_').replace('.', '_') + ext
+        new_file_path = os.path.join(os.path.dirname(file_path), new_file_name).replace('\\', '/')
+    definition.copyToHDAFile(new_file_path, new_type_name)
 
-    hou.hda.installFile(new_file)
-    new_definition = hou.hda.definitionsInFile(new_file)[0]
+    hou.hda.installFile(new_file_path)
+    new_definition = hou.hda.definitionsInFile(new_file_path)[0]  # Todo: fix potential bug
 
     new_definition.updateFromNode(node)
 
@@ -99,7 +105,7 @@ class NewVersionDialog(QDialog):
         super(NewVersionDialog, self).__init__(parent, Qt.Window)
 
         self.setWindowTitle('TDK: New HDA Version')
-        self.setWindowIcon(hou.qt.Icon('BUTTONS_list_add', 16, 16))
+        self.setWindowIcon(hou.qt.Icon('BUTTONS_list_add', 32, 32))
 
         # Data
         self.node = node
@@ -124,7 +130,7 @@ class NewVersionDialog(QDialog):
         form_layout.addRow('Source Name', src_name_label)
 
         # Component
-        self.comp_slider = QSlider(Qt.Horizontal)
+        self.comp_slider = Slider(Qt.Horizontal)
         self.comp_slider.setMaximum(max(3, self.src_version.count('.')))
         self.comp_slider.valueChanged.connect(self._updateDestFields)
         form_layout.addRow('Component', self.comp_slider)
@@ -132,6 +138,10 @@ class NewVersionDialog(QDialog):
         # Destination
         self.dst_name_label = QLabel()
         form_layout.addRow('Dest Name', self.dst_name_label)
+
+        self.use_original_file_toggle = QCheckBox('Use original file')
+        self.use_original_file_toggle.stateChanged.connect(self._updateDestFields)
+        form_layout.addWidget(self.use_original_file_toggle)
 
         self.dst_file_path = QLabel()
         form_layout.addRow('Dest File Path', self.dst_file_path)
@@ -148,15 +158,21 @@ class NewVersionDialog(QDialog):
     def _updateDestFields(self):
         new_type_name = nextVersionTypeName(self.node.type().name(), self.comp_slider.value())
         self.dst_name_label.setText(new_type_name)
-        src_location = os.path.dirname(self.node.type().definition().libraryFilePath())
-        dst_file_path = os.path.join(src_location, new_type_name.replace(':', '_').replace('.', '_')).replace('\\', '/') + '.hda'
+
+        hda_file_path = self.node.type().definition().libraryFilePath()
+
+        if self.use_original_file_toggle.isChecked():
+            dst_file_path = hda_file_path
+        else:
+            src_location = os.path.dirname(hda_file_path)
+            dst_file_name = new_type_name.replace(':', '_').replace('.', '_') + '.hda'
+            dst_file_path = os.path.join(src_location, dst_file_name).replace('\\', '/')
         self.dst_file_path.setText(dst_file_path)
 
     def _increment(self):
-        incrementHDAVersion(self.node, self.comp_slider.value())
-        hou.ui.setStatusMessage('HDA version successfully incremented',
-                                hou.severityType.ImportantMessage)
-        self.close()
+        incrementHDAVersion(self.node, self.comp_slider.value(), self.use_original_file_toggle.isChecked())
+        notify('HDA version successfully incremented')
+        self.accept()
 
 
 def showNewVersionDialog(**kwargs):
@@ -164,9 +180,13 @@ def showNewVersionDialog(**kwargs):
         nodes = kwargs['node'],
     else:
         nodes = hou.selectedNodes()
+
     if not nodes:
-        raise hou.Error('No node selected')
+        notify('No node selected', hou.severityType.Error)
+        return
     elif len(nodes) > 1:
-        raise hou.Error('Too much nodes selected')
+        notify('Too much nodes selected', hou.severityType.Error)
+        return
+
     window = NewVersionDialog(nodes[0], hou.qt.mainWindow())
     window.show()

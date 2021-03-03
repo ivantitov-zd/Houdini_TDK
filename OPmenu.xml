@@ -2,7 +2,7 @@
 
 <!--
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2020  Ivan Titov
+Copyright (C) 2021  Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,10 +30,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
             <scriptItem id="opmenu.tdk_generate_code">
                 <label>Generate Code...</label>
                 <scriptCode>
-import houdini_tdk
-reload(houdini_tdk)
+import houdini_tdk as tdk
 
-houdini_tdk.generateCode(**kwargs)
+tdk.showGenerateCode(**kwargs)
                 </scriptCode>
             </scriptItem>
 
@@ -49,19 +48,18 @@ houdini_tdk.showNodeUserData(cached=kwargs['shiftclick'], **kwargs)
 
             <separatorItem/>
 
-            <scriptItem id="opmenu.tdk_make_hda_from_template">
-                <label>Make HDA from Template...</label>
+            <scriptItem id="opmenu.tdk_make_hda_by_template">
+                <label>Make HDA by Template...</label>
                 <context>
                     <expression>
                         node = kwargs['node']
-                        return node.type().name() == 'tdk::template'
+                        return node.type().name().startswith('tdk::template')
                     </expression>
                 </context>
                 <scriptCode>
-import houdini_tdk
-reload(houdini_tdk)
+import houdini_tdk as tdk
 
-houdini_tdk.showMakeHDAFromTemplateDialog(**kwargs)
+tdk.showMakeHDAByTemplateDialog(**kwargs)
                 </scriptCode>
             </scriptItem>
 
@@ -74,17 +72,16 @@ houdini_tdk.showMakeHDAFromTemplateDialog(**kwargs)
                     </expression>
                 </context>
                 <scriptCode>
-import os
-import webbrowser
+from houdini_tdk.utils import openFileLocation
 
 node = kwargs['node']
 path = node.type().definition().libraryFilePath()
-webbrowser.open('file:///' + os.path.dirname(path))
+openFileLocation(path)
                 </scriptCode>
             </scriptItem>
 
-            <scriptItem id="opmenu.tdk_increment_hda_version">
-                <label>Increment HDA Version...</label>
+            <scriptItem id="opmenu.tdk_new_hda_version">
+                <label>New HDA Version...</label>
                 <context>
                     <expression>
                         node = kwargs['node']
@@ -92,10 +89,9 @@ webbrowser.open('file:///' + os.path.dirname(path))
                     </expression>
                 </context>
                 <scriptCode>
-import houdini_tdk
-reload(houdini_tdk)
+import houdini_tdk as tdk
 
-houdini_tdk.showNewVersionDialog(**kwargs)
+tdk.showNewVersionDialog(**kwargs)
                 </scriptCode>
             </scriptItem>
 

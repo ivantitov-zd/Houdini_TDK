@@ -1,6 +1,6 @@
 """
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2020  Ivan Titov
+Copyright (C) 2021  Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -52,12 +52,14 @@ class IconCache:
 def fuzzyMatch(pattern, text):
     if pattern == text:
         return True, 999999
+
     try:
         pattern_start = text.index(pattern)
         pattern_length = len(pattern)
         return True, pattern_length * pattern_length + (1 - pattern_start / 500.0)
     except ValueError:
         pass
+
     weight = 0
     count = 0
     index = 0
@@ -71,44 +73,47 @@ def fuzzyMatch(pattern, text):
                 count = 0
         except IndexError:
             pass
+
     weight += count * count
     if index < len(pattern):
         return False, weight
+
     return True, weight + (1 - text.index(pattern[0]) / 500.0)
 
 
 class FuzzyFilterProxyModel(QSortFilterProxyModel):
     def __init__(self, parent=None):
         super(FuzzyFilterProxyModel, self).__init__(parent)
+
         self.setDynamicSortFilter(True)
         self.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self.sort(0, Qt.DescendingOrder)
 
-        self.pattern = ''
+        self._pattern = ''
 
     def setFilterPattern(self, pattern):
-        self.pattern = pattern.lower()
+        self._pattern = pattern.lower()
         self.invalidate()
 
     def filterAcceptsRow(self, source_row, source_parent):
-        if not self.pattern:
+        if not self._pattern:
             return True
 
         source_model = self.sourceModel()
         text = source_model.data(source_model.index(source_row, 0, source_parent),
                                  Qt.UserRole)
-        matches, _ = fuzzyMatch(self.pattern, text.lower())
+        matches, _ = fuzzyMatch(self._pattern, text.lower())
         return matches
 
     def lessThan(self, source_left, source_right):
-        if not self.pattern:
+        if not self._pattern:
             return source_left.row() < source_right.row()
 
         text1 = source_left.data(Qt.DisplayRole)
-        _, weight1 = fuzzyMatch(self.pattern, text1.lower())
+        _, weight1 = fuzzyMatch(self._pattern, text1.lower())
 
         text2 = source_right.data(Qt.DisplayRole)
-        _, weight2 = fuzzyMatch(self.pattern, text2.lower())
+        _, weight2 = fuzzyMatch(self._pattern, text2.lower())
 
         return weight1 < weight2
 
@@ -127,52 +132,159 @@ class IconListModel(QAbstractListModel):
     def data(self, index, role):
         icon_name = self.__data[index.row()]
         if role == Qt.DisplayRole:
-            label = icon_name.replace('.svg', '')
+            label = icon_name.replace('.svg', '')  # VOP_wood.svg -> VOP_wood
             if '_' in label:
-                label = ' '.join(label.split('_')[1:]).title()
+                label = ' '.join(label.split('_')[1:]).title()  # VOP_wood -> Wood
             return label
         elif role == Qt.DecorationRole:
             return IconCache.icon(icon_name)
         elif role == Qt.UserRole or role == Qt.ToolTipRole:
             return icon_name
 
+    def indexByKey(self, key):
+        for index, name in enumerate(self.__data):
+            if name[:-4] == key:
+                return self.index(index, 0)
+
+        return QModelIndex()
+
 
 class IconListView(QListView):
+    # Signals
+    itemDoubleClicked = Signal(QModelIndex)
+
     def __init__(self):
         super(IconListView, self).__init__()
         self.setViewMode(QListView.IconMode)
-        self.setResizeMode(QListView.Adjust)
-        self.setDragDropMode(QAbstractItemView.NoDragDrop)
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
-        self.verticalScrollBar().setSingleStep(30)
-        self.setSpacing(15)
         self.setIconSize(QSize(48, 48))
         self.setUniformItemSizes(True)
 
+        self.setResizeMode(QListView.Adjust)
+        self.setDragDropMode(QAbstractItemView.NoDragDrop)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+
+        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.verticalScrollBar().setSingleStep(30)
+
+        self.setSpacing(15)
+
+        # Item Double Clicked
+        self._item_double_clicked_signal_enabled = False
+        self.doubleClicked.connect(self.__emitItemDoubleClicked)
+
         # Menu
+        self._menu = None
+        self._copy_name_action = None
+        self._copy_file_name_action = None
+        self._copy_image_action = None
+        self._save_image_action = None
+
+        self._createActions()
+
         self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showContextMenu)
 
-        self.menu = QMenu(self)
-        self.menu.addAction('Copy', self.copySelectedIconName, QKeySequence.Copy)
+    def doubleClickedSignalEnabled(self):
+        return self._item_double_clicked_signal_enabled
 
-        self.customContextMenuRequested.connect(self.showMenu)
+    def enableDoubleClickedSignal(self, enable=True):
+        self._item_double_clicked_signal_enabled = enable
 
     def copySelectedIconName(self):
         names = []
         for index in self.selectedIndexes():
             names.append(index.data(Qt.ToolTipRole))
+
+        QApplication.clipboard().setText('\n'.join(name[:-4] for name in names))
+
+    def copySelectedIconFileName(self):
+        names = []
+        for index in self.selectedIndexes():
+            names.append(index.data(Qt.ToolTipRole))
+
         QApplication.clipboard().setText('\n'.join(names))
 
-    def showMenu(self, pos):
-        if self.selectedIndexes():
-            self.menu.exec_(self.mapToGlobal(pos))
+    def _selectedImage(self):
+        indexes = self.selectedIndexes()
+        if len(indexes) == 1:
+            name = indexes[0].data(Qt.UserRole)
+            return hou.qt.Icon(name, 48, 48).pixmap(48, 48)
 
-    def keyPressEvent(self, event):
-        if event.matches(QKeySequence.Copy):
-            self.copySelectedIconName()
+    def copySelectedIcon(self):
+        image = self._selectedImage()
+        if image:
+            clipboard = QApplication.clipboard()
+            clipboard.setPixmap(image)
+
+    def saveSelectedIcon(self):
+        indexes = self.selectedIndexes()
+
+        if len(indexes) != 1:
+            return
+
+        name = indexes[0].data(Qt.DisplayRole)
+        path, _ = QFileDialog.getSaveFileName(self, 'Save image',
+                                              name, filter='PNG (*.png)',
+                                              initialFilter=name)
+
+        image = self._selectedImage()
+        if path and image:
+            image.save(path)
+
+    def _createActions(self):
+        # Copy Name
+        self._copy_name_action = QAction('Copy Name', self)
+        self._copy_name_action.triggered.connect(self.copySelectedIconName)
+        self._copy_name_action.setShortcut(QKeySequence.Copy)
+        self.addAction(self._copy_name_action)
+
+        # Copy File Name
+        self._copy_file_name_action = QAction('Copy File Name', self)
+        self._copy_file_name_action.triggered.connect(self.copySelectedIconFileName)
+
+        # Copy Image
+        self._copy_image_action = QAction('Copy Image...', self)
+        self._copy_image_action.triggered.connect(self.copySelectedIcon)
+
+        # Save Image
+        self._save_image_action = QAction('Save Image...', self)
+        self._save_image_action.triggered.connect(self.saveSelectedIcon)
+
+    def _createContextMenu(self):
+        self._menu = hou.qt.Menu()
+
+        self._menu.addAction(self._copy_name_action)
+        self._menu.addAction(self._copy_file_name_action)
+
+        self._menu.addSeparator()
+
+        self._menu.addAction(self._copy_image_action)
+        self._menu.addAction(self._save_image_action)
+
+    def _updateContextMenu(self):
+        selected_indices = self.selectedIndexes()
+        if len(selected_indices) == 1:
+            self._copy_image_action.setEnabled(True)
+            self._save_image_action.setEnabled(True)
         else:
-            super(IconListView, self).keyPressEvent(event)
+            self._copy_image_action.setEnabled(False)
+            self._save_image_action.setEnabled(False)
+
+    def showContextMenu(self, local_pos):
+        if not self._menu:
+            self._createContextMenu()
+
+        self._updateContextMenu()
+
+        return self._menu.exec_(self.mapToGlobal(local_pos))
+
+    def __emitItemDoubleClicked(self):
+        if not self._item_double_clicked_signal_enabled:
+            return
+
+        index = self.currentIndex()
+        if index.isValid():
+            self.itemDoubleClicked.emit(index)
 
 
 class FindIconDialog(QDialog):
@@ -180,7 +292,7 @@ class FindIconDialog(QDialog):
         super(FindIconDialog, self).__init__(parent, Qt.Window)
 
         self.setWindowTitle('TDK: Find Icon')
-        self.setWindowIcon(hou.qt.Icon('MISC_m', 16, 16))
+        self.setWindowIcon(hou.qt.Icon('MISC_m', 32, 32))
         self.resize(820, 500)
 
         # Layout
@@ -201,6 +313,7 @@ class FindIconDialog(QDialog):
 
         self.icon_list_view = IconListView()
         self.icon_list_view.setModel(self.filter_proxy_model)
+        self.icon_list_view.itemDoubleClicked.connect(self.accept)
         main_layout.addWidget(self.icon_list_view)
 
         # Buttons
@@ -210,13 +323,15 @@ class FindIconDialog(QDialog):
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Ignored)
         buttons_layout.addSpacerItem(spacer)
 
-        ok_button = QPushButton('OK')
-        ok_button.clicked.connect(self.accept)
-        buttons_layout.addWidget(ok_button)
+        self.ok_button = QPushButton('OK')
+        self.ok_button.setVisible(False)
+        self.ok_button.clicked.connect(self.accept)
+        buttons_layout.addWidget(self.ok_button)
 
-        cancel_button = QPushButton('Cancel')
-        cancel_button.clicked.connect(self.reject)
-        buttons_layout.addWidget(cancel_button)
+        self.cancel_button = QPushButton('Cancel')
+        self.cancel_button.setVisible(False)
+        self.cancel_button.clicked.connect(self.reject)
+        buttons_layout.addWidget(self.cancel_button)
 
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.Find) or event.key() == Qt.Key_F3:
@@ -225,11 +340,26 @@ class FindIconDialog(QDialog):
         else:
             super(FindIconDialog, self).keyPressEvent(event)
 
+    def enableDialogMode(self):
+        self.icon_list_view.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.icon_list_view.enableDoubleClickedSignal()
+        self.ok_button.setVisible(True)
+        self.cancel_button.setVisible(True)
+
     @classmethod
-    def getIconName(cls, parent=hou.qt.mainWindow(), title='Find Icon'):
+    def getIconName(cls, parent=hou.qt.mainWindow(), title='Find Icon', name=None):
         window = FindIconDialog(parent)
         window.setWindowTitle('TDK: ' + title)
-        window.icon_list_view.setSelectionMode(QAbstractItemView.SingleSelection)
+        window.enableDialogMode()
+
+        if name:
+            model = window.icon_list_view.model()
+            for row in range(model.rowCount()):
+                index = model.index(row, 0)
+                if index.data(Qt.UserRole) == name + '.svg':
+                    window.icon_list_view.setCurrentIndex(index)
+                    break
+
         if window.exec_() and window.icon_list_view.currentIndex().isValid():
             return window.icon_list_view.currentIndex().data(Qt.UserRole)
 

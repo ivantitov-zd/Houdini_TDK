@@ -1,6 +1,6 @@
 """
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2020  Ivan Titov
+Copyright (C) 2021  Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import json
+
 try:
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
@@ -29,37 +31,58 @@ except ImportError:
 
 import hou
 
+from notification import notify
+
+
+class UserDataItem:
+    def __init__(self, key, data, cached):
+        self.key = key
+        self.data = data
+        self.cached = cached
+
 
 class UserDataModel(QAbstractListModel):
+    DEFAULT_ICON = hou.qt.Icon('DATATYPES_file', 16, 16)
+    CACHED_DATA_ICON = hou.qt.Icon('NETVIEW_time_dependent_badge', 16, 16)
+
     def __init__(self, parent=None):
         super(UserDataModel, self).__init__(parent)
 
         # Data
-        self.__data = {}
-        self.__keys = ()
+        self.__data = []
 
-    def updateDataFromNode(self, node, cached=False):
+    def updateDataFromNode(self, node):
         self.beginResetModel()
-        if node is None:
-            self.__data = {}
-            self.__keys = ()
-        else:
-            if cached:
-                self.__data = node.cachedUserDataDict()
-            else:
-                self.__data = node.userDataDict()
-            self.__keys = tuple(self.__data.keys())
+        self.__data = []
+        if node is not None:
+            for key, data in node.userDataDict().items():
+                self.__data.append(UserDataItem(key, data, False))
+
+            for key, data in node.cachedUserDataDict().items():
+                self.__data.append(UserDataItem(key, data, True))
         self.endResetModel()
+
+    def indexByKey(self, key):
+        for index, data in enumerate(self.__data):
+            if data.key == key:
+                return self.index(index, 0)
+
+        return QModelIndex()
 
     def rowCount(self, parent):
         return len(self.__data)
 
     def data(self, index, role):
-        key = self.__keys[index.row()]
+        item = self.__data[index.row()]
         if role == Qt.DisplayRole:
-            return key
+            return item.key
+        elif role == Qt.DecorationRole:
+            if item.cached:
+                return UserDataModel.CACHED_DATA_ICON
+            else:
+                return UserDataModel.DEFAULT_ICON
         elif role == Qt.UserRole:
-            return self.__data[key]
+            return item.data
 
 
 class UserDataListView(QListView):
@@ -73,59 +96,149 @@ class UserDataWindow(QWidget):
     def __init__(self, parent=None):
         super(UserDataWindow, self).__init__(parent, Qt.Window)
 
-        self.setWindowIcon(hou.qt.Icon('TOP_jsondata', 16, 16))
+        self.setWindowIcon(hou.qt.Icon('TOP_jsondata', 32, 32))
 
         # Layout
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(4, 4, 4, 4)
         main_layout.setSpacing(4)
 
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
-        main_layout.addLayout(layout)
+        splitter = QSplitter(Qt.Horizontal)
+        main_layout.addWidget(splitter)
 
         # Key List
         self.user_data_model = UserDataModel()
 
         self.user_data_list = UserDataListView()
-        self.user_data_list.setMaximumWidth(120)
         self.user_data_list.setModel(self.user_data_model)
+        self.user_data_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         selection_model = self.user_data_list.selectionModel()
         selection_model.currentChanged.connect(self._readData)
-        layout.addWidget(self.user_data_list)
+        splitter.addWidget(self.user_data_list)
 
         # Data View
         self.user_data_view = QTextEdit()
-        layout.addWidget(self.user_data_view)
+        splitter.addWidget(self.user_data_view)
+
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 3)
 
         # Data
-        self.node = None
+        self._current_key = None
+        self._node = None
 
         # Update
-        update_button = QPushButton('Update from Node')
-        update_button.clicked.connect(lambda: self.setCurrentNode(self.node))
-        main_layout.addWidget(update_button)
+        bottom_layout = QHBoxLayout()
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        bottom_layout.setSpacing(4)
+        main_layout.addLayout(bottom_layout)
+
+        update_button = QPushButton()
+        update_button.setToolTip('Update from Node')
+        update_button.setFixedSize(24, 24)
+        update_button.setIcon(hou.qt.Icon('NETVIEW_reload', 16, 16))
+        update_button.clicked.connect(self.updateData)
+        bottom_layout.addWidget(update_button)
+
+        self.update_timer = QTimer(self)
+        self.update_timer.setInterval(500)
+        self.update_timer.timeout.connect(self.updateData)
+
+        self.auto_update_toggle = QCheckBox('Auto Update')
+        self.auto_update_toggle.setFixedWidth(100)
+        self.auto_update_toggle.setChecked(True)
+        self.auto_update_toggle.toggled.connect(self._switchTimer)
+        bottom_layout.addWidget(self.auto_update_toggle, 0)
+
+        bottom_layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Ignored))
+
+        self.prettify_json_button = QPushButton()
+        self.prettify_json_button.setToolTip('Prettify JSON')
+        self.prettify_json_button.setFixedSize(24, 24)
+        self.prettify_json_button.setIcon(hou.qt.Icon('TOP_jsondata', 16, 16))
+        self.prettify_json_button.clicked.connect(self._prettifyJSON)
+        bottom_layout.addWidget(self.prettify_json_button)
+
+    def _updatePrettifyJSONButtonVisibility(self):
+        text = self.user_data_view.toPlainText()
+        try:
+            data = json.loads(text)
+
+            if text == json.dumps(data, indent=4):
+                raise ValueError
+
+            self.prettify_json_button.setVisible(True)
+        except ValueError:
+            self.prettify_json_button.setVisible(False)
+
+    def _prettifyJSON(self):
+        text = self.user_data_view.toPlainText()
+        try:
+            data = json.loads(text)
+            text = json.dumps(data, indent=4)
+            self.user_data_view.setPlainText(text)
+        except ValueError:
+            return
 
     def _readData(self):
         selection_model = self.user_data_list.selectionModel()
-        value = selection_model.currentIndex().data(Qt.UserRole)
-        self.user_data_view.setText(str(value))
+        index = selection_model.currentIndex()
 
-    def setCurrentNode(self, node, cached=False):
-        self.node = node
-        self.user_data_model.updateDataFromNode(node, cached)
+        if not index.isValid():
+            return
+
+        self._current_key = index.data(Qt.DisplayRole)
+        value = index.data(Qt.UserRole)
+        self.user_data_view.setText(value)
+        self._updatePrettifyJSONButtonVisibility()
+
+    def _switchTimer(self):
+        if self.update_timer.isActive():
+            self.update_timer.stop()
+        else:
+            self.update_timer.start()
+
+    # def _removeCallbacks(self):
+    #     if self.node:
+    #         node.removeEventCallback((hou.nodeEventType.CustomDataChanged,), self.updateData)
+
+    def __del__(self):
+        # self._removeCallbacks()
+        self.update_timer.stop()
+
+    def updateData(self, auto=True):
+        if auto and not self.auto_update_toggle.isChecked():
+            return
+
+        if self._node:
+            self.user_data_model.updateDataFromNode(self._node)
+
+        new_index = self.user_data_model.indexByKey(self._current_key)
+        if new_index.isValid():
+            self.user_data_list.setCurrentIndex(new_index)
+
+    def setCurrentNode(self, node):
+        if self._node:
+            self._removeCallbacks()
+
+        self._node = node
+        # node.addEventCallback((hou.nodeEventType.CustomDataChanged,), self.updateData)
+        self.update_timer.start()
+        self.updateData(False)
         self.setWindowTitle('TDK: Node User Data: ' + node.path())
 
 
-def showNodeUserData(node=None, cached=False, **kwargs):
+def showNodeUserData(node=None, **kwargs):
     if node is None:
         nodes = hou.selectedNodes()
         if not nodes:
-            raise hou.Error('No node selected')
+            notify('No node selected', hou.severityType.Error)
+            return
         elif len(nodes) > 1:
-            raise hou.Error('Too much nodes selected')
+            notify('Too much nodes selected', hou.severityType.Error)
+            return
         node = nodes[0]
+
     window = UserDataWindow(hou.qt.mainWindow())
-    window.setCurrentNode(node, cached)
+    window.setCurrentNode(node)
     window.show()
