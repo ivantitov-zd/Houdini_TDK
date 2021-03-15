@@ -105,6 +105,13 @@ class IconField(QWidget):
         self.edit = QLineEdit()
         layout.addWidget(self.edit)
 
+        self.current_icon_view = QLabel()
+        self.current_icon_view.setToolTip('Current icon')
+        self.current_icon_view.setFixedSize(24, 24)
+        self.current_icon_view.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.current_icon_view)
+        self.edit.textChanged.connect(self.updateCurrentIcon)
+
         self.pick_icon_button = QPushButton()
         self.pick_icon_button.setToolTip('Pick icon')
         self.pick_icon_button.setFixedSize(24, 24)
@@ -114,6 +121,24 @@ class IconField(QWidget):
 
     def text(self):
         return self.edit.text()
+
+    def updateCurrentIcon(self):
+        icon_file_name = self.edit.text()
+
+        if not icon_file_name:
+            self.current_icon_view.clear()
+            return
+
+        if os.path.exists(icon_file_name) and os.path.isfile(icon_file_name):
+            return  # Todo
+        else:
+            try:
+                icon = hou.qt.Icon(icon_file_name, 16, 16)
+            except hou.OperationFailed:
+                self.current_icon_view.clear()
+                return
+
+        self.current_icon_view.setPixmap(icon.pixmap(16, 16))
 
     def _pickIcon(self):
         icon = FindIconDialog.getIconName(self, 'Pick Icon', self.edit.text())
