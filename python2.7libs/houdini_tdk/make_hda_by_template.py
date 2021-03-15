@@ -105,20 +105,19 @@ class IconField(QWidget):
         self.edit = QLineEdit()
         layout.addWidget(self.edit)
 
-        self.current_icon_view = QLabel()
-        self.current_icon_view.setToolTip('Current icon preview')
-        self.current_icon_view.setFixedSize(24, 24)
-        self.current_icon_view.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.current_icon_view)
-        self.edit.textChanged.connect(self.updateCurrentIcon)
+        self.icon_preview = QLabel()
+        self.icon_preview.setToolTip('Icon preview')
+        self.icon_preview.setFixedSize(24, 24)
+        self.icon_preview.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.icon_preview)
+        self.edit.textChanged.connect(self.updateIconPreview)
 
-        self.pick_icon_from_file_button = QPushButton()
-        self.pick_icon_from_file_button.setToolTip('Pick icon from file')
-        self.pick_icon_from_file_button.setFixedSize(24, 24)
-        self.pick_icon_from_file_button.setIcon(hou.qt.Icon('BUTTONS_chooser_file', 16, 16))
-        self.pick_icon_from_file_button.clicked.connect(self._pickIconFromFile)
-        self.current_icon_view.setScaledContents(True)
-        layout.addWidget(self.pick_icon_from_file_button)
+        self.pick_icon_from_disk_button = QPushButton()
+        self.pick_icon_from_disk_button.setToolTip('Pick icon from disk')
+        self.pick_icon_from_disk_button.setFixedSize(24, 24)
+        self.pick_icon_from_disk_button.setIcon(hou.qt.Icon('BUTTONS_chooser_file', 16, 16))
+        self.pick_icon_from_disk_button.clicked.connect(self._pickIconFromDisk)
+        layout.addWidget(self.pick_icon_from_disk_button)
 
         self.pick_icon_from_houdini_button = QPushButton()
         self.pick_icon_from_houdini_button.setToolTip('Pick icon from Houdini')
@@ -130,18 +129,18 @@ class IconField(QWidget):
     def text(self):
         return self.edit.text()
 
-    def updateCurrentIcon(self):
+    def updateIconPreview(self):
         icon_file_name = self.edit.text()
 
         if not icon_file_name:
-            self.current_icon_view.clear()
+            self.icon_preview.clear()
             return
 
         if os.path.isfile(icon_file_name):  # Todo: Limit allowed file size
             _, ext = os.path.splitext(icon_file_name)
             if ext in ('.jpg', '.jpeg', '.png', '.bmp', '.tga', '.tif', '.tiff'):
                 image = QImage(icon_file_name)
-                self.current_icon_view.setPixmap(QPixmap.fromImage(image).scaled(16, 16, Qt.KeepAspectRatio))
+                self.icon_preview.setPixmap(QPixmap.fromImage(image).scaled(16, 16, Qt.KeepAspectRatio))
             else:  # Fallback to Houdini loading
                 with hou.undos.disabler():
                     try:
@@ -153,19 +152,19 @@ class IconField(QWidget):
                         image_data = file_node.allPixelsAsString(depth=hou.imageDepth.Int8)
                         image = QImage(image_data, file_node.xRes(), file_node.yRes(), QImage.Format_RGB888)
 
-                        self.current_icon_view.setPixmap(QPixmap.fromImage(image).scaled(16, 16, Qt.KeepAspectRatio))
+                        self.icon_preview.setPixmap(QPixmap.fromImage(image).scaled(16, 16, Qt.KeepAspectRatio))
                     except hou.OperationFailed:
-                        self.current_icon_view.clear()
+                        self.icon_preview.clear()
                     finally:
                         comp_net.destroy()
         else:
             try:
                 icon = hou.qt.Icon(icon_file_name, 16, 16)
-                self.current_icon_view.setPixmap(icon.pixmap(16, 16))
+                self.icon_preview.setPixmap(icon.pixmap(16, 16))
             except hou.OperationFailed:
-                self.current_icon_view.clear()
+                self.icon_preview.clear()
 
-    def _pickIconFromFile(self):
+    def _pickIconFromDisk(self):
         path = self.edit.text()
         if os.path.isdir(path):
             initial_dir = path
