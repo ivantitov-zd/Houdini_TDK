@@ -140,7 +140,7 @@ class IconField(QWidget):
             _, ext = os.path.splitext(icon_file_name)
             if ext in ('.jpg', '.jpeg', '.png', '.bmp', '.tga', '.tif', '.tiff'):
                 image = QImage(icon_file_name)
-                self.icon_preview.setPixmap(QPixmap.fromImage(image).scaled(16, 16, Qt.KeepAspectRatio))
+                self.icon_preview.setPixmap(QPixmap.fromImage(image).scaled(24, 24, Qt.KeepAspectRatio))
             else:  # Fallback to Houdini loading
                 with hou.undos.disabler():
                     try:
@@ -152,15 +152,15 @@ class IconField(QWidget):
                         image_data = file_node.allPixelsAsString(depth=hou.imageDepth.Int8)
                         image = QImage(image_data, file_node.xRes(), file_node.yRes(), QImage.Format_RGB888)
 
-                        self.icon_preview.setPixmap(QPixmap.fromImage(image).scaled(16, 16, Qt.KeepAspectRatio))
+                        self.icon_preview.setPixmap(QPixmap.fromImage(image).scaled(24, 24, Qt.KeepAspectRatio))
                     except hou.OperationFailed:
                         self.icon_preview.clear()
                     finally:
                         comp_net.destroy()
         else:
             try:
-                icon = hou.qt.Icon(icon_file_name, 16, 16)
-                self.icon_preview.setPixmap(icon.pixmap(16, 16))
+                icon = hou.qt.Icon(icon_file_name, 24, 24)
+                self.icon_preview.setPixmap(icon.pixmap(24, 24))
             except hou.OperationFailed:
                 self.icon_preview.clear()
 
