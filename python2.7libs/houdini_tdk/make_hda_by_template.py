@@ -249,9 +249,8 @@ class ColorField(QWidget):
     def __init__(self, node):
         super(ColorField, self).__init__()
 
-        self.node = node
-        self.node_color = qColorFromHoudiniColor(self.node.color())
-        self.default_node_type_color = qColorFromHoudiniColor(self.node.type().defaultColor())
+        self.node_color = qColorFromHoudiniColor(node.color())
+        self.default_node_type_color = qColorFromHoudiniColor(node.type().defaultColor())
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
