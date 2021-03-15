@@ -85,6 +85,12 @@ def makeNewHDAFromTemplateNode(template_node, label, name=None, namespace=None, 
     if inherit_subnetwork:
         new_def.updateFromNode(template_node)
 
+    if inherit_parm_template_group:
+        parm_template_group = template_node.parmTemplateGroup()
+        hou.hda.installFile(new_hda_file_path)
+        new_def.setParmTemplateGroup(parm_template_group)
+        hou.hda.uninstallFile(new_hda_file_path)
+
     new_def.setDescription(label)
 
     if icon:
@@ -354,6 +360,10 @@ class MakeHDAByTemplateDialog(QDialog):
         self.inherit_subnetwork_toggle.setChecked(True)
         form_layout.addWidget(self.inherit_subnetwork_toggle)
 
+        self.inherit_parm_template_group_toggle = QCheckBox('Inherit parameters')
+        self.inherit_parm_template_group_toggle.setChecked(True)
+        form_layout.addWidget(self.inherit_parm_template_group_toggle)
+
         self.install_toggle = QCheckBox('Install new HDA')
         self.install_toggle.setChecked(True)
         form_layout.addWidget(self.install_toggle)
@@ -435,7 +445,9 @@ class MakeHDAByTemplateDialog(QDialog):
                                                     self.version_field.text(),
                                                     self.location_field.path(),
                                                     self.inherit_subnetwork_toggle.isChecked(),
-                                                    color=color)
+                                                    self.inherit_parm_template_group_toggle.isChecked(),
+                                                    color)
+
             if self.install_toggle.isChecked():
                 hou.hda.installFile(definition.libraryFilePath())
                 if self.replace_node_toggle.isChecked():
