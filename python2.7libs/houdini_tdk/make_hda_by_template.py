@@ -106,18 +106,26 @@ class IconField(QWidget):
         layout.addWidget(self.edit)
 
         self.current_icon_view = QLabel()
-        self.current_icon_view.setToolTip('Current icon')
+        self.current_icon_view.setToolTip('Current icon preview')
         self.current_icon_view.setFixedSize(24, 24)
         self.current_icon_view.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.current_icon_view)
         self.edit.textChanged.connect(self.updateCurrentIcon)
 
-        self.pick_icon_button = QPushButton()
-        self.pick_icon_button.setToolTip('Pick icon')
-        self.pick_icon_button.setFixedSize(24, 24)
-        self.pick_icon_button.setIcon(hou.qt.Icon('OBJ_hlight', 16, 16))
-        self.pick_icon_button.clicked.connect(self._pickIcon)
-        layout.addWidget(self.pick_icon_button)
+        self.pick_icon_from_file_button = QPushButton()
+        self.pick_icon_from_file_button.setToolTip('Pick icon from file')
+        self.pick_icon_from_file_button.setFixedSize(24, 24)
+        self.pick_icon_from_file_button.setIcon(hou.qt.Icon('BUTTONS_chooser_file', 16, 16))
+        self.pick_icon_from_file_button.clicked.connect(self._pickIconFromFile)
+        self.current_icon_view.setScaledContents(True)
+        layout.addWidget(self.pick_icon_from_file_button)
+
+        self.pick_icon_from_houdini_button = QPushButton()
+        self.pick_icon_from_houdini_button.setToolTip('Pick icon from Houdini')
+        self.pick_icon_from_houdini_button.setFixedSize(24, 24)
+        self.pick_icon_from_houdini_button.setIcon(hou.qt.Icon('OBJ_hlight', 16, 16))
+        self.pick_icon_from_houdini_button.clicked.connect(self._pickIconFromHoudini)
+        layout.addWidget(self.pick_icon_from_houdini_button)
 
     def text(self):
         return self.edit.text()
@@ -129,21 +137,51 @@ class IconField(QWidget):
             self.current_icon_view.clear()
             return
 
-        if os.path.exists(icon_file_name) and os.path.isfile(icon_file_name):
-            return  # Todo
+        if os.path.isfile(icon_file_name):  # Todo: Limit allowed file size
+            _, ext = os.path.splitext(icon_file_name)
+            if ext in ('.jpg', '.jpeg', '.png', '.bmp', '.tga', '.tif', '.tiff'):
+                image = QImage(icon_file_name)
+                self.current_icon_view.setPixmap(QPixmap.fromImage(image).scaled(16, 16, Qt.KeepAspectRatio))
+            else:  # Fallback to Houdini loading
+                with hou.undos.disabler():
+                    try:
+                        comp_net = hou.node('/img/').createNode('img')
+                        file_node = comp_net.createNode('file')
+                        file_node.parm('filename1').set(icon_file_name)
+
+                        # Todo: Support alpha channel
+                        image_data = file_node.allPixelsAsString(depth=hou.imageDepth.Int8)
+                        image = QImage(image_data, file_node.xRes(), file_node.yRes(), QImage.Format_RGB888)
+
+                        self.current_icon_view.setPixmap(QPixmap.fromImage(image).scaled(16, 16, Qt.KeepAspectRatio))
+                    except hou.OperationFailed:
+                        self.current_icon_view.clear()
+                    finally:
+                        comp_net.destroy()
         else:
             try:
                 icon = hou.qt.Icon(icon_file_name, 16, 16)
+                self.current_icon_view.setPixmap(icon.pixmap(16, 16))
             except hou.OperationFailed:
                 self.current_icon_view.clear()
-                return
 
-        self.current_icon_view.setPixmap(icon.pixmap(16, 16))
+    def _pickIconFromFile(self):
+        icon_file_name, _ = QFileDialog.getOpenFileName(self, 'Pick Icon',
+                                                        filter='Images (*.pic *.pic.Z *.picZ *.pic.gz *.picgz *.rat '
+                                                               '*.tbf *.dsm *.picnc *.piclc *.rgb *.rgba *.sgi *.tif '
+                                                               '*.tif3 *.tif16 *.tif32 *.tiff *.yuv *.pix *.als *.cin '
+                                                               '*.kdk *.exr *.psd *.psb *.si *.tga *.vst *.vtg *.rla '
+                                                               '*.rla16 *.rlb *.rlb16 *.hdr *.ptx *.ptex *.ies *.dds '
+                                                               '*.qtl *.pic *.pic.Z *.pic.gz *.jpg *.jpeg *.bmp *.png '
+                                                               '*.svg *.);;'
+                                                               'All (*.*)')
+        if icon_file_name:
+            self.edit.setText(icon_file_name)
 
-    def _pickIcon(self):
-        icon = FindIconDialog.getIconName(self, 'Pick Icon', self.edit.text())
-        if icon:
-            self.edit.setText(icon.replace('.svg', ''))
+    def _pickIconFromHoudini(self):
+        icon_file_name = FindIconDialog.getIconName(self, 'Pick Icon', self.edit.text())
+        if icon_file_name:
+            self.edit.setText(icon_file_name.replace('.svg', ''))
 
 
 class LocationField(QWidget):
