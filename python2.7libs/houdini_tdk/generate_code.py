@@ -23,8 +23,6 @@ from __future__ import print_function
 import os
 import tempfile
 
-import os
-
 try:
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
