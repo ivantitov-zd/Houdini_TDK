@@ -166,7 +166,14 @@ class IconField(QWidget):
                 self.current_icon_view.clear()
 
     def _pickIconFromFile(self):
-        icon_file_name, _ = QFileDialog.getOpenFileName(self, 'Pick Icon',
+        path = self.edit.text()
+        if os.path.isdir(path):
+            initial_dir = path
+        elif os.path.isfile(path):
+            initial_dir = os.path.dirname(path)
+        else:
+            initial_dir = os.path.dirname(hou.hipFile.path())
+        icon_file_name, _ = QFileDialog.getOpenFileName(self, 'Pick Icon', initial_dir,
                                                         filter='Images (*.pic *.pic.Z *.picZ *.pic.gz *.picgz *.rat '
                                                                '*.tbf *.dsm *.picnc *.piclc *.rgb *.rgba *.sgi *.tif '
                                                                '*.tif3 *.tif16 *.tif32 *.tiff *.yuv *.pix *.als *.cin '
