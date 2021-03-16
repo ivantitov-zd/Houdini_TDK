@@ -30,11 +30,14 @@ except ImportError:
 import hou
 
 from .filter_field import FilterField
+from .fuzzy_filter_proxy_model import FuzzyFilterProxyModel
+
+ICON_SIZE = 64
 
 
 class IconCache:
     # Icons
-    DEFAULT_ICON = hou.qt.Icon('MISC_tier_one', 48, 48)
+    DEFAULT_ICON = hou.qt.Icon('MISC_tier_one', ICON_SIZE, ICON_SIZE)
 
     # Data
     data = {}
@@ -43,79 +46,10 @@ class IconCache:
     def icon(name):
         if name not in IconCache.data:
             try:
-                IconCache.data[name] = hou.qt.Icon(name, 48, 48)
+                IconCache.data[name] = hou.qt.Icon(name, ICON_SIZE, ICON_SIZE)
             except hou.OperationFailed:
                 IconCache.data[name] = IconCache.DEFAULT_ICON
         return IconCache.data[name]
-
-
-def fuzzyMatch(pattern, text):
-    if pattern == text:
-        return True, 999999
-
-    try:
-        pattern_start = text.index(pattern)
-        pattern_length = len(pattern)
-        return True, pattern_length * pattern_length + (1 - pattern_start / 500.0)
-    except ValueError:
-        pass
-
-    weight = 0
-    count = 0
-    index = 0
-    for char in text:
-        try:
-            if char == pattern[index]:
-                count += 1
-                index += 1
-            elif count != 0:
-                weight += count * count
-                count = 0
-        except IndexError:
-            pass
-
-    weight += count * count
-    if index < len(pattern):
-        return False, weight
-
-    return True, weight + (1 - text.index(pattern[0]) / 500.0)
-
-
-class FuzzyFilterProxyModel(QSortFilterProxyModel):
-    def __init__(self, parent=None):
-        super(FuzzyFilterProxyModel, self).__init__(parent)
-
-        self.setDynamicSortFilter(True)
-        self.setFilterCaseSensitivity(Qt.CaseInsensitive)
-        self.sort(0, Qt.DescendingOrder)
-
-        self._pattern = ''
-
-    def setFilterPattern(self, pattern):
-        self._pattern = pattern.lower()
-        self.invalidate()
-
-    def filterAcceptsRow(self, source_row, source_parent):
-        if not self._pattern:
-            return True
-
-        source_model = self.sourceModel()
-        text = source_model.data(source_model.index(source_row, 0, source_parent),
-                                 Qt.UserRole)
-        matches, _ = fuzzyMatch(self._pattern, text.lower())
-        return matches
-
-    def lessThan(self, source_left, source_right):
-        if not self._pattern:
-            return source_left.row() < source_right.row()
-
-        text1 = source_left.data(Qt.DisplayRole)
-        _, weight1 = fuzzyMatch(self._pattern, text1.lower())
-
-        text2 = source_right.data(Qt.DisplayRole)
-        _, weight2 = fuzzyMatch(self._pattern, text2.lower())
-
-        return weight1 < weight2
 
 
 class IconListModel(QAbstractListModel):
@@ -156,8 +90,11 @@ class IconListView(QListView):
     def __init__(self):
         super(IconListView, self).__init__()
         self.setViewMode(QListView.IconMode)
-        self.setIconSize(QSize(48, 48))
+        self.setIconSize(QSize(ICON_SIZE, ICON_SIZE))
+
         self.setUniformItemSizes(True)
+        self.setBatchSize(60)
+        self.setLayoutMode(QListView.Batched)
 
         self.setResizeMode(QListView.Adjust)
         self.setDragDropMode(QAbstractItemView.NoDragDrop)
@@ -208,7 +145,7 @@ class IconListView(QListView):
         indexes = self.selectedIndexes()
         if len(indexes) == 1:
             name = indexes[0].data(Qt.UserRole)
-            return hou.qt.Icon(name, 48, 48).pixmap(48, 48)
+            return hou.qt.Icon(name, ICON_SIZE, ICON_SIZE).pixmap(ICON_SIZE, ICON_SIZE)
 
     def copySelectedIcon(self):
         image = self._selectedImage()
