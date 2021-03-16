@@ -47,7 +47,8 @@ def houdiniColorFromQColor(color):
 
 def makeNewHDAFromTemplateNode(template_node, label, name=None, namespace=None, icon=None,
                                sections=None, version='1.0', location='$HOUDINI_USER_PREF_DIR/otls',
-                               inherit_subnetwork=True, inherit_parm_template_group=True, color=None):
+                               inherit_subnetwork=True, inherit_parm_template_group=True, color=None,
+                               shape=None):
     template_node_type = template_node.type()
     if template_node_type.name() != 'tdk::template':
         raise TypeError
@@ -306,6 +307,31 @@ class ColorField(QWidget):
         self.edit.blockSignals(True)
         self.edit.setText(color.name())
         self.edit.blockSignals(False)
+
+
+
+class NodeShapeField(QWidget):
+    shapes = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor).nodeShapes()
+
+    def __init__(self, node):
+        super(NodeShapeField, self).__init__()
+
+        self.node_shape = node.userData('nodeshape') or ''
+        self.default_node_type_shape = node.type().defaultShape()
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+
+    @staticmethod
+    def isValidShape(name):
+        pass
+
+    def text(self):
+        pass
+
+    def shape(self):
+        pass
 
 
 class MakeHDAByTemplateDialog(QDialog):
