@@ -65,7 +65,7 @@ class FindNodeShapeDialog(QDialog):
 
         self.shape_list_view = NodeShapeListView()
         self.shape_list_view.setModel(self.filter_proxy_model)
-        self.shape_list_view.setItemDelegate(NodeShapeDelegate(self))
+        self.shape_list_view.setItemDelegate(NodeShapeDelegate(self.shape_list_view))
         self.shape_list_view.itemDoubleClicked.connect(self.accept)
         main_layout.addWidget(self.shape_list_view)
 

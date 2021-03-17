@@ -276,8 +276,8 @@ class ColorField(QWidget):
 
         self.edit = QLineEdit()
         self.edit.setText(self.node_color.name())
-        layout.addWidget(self.edit)
         self.edit.installEventFilter(self)
+        layout.addWidget(self.edit)
 
         self.pick_color_button = hou.qt.ColorSwatchButton()
         self.pick_color_button.setToolTip('Pick color')
@@ -298,7 +298,6 @@ class ColorField(QWidget):
                 elif button == Qt.MiddleButton and modifiers == Qt.ControlModifier:
                     self.edit.setText(self.node_color.name())
                     return True
-
         return False
 
     def text(self):
@@ -320,6 +319,44 @@ class ColorField(QWidget):
         self.edit.blockSignals(False)
 
 
+class NodeShapePreview(QWidget):
+    def __init__(self):
+        super(NodeShapePreview, self).__init__()
+
+        self._shape = None
+        self._path = None
+
+    def recacheShape(self):
+        rect = self.rect().adjusted(1, 1, -1, -1)
+        self._path = self._shape.fittedInRect(rect).painterPath()
+        self.repaint()
+
+    def setShape(self, shape_name):
+        shape = NodeShape.byName(shape_name)
+
+        if not shape.isValid():
+            self._shape = None
+            self.repaint()
+            return
+
+        self._shape = shape.copy()
+        self.recacheShape()
+        self.repaint()
+
+    def paintEvent(self, event):
+        if not self._shape:
+            return
+
+        if not self._path:
+            self._path = self._shape.painterPath()
+
+        p = QPainter(self)
+        p.setBrush(p.pen().color().darker())
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setRenderHint(QPainter.HighQualityAntialiasing)
+        p.drawPath(self._path)
+
+
 class NodeShapeField(QWidget):
     def __init__(self, node):
         super(NodeShapeField, self).__init__()
@@ -331,8 +368,17 @@ class NodeShapeField(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
-        self.edit = QLineEdit()
+        self.edit = QLineEdit(self.node_shape)
+        self.edit.installEventFilter(self)
         layout.addWidget(self.edit)
+
+        self.shape_preview = NodeShapePreview()
+        self.shape_preview.setToolTip('Shape preview')
+        self.shape_preview.setFixedSize(52, 24)
+        layout.addWidget(self.shape_preview)
+        self.edit.textChanged.connect(self.shape_preview.setShape)
+        if self.node_shape:
+            self.shape_preview.setShape(self.node_shape)
 
         self.pick_shape_button = QPushButton()
         self.pick_shape_button.setToolTip('Pick shape')
@@ -340,6 +386,19 @@ class NodeShapeField(QWidget):
         self.pick_shape_button.setIcon(hou.qt.Icon('NETVIEW_shape_palette', 16, 16))
         self.pick_shape_button.clicked.connect(self._pickShape)
         layout.addWidget(self.pick_shape_button)
+
+    def eventFilter(self, watched, event):
+        if watched == self.edit:
+            if event.type() == QEvent.MouseButtonPress:
+                button = event.button()
+                modifiers = event.modifiers()
+                if button == Qt.LeftButton and modifiers == Qt.NoModifier:
+                    self.edit.selectAll()
+                    return True
+                elif button == Qt.MiddleButton and modifiers == Qt.ControlModifier:
+                    self.edit.clear()
+                    return True
+        return False
 
     def text(self):
         return self.edit.text()
@@ -504,6 +563,7 @@ class MakeHDAByTemplateDialog(QDialog):
                 hou.hda.installFile(definition.libraryFilePath())
                 if self.replace_node_toggle.isChecked():
                     self.node = self.node.changeNodeType(definition.nodeTypeName(), keep_network_contents=False)
+                    self.node.setCurrent(True, True)
 
                     if color:
                         definition.nodeType().setDefaultColor(houdiniColorFromQColor(color))

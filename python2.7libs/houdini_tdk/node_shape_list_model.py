@@ -18,6 +18,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import print_function
 
+import os
+
 try:
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
@@ -31,7 +33,7 @@ except ImportError:
 
 import hou
 
-from .node_shape import NodeShape
+from .node_shape import NodeShape, EXCLUDED_SHAPES
 
 
 class NodeShapeListModel(QAbstractListModel):

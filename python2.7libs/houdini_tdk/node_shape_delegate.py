@@ -36,15 +36,18 @@ qInstallMessageHandler(lambda *args: None)
 
 class NodeShapeDelegate(QStyledItemDelegate):
     def sizeHint(self, option, index):
-        return QSize(84, 84)
+        grid_width = self.parent().gridSize().width()
+        if grid_width > 100:
+            ratio = grid_width / 105.0
+            width = 100 * ratio
+        else:
+            width = 100
+        return QSize(width, 70)
 
     def paint(self, painter, option, index):
         painter.save()
 
         painter.eraseRect(option.rect)
-
-        painter.setClipRect(option.rect)
-        painter.setClipping(True)
 
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setRenderHint(QPainter.HighQualityAntialiasing)
@@ -52,17 +55,23 @@ class NodeShapeDelegate(QStyledItemDelegate):
         pen_width = painter.pen().width()
         inner_rect = option.rect.adjusted(pen_width, pen_width, -pen_width, -pen_width)
         spacing = pen_width * 4
-        inner_rect_spaced = option.rect.adjusted(spacing, spacing, -spacing, -spacing)
+        inner_rect_spaced = inner_rect.adjusted(spacing, spacing, -spacing, -spacing)
 
         if option.state & QStyle.State_Selected:
             painter.drawRect(inner_rect)
 
-        metrics = painter.fontMetrics()
-        shape_name = metrics.elidedText(index.data(Qt.DisplayRole), Qt.ElideRight, inner_rect_spaced.width())
-        painter.drawText(inner_rect, Qt.AlignHCenter | Qt.AlignBottom, shape_name)
+        if inner_rect_spaced.width() > 30:
+            metrics = painter.fontMetrics()
+            text_height = metrics.height()
+            text = metrics.elidedText(index.data(Qt.DisplayRole), Qt.ElideRight, inner_rect_spaced.width())
+            painter.drawText(inner_rect, Qt.AlignHCenter | Qt.AlignBottom, text)
+        else:
+            text_height = 0
 
-        shape = index.data(NodeShapeListModel.ShapeRole)
-        painter.setBrush(painter.pen().color().darker())
-        painter.drawPath(shape.fittedInRect(inner_rect_spaced).painterPath())
+        if inner_rect_spaced.width() > 10:
+            shape = index.data(NodeShapeListModel.ShapeRole)
+            painter.setBrush(painter.pen().color().darker())
+            icon_rect = inner_rect_spaced.adjusted(0, 0, 0, -text_height)
+            painter.drawPath(shape.fittedInRect(icon_rect).painterPath())
 
         painter.restore()

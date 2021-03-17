@@ -91,27 +91,29 @@ class BoundingRectF(QRectF):
             right = max(x, right)
             bottom = max(y, bottom)
 
-        self.setCoords(top, left, right, bottom)
+        self.setCoords(left, top, right, bottom)
 
     @staticmethod
     def fromPositions(positions):
         new = BoundingRectF()
         new.addPositions(positions)
-        # new.normalize()
-        return new.normalized()
+        return new
 
     def addPoints(self, points):
-        self.addPositions((p.x(), p.y()) for p in points)
+        self.addPositions((point.x(), point.y()) for point in points)
 
     @staticmethod
     def fromPoints(points):
         new = BoundingRectF()
         new.addPoints(points)
-        # new.normalize()
-        return new.normalized()
+        return new
+
+
+EXCLUDED_SHAPES = ('vop', 'task', 'shop', 'cop2', 'subnet_input')
 
 
 class NodeShape(object):
+
     def __init__(self):
         self.__valid = False
         self.__name = None
@@ -137,37 +139,21 @@ class NodeShape(object):
         return self.__copy__()
 
     def transformToRect(self, rect, aspect_ratio_mode=Qt.KeepAspectRatio):
-        rect = QRectF(rect)
-        brect = BoundingRectF.fromPoints(self.__points)
+        target_rect = QRectF(rect)
+        bounding_rect = BoundingRectF.fromPoints(self.__points)
 
-        if aspect_ratio_mode == Qt.KeepAspectRatio:
-            center = rect.center()
+        target_rect.setSize(bounding_rect.size().scaled(rect.size(), aspect_ratio_mode))
 
-            try:
-                width_ratio = rect.width() / brect.width()
-                height_ratio = rect.height() / brect.height()
-            except ZeroDivisionError:
-                return QTransform()
+        # Todo: Alignment
+        target_rect.moveCenter(rect.center())
 
-            if width_ratio < height_ratio:
-                ratio = width_ratio
-                rect.setHeight(rect.height() / ratio)
-            else:
-                ratio = height_ratio
-                rect.setWidth(rect.width() / ratio)
+        bounding_polygon = QPolygonF(bounding_rect)
+        bounding_polygon.takeLast()
 
-            rect.moveCenter(center)  # Todo: Alignment
+        target_polygon = QPolygonF(target_rect)
+        target_polygon.takeLast()
 
-        elif aspect_ratio_mode == Qt.KeepAspectRatioByExpanding:
-            raise ValueError('Aspect ratio mode Qt.KeepAspectRatioByExpanding not supported.')
-
-        b_polygon = QPolygonF(brect)
-        b_polygon.takeLast()
-
-        t_polygon = QPolygonF(rect)
-        t_polygon.takeLast()
-
-        return QTransform.quadToQuad(b_polygon, t_polygon)
+        return QTransform.quadToQuad(bounding_polygon, target_polygon)
 
     def fitInRect(self, rect, aspect_ratio_mode=Qt.KeepAspectRatio):
         transform = self.transformToRect(rect, aspect_ratio_mode)
@@ -187,24 +173,8 @@ class NodeShape(object):
 
         return path
 
-    def draw(self, device, painter=None, pen=None, brush=None, transform=None):
-        p = painter or QPainter(device)
-        p.save()
-
-        if pen:
-            p.setPen(pen)
-
-        if brush:
-            p.setBrush(brush)
-
-        if transform:
-            p.setTransform(transform)
-
-        p.drawPath(self.painterPath())
-        p.restore()
-
     @staticmethod
-    def fromFile(file_path):
+    def fromFile(file_path, allow_excluded=False):
         shape = NodeShape()
 
         try:
@@ -213,23 +183,47 @@ class NodeShape(object):
         except IOError:
             return shape
 
+        if 'name' in shape_data:
+            shape.__name = shape_data['name']
+        else:
+            shape.__name, _ = os.path.splitext(os.path.basename(file_path))
+
+        if not allow_excluded and shape.__name in EXCLUDED_SHAPES:
+            return shape
+
         if not shape_data or 'outline' not in shape_data:
             return shape
 
         shape.__points = tuple(QPointF(x, -y) for x, y in shape_data['outline'])
 
-        if 'name' in shape_data:
-            shape.__name = shape_data['name']
-        else:
-            _, file_name = os.path.split(file_path)
-            shape.__name, _ = os.path.splitext(file_name)
-
         shape.__valid = True
         return shape
 
     @staticmethod
+    def byName(name, allow_excluded=False):
+        if not name:
+            return NodeShape()
+
+        name = name.replace(' ', '_').lower()
+
+        if allow_excluded and name in EXCLUDED_SHAPES:
+            return NodeShape()
+
+        file_name = name + '.json'
+        shape_files = hou.findFilesWithExtension('json', 'config/NodeShapes')
+        for file_path in shape_files:
+            if file_name in file_path.lower():
+                return NodeShape.fromFile(file_path)
+        return NodeShape()
+
+    @staticmethod
     def isValidShape(name):
-        file_name = name.replace(' ', '_').lower() + '.json'
+        name = name.replace(' ', '_').lower()
+
+        if name in EXCLUDED_SHAPES:
+            return False
+
+        file_name = name + '.json'
         shape_files = hou.findFilesWithExtension('json', 'config/NodeShapes')
         for file_path in shape_files:
             if file_name in file_path.lower():

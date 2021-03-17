@@ -48,11 +48,21 @@ class NodeShapeListView(QListView):
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.verticalScrollBar().setSingleStep(30)
 
-        self.setGridSize(QSize(94, 94))
+        self.setGridSize(QSize(100, 88))
 
         # Item Double Clicked
         self._item_double_clicked_signal_enabled = False
         self.doubleClicked.connect(self.__emitItemDoubleClicked)
+
+    def resizeEvent(self, event):
+        super(NodeShapeListView, self).resizeEvent(event)
+
+        # Update grid size
+        grid_size = self.gridSize()
+        column_count = 7
+        spacing = 5
+        grid_size.setWidth(self.viewport().width() / column_count - spacing)
+        self.setGridSize(grid_size)
 
     def doubleClickedSignalEnabled(self):
         return self._item_double_clicked_signal_enabled
