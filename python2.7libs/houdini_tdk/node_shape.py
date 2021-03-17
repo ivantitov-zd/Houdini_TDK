@@ -32,6 +32,8 @@ except ImportError:
     from PySide2.QtGui import *
     from PySide2.QtCore import *
 
+import hou
+
 
 class BoundingRectF(QRectF):
     def __init__(self, *args):
