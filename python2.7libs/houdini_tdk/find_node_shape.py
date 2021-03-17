@@ -59,7 +59,7 @@ class FindNodeShapeDialog(QDialog):
         self.shape_list_model = NodeShapeListModel(self)
         self.shape_list_model.updateNodeShapeList()
 
-        self.filter_proxy_model = FuzzyFilterProxyModel(self)
+        self.filter_proxy_model = FuzzyFilterProxyModel(self, Qt.DisplayRole)
         self.filter_proxy_model.setSourceModel(self.shape_list_model)
         self.filter_field.textChanged.connect(self.filter_proxy_model.setFilterPattern)
 
@@ -109,12 +109,12 @@ class FindNodeShapeDialog(QDialog):
             model = window.shape_list_view.model()
             for row in range(model.rowCount()):
                 index = model.index(row, 0)
-                if index.data(Qt.UserRole) == name + '.svg':
+                if index.data(NodeShapeListModel.ShapeNameRole) == name:
                     window.shape_list_view.setCurrentIndex(index)
                     break
 
         if window.exec_() and window.shape_list_view.currentIndex().isValid():
-            return window.shape_list_view.currentIndex().data(Qt.UserRole)
+            return window.shape_list_view.currentIndex().data(NodeShapeListModel.ShapeNameRole)
 
 
 def findNodeShape(**kwargs):

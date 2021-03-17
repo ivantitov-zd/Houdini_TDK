@@ -34,7 +34,9 @@ except ImportError:
 import hou
 
 from .find_icon import FindIconDialog
+from .find_node_shape import FindNodeShapeDialog
 from .notification import notify
+from .node_shape import NodeShape
 
 
 def qColorFromHoudiniColor(color):
@@ -218,7 +220,7 @@ class IconField(QWidget):
     def _pickIconFromHoudini(self):
         icon_file_name = FindIconDialog.getIconName(self, 'Pick Icon', self.edit.text())
         if icon_file_name:
-            self.edit.setText(icon_file_name.replace('.svg', ''))
+            self.edit.setText(icon_file_name)
 
 
 class LocationField(QWidget):
@@ -309,7 +311,6 @@ class ColorField(QWidget):
         self.edit.blockSignals(False)
 
 
-
 class NodeShapeField(QWidget):
     shapes = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor).nodeShapes()
 
@@ -323,15 +324,28 @@ class NodeShapeField(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
-    @staticmethod
-    def isValidShape(name):
-        pass
+        self.edit = QLineEdit()
+        layout.addWidget(self.edit)
+
+        self.pick_shape_button = QPushButton()
+        self.pick_shape_button.setToolTip('Pick shape')
+        self.pick_shape_button.setFixedSize(24, 24)
+        self.pick_shape_button.setIcon(hou.qt.Icon('NETVIEW_shape_palette', 16, 16))
+        self.pick_shape_button.clicked.connect(self._pickShape)
+        layout.addWidget(self.pick_shape_button)
 
     def text(self):
-        pass
+        return self.edit.text()
 
     def shape(self):
-        pass
+        name = self.edit.text()
+        if NodeShape.isValidShape(name):
+            return name
+
+    def _pickShape(self):
+        shape_name = FindNodeShapeDialog.getShapeName(self, 'Pick Node Shape', self.edit.text())
+        if shape_name:
+            self.edit.setText(shape_name)
 
 
 class MakeHDAByTemplateDialog(QDialog):
@@ -381,6 +395,9 @@ class MakeHDAByTemplateDialog(QDialog):
 
         self.color_field = ColorField(node)
         form_layout.addRow('Color', self.color_field)
+
+        self.shape_field = NodeShapeField(node)
+        form_layout.addRow('Shape', self.shape_field)
 
         self.inherit_subnetwork_toggle = QCheckBox('Inherit subnetwork')
         self.inherit_subnetwork_toggle.setChecked(True)

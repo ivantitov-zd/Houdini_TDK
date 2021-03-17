@@ -298,7 +298,7 @@ class FindIconDialog(QDialog):
                     break
 
         if window.exec_() and window.icon_list_view.currentIndex().isValid():
-            return window.icon_list_view.currentIndex().data(Qt.UserRole)
+            return window.icon_list_view.currentIndex().data(Qt.UserRole).replace('.svg', '')
 
 
 def findIcon(**kwargs):

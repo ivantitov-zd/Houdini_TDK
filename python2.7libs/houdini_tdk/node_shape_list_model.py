@@ -35,6 +35,10 @@ from .node_shape import NodeShape
 
 
 class NodeShapeListModel(QAbstractListModel):
+    # Roles
+    ShapeNameRole = Qt.UserRole + 1
+    ShapeRole = Qt.UserRole + 2
+
     def __init__(self, parent=None):
         super(NodeShapeListModel, self).__init__(parent)
 
@@ -68,7 +72,7 @@ class NodeShapeListModel(QAbstractListModel):
 
         if role == Qt.DisplayRole:
             return index.internalPointer().name().replace('_', ' ').title()
-        elif role == Qt.TextAlignmentRole:
-            return Qt.AlignBottom
-        elif role == Qt.UserRole:
+        elif role == NodeShapeListModel.ShapeNameRole:
+            return index.internalPointer().name()
+        elif role == NodeShapeListModel.ShapeRole:
             return index.internalPointer()

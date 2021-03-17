@@ -63,8 +63,11 @@ def fuzzyMatch(pattern, text):
 
 
 class FuzzyFilterProxyModel(QSortFilterProxyModel):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, accept_text_role=Qt.UserRole, comp_text_role=Qt.DisplayRole):
         super(FuzzyFilterProxyModel, self).__init__(parent)
+
+        self._accept_text_role = accept_text_role
+        self.comp_text_role = comp_text_role
 
         self.setDynamicSortFilter(True)
         self.setFilterCaseSensitivity(Qt.CaseInsensitive)
@@ -81,8 +84,7 @@ class FuzzyFilterProxyModel(QSortFilterProxyModel):
             return True
 
         source_model = self.sourceModel()
-        text = source_model.data(source_model.index(source_row, 0, source_parent),
-                                 Qt.UserRole)
+        text = source_model.data(source_model.index(source_row, 0, source_parent), self._accept_text_role)
         matches, _ = fuzzyMatch(self._pattern, text.lower())
         return matches
 
@@ -90,10 +92,10 @@ class FuzzyFilterProxyModel(QSortFilterProxyModel):
         if not self._pattern:
             return source_left.row() < source_right.row()
 
-        text1 = source_left.data(Qt.DisplayRole)
+        text1 = source_left.data(self.comp_text_role)
         _, weight1 = fuzzyMatch(self._pattern, text1.lower())
 
-        text2 = source_right.data(Qt.DisplayRole)
+        text2 = source_right.data(self.comp_text_role)
         _, weight2 = fuzzyMatch(self._pattern, text2.lower())
 
         return weight1 < weight2
