@@ -278,6 +278,10 @@ class UserDataWindow(QWidget):
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.Refresh):
             self.updateData()
+        elif event.matches(QKeySequence.ZoomIn):
+            self.user_data_view.zoomIn(2)
+        elif event.matches(QKeySequence.ZoomOut):
+            self.user_data_view.zoomOut(2)
         else:
             super(UserDataWindow, self).keyPressEvent(event)
 
