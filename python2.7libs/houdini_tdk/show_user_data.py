@@ -253,7 +253,30 @@ class UserDataWindow(QWidget):
         if self._prettify:
             data = prettify(data)
 
-        self.user_data_view.setText(data)
+        if self.user_data_view.toPlainText() != data:
+            cursor = self.user_data_view.textCursor()
+            if cursor.hasSelection():
+                selection_start = cursor.selectionStart()
+                selection_end = cursor.selectionEnd()
+                reselect = True
+            else:
+                selection_start = None
+                selection_end = None
+                reselect = False
+
+            self.user_data_view.setPlainText(data)
+
+            if reselect:
+                cursor = self.user_data_view.textCursor()
+                cursor.setPosition(selection_start)
+                cursor.movePosition(QTextCursor.Start, QTextCursor.MoveAnchor)
+                cursor.movePosition(QTextCursor.Right, QTextCursor.MoveAnchor, selection_start)
+                selection_length = abs(selection_start - selection_end)
+                if selection_start > selection_end:
+                    cursor.movePosition(QTextCursor.Left, QTextCursor.KeepAnchor, selection_length)
+                else:
+                    cursor.movePosition(QTextCursor.Right, QTextCursor.KeepAnchor, selection_length)
+                self.user_data_view.setTextCursor(cursor)
 
     def updateData(self):
         if self._node:
