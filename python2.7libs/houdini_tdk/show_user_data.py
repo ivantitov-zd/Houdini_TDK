@@ -143,6 +143,7 @@ class UserDataWindow(QWidget):
         self._auto_update = True
         self._word_wrap = True
         self._prettify = False
+        self._previous_key = None
 
         # Window
         self.updateWindowTitle()
@@ -255,7 +256,7 @@ class UserDataWindow(QWidget):
 
         if self.user_data_view.toPlainText() != data:
             cursor = self.user_data_view.textCursor()
-            if cursor.hasSelection():
+            if cursor.hasSelection() and self._current_key == self._previous_key:
                 selection_start = cursor.selectionStart()
                 selection_end = cursor.selectionEnd()
                 reselect = True
@@ -266,9 +267,10 @@ class UserDataWindow(QWidget):
 
             self.user_data_view.setPlainText(data)
 
+            self._previous_key = self._current_key
+
             if reselect:
                 cursor = self.user_data_view.textCursor()
-                cursor.setPosition(selection_start)
                 cursor.movePosition(QTextCursor.Start, QTextCursor.MoveAnchor)
                 cursor.movePosition(QTextCursor.Right, QTextCursor.MoveAnchor, selection_start)
                 selection_length = abs(selection_start - selection_end)
