@@ -224,11 +224,11 @@ class IconListView(QListView):
             self.itemDoubleClicked.emit(index)
 
 
-class FindIconDialog(QDialog):
+class IconListDialog(QDialog):
     def __init__(self, parent=None):
-        super(FindIconDialog, self).__init__(parent, Qt.Window)
+        super(IconListDialog, self).__init__(parent, Qt.Window)
 
-        self.setWindowTitle('TDK: Find Icon')
+        self.setWindowTitle('TDK: Icons')
         self.setWindowIcon(hou.qt.Icon('MISC_m', 32, 32))
         self.resize(820, 500)
 
@@ -275,7 +275,7 @@ class FindIconDialog(QDialog):
             self.filter_field.setFocus()
             self.filter_field.selectAll()
         else:
-            super(FindIconDialog, self).keyPressEvent(event)
+            super(IconListDialog, self).keyPressEvent(event)
 
     def enableDialogMode(self):
         self.icon_list_view.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -284,8 +284,8 @@ class FindIconDialog(QDialog):
         self.cancel_button.setVisible(True)
 
     @classmethod
-    def getIconName(cls, parent=hou.qt.mainWindow(), title='Find Icon', name=None):
-        window = FindIconDialog(parent)
+    def getIconName(cls, parent=hou.qt.mainWindow(), title='Icons', name=None):
+        window = IconListDialog(parent)
         window.setWindowTitle('TDK: ' + title)
         window.enableDialogMode()
 
@@ -302,5 +302,5 @@ class FindIconDialog(QDialog):
 
 
 def findIcon(**kwargs):
-    window = FindIconDialog(hou.qt.mainWindow())
+    window = IconListDialog(hou.qt.mainWindow())
     window.show()

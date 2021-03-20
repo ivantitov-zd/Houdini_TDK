@@ -33,7 +33,7 @@ except ImportError:
 
 import hou
 
-from .find_icon import FindIconDialog
+from .icon_list import IconListDialog
 from .node_shape_list_dialog import NodeShapeListDialog
 from .notification import notify
 from .node_shape import NodeShape
@@ -227,7 +227,7 @@ class IconField(QWidget):
             self.edit.setText(icon_file_name)
 
     def _pickIconFromHoudini(self):
-        icon_file_name = FindIconDialog.getIconName(self, 'Pick Icon', self.edit.text())
+        icon_file_name = IconListDialog.getIconName(self, 'Pick Icon', self.edit.text())
         if icon_file_name:
             self.edit.setText(icon_file_name)
 
