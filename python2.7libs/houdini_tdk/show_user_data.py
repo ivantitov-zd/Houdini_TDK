@@ -165,7 +165,6 @@ class UserDataWindow(QWidget):
         super(UserDataWindow, self).__init__(parent, Qt.Window)
 
         # Data
-        self._current_key = None
         self._node = None
 
         # State
@@ -173,7 +172,7 @@ class UserDataWindow(QWidget):
         self._auto_update = True
         self._word_wrap = True
         self._prettify = False
-        self._previous_key = None
+        self._current_key = None
 
         # Window
         self.updateWindowTitle()
@@ -290,10 +289,10 @@ class UserDataWindow(QWidget):
         if not index.isValid():
             return
 
-        self._current_key = index.data(Qt.DisplayRole)
+        key = index.data(Qt.DisplayRole)
         data = index.data(Qt.UserRole)
 
-        if self._current_key == 'nodeshape':
+        if key == 'nodeshape':
             self.shape_preview.setShape(data)
 
         if self._prettify:
@@ -301,7 +300,7 @@ class UserDataWindow(QWidget):
 
         if self.user_data_view.toPlainText() != data:
             cursor = self.user_data_view.textCursor()
-            if cursor.hasSelection() and self._current_key == self._previous_key:
+            if cursor.hasSelection() and key == self._current_key:
                 selection_start = cursor.selectionStart()
                 selection_end = cursor.selectionEnd()
                 reselect = True
@@ -312,7 +311,7 @@ class UserDataWindow(QWidget):
 
             self.user_data_view.setPlainText(data)
 
-            self._previous_key = self._current_key
+            self._current_key = key
 
             if reselect:
                 cursor = self.user_data_view.textCursor()
@@ -330,6 +329,7 @@ class UserDataWindow(QWidget):
             self.user_data_model.updateDataFromNode(self._node)
 
         new_index = self.user_data_model.indexByKey(self._current_key)
+        new_index = self.user_data_filter_model.mapFromSource(new_index)
         if new_index.isValid():
             self.user_data_list.setCurrentIndex(new_index)
 
