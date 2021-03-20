@@ -33,6 +33,7 @@ from lxml import etree
 
 import hou
 
+from .node_shape_preview import NodeShapePreview
 from .notification import notify
 
 
@@ -168,9 +169,9 @@ class UserDataWindow(QWidget):
         splitter.addWidget(self.user_data_list)
 
         # Data View
-        self.user_data_view = QTextBrowser()
-        self.user_data_view.setOpenLinks(True)
-        self.user_data_view.setOpenExternalLinks(True)
+        self.user_data_view = QTextEdit()
+        self.shape_preview = NodeShapePreview()
+        self.user_data_view.viewport().installEventFilter(self)
         self.user_data_view.setPlaceholderText('Key has no data')
         self.user_data_view.installEventFilter(self)
         splitter.addWidget(self.user_data_view)
@@ -195,6 +196,14 @@ class UserDataWindow(QWidget):
         self.pin_toggle.setFixedSize(24, 24)
         self.pin_toggle.setIcon(hou.qt.Icon('BUTTONS_pinned', 16, 16))
         options_layout.addWidget(self.pin_toggle)
+
+        self.hide_empty_toggle = QPushButton()
+        self.hide_empty_toggle.setCheckable(True)
+        self.hide_empty_toggle.setChecked(False)
+        self.hide_empty_toggle.setToolTip('Hide Empty')
+        self.hide_empty_toggle.setFixedSize(24, 24)
+        self.hide_empty_toggle.setIcon(hou.qt.Icon('NETVIEW_hidden_flag', 16, 16))
+        options_layout.addWidget(self.hide_empty_toggle)
 
         self.auto_update_toggle = QPushButton()
         self.auto_update_toggle.setCheckable(True)
@@ -250,6 +259,9 @@ class UserDataWindow(QWidget):
 
         self._current_key = index.data(Qt.DisplayRole)
         data = index.data(Qt.UserRole)
+
+        if self._current_key == 'nodeshape':
+            self.shape_preview.setShape(data)
 
         if self._prettify:
             data = prettify(data)
@@ -318,6 +330,11 @@ class UserDataWindow(QWidget):
                 else:
                     self.user_data_view.zoomOut(2)
                 return True
+        elif self._current_key == 'nodeshape' and \
+                watched == self.user_data_view.viewport() and event.type() == QEvent.Paint:
+            self.shape_preview.setFixedSize(event.rect().size())
+            self.shape_preview.render(watched, -self.user_data_view.rect().topLeft())
+
         return False
 
     def __del__(self):

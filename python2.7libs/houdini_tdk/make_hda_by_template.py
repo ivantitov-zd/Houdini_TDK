@@ -35,6 +35,7 @@ import hou
 
 from .icon_list import IconListDialog
 from .node_shape_list_dialog import NodeShapeListDialog
+from .node_shape_preview import NodeShapePreview
 from .notification import notify
 from .node_shape import NodeShape
 from .input_field import InputField
@@ -318,44 +319,6 @@ class ColorField(QWidget):
         self.edit.blockSignals(True)
         self.edit.setText(color.name())
         self.edit.blockSignals(False)
-
-
-class NodeShapePreview(QWidget):
-    def __init__(self):
-        super(NodeShapePreview, self).__init__()
-
-        self._shape = None
-        self._path = None
-
-    def recacheShape(self):
-        rect = self.rect().adjusted(1, 1, -1, -1)
-        self._path = self._shape.fittedInRect(rect).painterPath()
-        self.repaint()
-
-    def setShape(self, shape_name):
-        shape = NodeShape.fromName(shape_name)
-
-        if not shape.isValid():
-            self._shape = None
-            self.repaint()
-            return
-
-        self._shape = shape.copy()
-        self.recacheShape()
-        self.repaint()
-
-    def paintEvent(self, event):
-        if not self._shape:
-            return
-
-        if not self._path:
-            self._path = self._shape.painterPath()
-
-        p = QPainter(self)
-        p.setBrush(p.pen().color().darker())
-        p.setRenderHint(QPainter.Antialiasing)
-        p.setRenderHint(QPainter.HighQualityAntialiasing)
-        p.drawPath(self._path)
 
 
 class NodeShapeField(QWidget):
