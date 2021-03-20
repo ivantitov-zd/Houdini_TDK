@@ -18,8 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import print_function
 
-import os
-
 try:
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
@@ -33,7 +31,7 @@ except ImportError:
 
 import hou
 
-from .node_shape import NodeShape, EXCLUDED_SHAPES
+from .node_shape import NodeShape
 
 
 class NodeShapeListModel(QAbstractListModel):
@@ -72,9 +70,13 @@ class NodeShapeListModel(QAbstractListModel):
         if not index.isValid():
             return
 
+        shape = index.internalPointer()
+
         if role == Qt.DisplayRole:
-            return index.internalPointer().name().replace('_', ' ').title()
+            return shape.name().replace('_', ' ').title()
+        elif role == Qt.ToolTipRole:
+            return shape.name()
         elif role == NodeShapeListModel.ShapeNameRole:
-            return index.internalPointer().name()
+            return shape.name()
         elif role == NodeShapeListModel.ShapeRole:
-            return index.internalPointer()
+            return shape

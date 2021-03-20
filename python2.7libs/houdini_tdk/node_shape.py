@@ -200,7 +200,7 @@ class NodeShape(object):
         return shape
 
     @staticmethod
-    def byName(name, allow_excluded=False):
+    def fromName(name, allow_excluded=False):
         if not name:
             return NodeShape()
 

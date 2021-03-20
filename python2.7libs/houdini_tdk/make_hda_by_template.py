@@ -332,7 +332,7 @@ class NodeShapePreview(QWidget):
         self.repaint()
 
     def setShape(self, shape_name):
-        shape = NodeShape.byName(shape_name)
+        shape = NodeShape.fromName(shape_name)
 
         if not shape.isValid():
             self._shape = None
