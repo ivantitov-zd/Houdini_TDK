@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
 import re
+from operator import attrgetter
 
 try:
     from PyQt5.QtWidgets import *
@@ -44,6 +45,26 @@ class UserDataItem:
         self.cached = cached
 
 
+class FilterEmptyProxyModel(QSortFilterProxyModel):
+    def __init__(self, parent=None):
+        super(FilterEmptyProxyModel, self).__init__(parent)
+
+        self._enabled = False
+
+    def setEnabled(self, enable):
+        self._enabled = enable
+        self.invalidate()
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        if not self._enabled:
+            return True
+
+        source_model = self.sourceModel()
+        index = source_model.index(source_row, 0, source_parent)
+        data = source_model.data(index, Qt.UserRole)
+        return bool(data)
+
+
 class UserDataModel(QAbstractListModel):
     DEFAULT_ICON = hou.qt.Icon('DATATYPES_file', 16, 16)
     CACHED_DATA_ICON = hou.qt.Icon('NETVIEW_time_dependent_badge', 16, 16)
@@ -56,13 +77,21 @@ class UserDataModel(QAbstractListModel):
 
     def updateDataFromNode(self, node):
         self.beginResetModel()
+
         self.__data = []
         if node is not None:
+            persistent_items = []
             for key, data in node.userDataDict().items():
-                self.__data.append(UserDataItem(key, data, False))
+                persistent_items.append(UserDataItem(key, data, False))
+            persistent_items.sort(key=attrgetter('key'))
+            self.__data.extend(persistent_items)
 
+            cached_items = []
             for key, data in node.cachedUserDataDict().items():
-                self.__data.append(UserDataItem(key, data, True))
+                cached_items.append(UserDataItem(key, data, True))
+            cached_items.sort(key=attrgetter('key'))
+            self.__data.extend(cached_items)
+
         self.endResetModel()
 
     def indexByKey(self, key):
@@ -161,8 +190,11 @@ class UserDataWindow(QWidget):
         # Key List
         self.user_data_model = UserDataModel()
 
+        self.user_data_filter_model = FilterEmptyProxyModel()
+        self.user_data_filter_model.setSourceModel(self.user_data_model)
+
         self.user_data_list = UserDataListView()
-        self.user_data_list.setModel(self.user_data_model)
+        self.user_data_list.setModel(self.user_data_filter_model)
         self.user_data_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         selection_model = self.user_data_list.selectionModel()
         selection_model.currentChanged.connect(self._readData)
@@ -203,6 +235,7 @@ class UserDataWindow(QWidget):
         self.hide_empty_toggle.setToolTip('Hide Empty')
         self.hide_empty_toggle.setFixedSize(24, 24)
         self.hide_empty_toggle.setIcon(hou.qt.Icon('NETVIEW_hidden_flag', 16, 16))
+        self.hide_empty_toggle.toggled.connect(self.user_data_filter_model.setEnabled)
         options_layout.addWidget(self.hide_empty_toggle)
 
         self.auto_update_toggle = QPushButton()
