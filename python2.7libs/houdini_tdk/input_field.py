@@ -27,21 +27,18 @@ except ImportError:
     from PySide2.QtGui import *
     from PySide2.QtCore import *
 
-from .input_field import InputField
 
-
-class FilterField(InputField):
-    # Signals
-    accepted = Signal(str)
-
-    def __init__(self):
-        super(FilterField, self).__init__()
-        self.setPlaceholderText('Type to Filter...')
-
+class InputField(QLineEdit):
     def keyPressEvent(self, event):
         key = event.key()
 
-        if key == Qt.Key_Enter or key == Qt.Key_Return:
-            self.accepted.emit(self.text())
+        if key == Qt.Key_Escape:
+            self.clear()
         else:
-            super(FilterField, self).keyPressEvent(event)
+            super(InputField, self).keyPressEvent(event)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MiddleButton and event.modifiers() == Qt.ControlModifier:
+            self.clear()
+        else:
+            super(InputField, self).mousePressEvent(event)
