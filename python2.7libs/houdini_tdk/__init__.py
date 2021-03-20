@@ -22,4 +22,4 @@ from .generate_code import showGenerateCode
 from .hda_doctor import HDADoctorWindow
 from .make_hda_by_template import MakeHDAByTemplateDialog, showMakeHDAByTemplateDialog
 from .new_hda_version import NewVersionDialog, showNewVersionDialog
-from .show_node_user_data import UserDataWindow, showNodeUserData
+from .show_user_data import UserDataWindow, showNodeUserData
