@@ -252,6 +252,7 @@ class IconListDialog(QDialog):
         self.icon_list_view = IconListView()
         self.icon_list_view.setModel(self.filter_proxy_model)
         self.icon_list_view.itemDoubleClicked.connect(self.accept)
+        self.icon_list_view.viewport().installEventFilter(self)
         main_layout.addWidget(self.icon_list_view)
 
         # Filter
@@ -264,9 +265,7 @@ class IconListDialog(QDialog):
         self.slider.setFixedWidth(120)
         self.slider.setDefaultValue(64)
         self.slider.setRange(48, 128)
-        self.slider.valueChanged.connect(lambda v: self.slider.setToolTip('Size: ' + str(v)))
-        self.slider.valueChanged.connect(self.icon_list_model.setIconSize)
-        self.slider.valueChanged.connect(lambda v: self.icon_list_view.setIconSize(QSize(v, v)))
+        self.slider.valueChanged.connect(self.setIconSize)
         self.slider.setValue(64)
         top_layout.addWidget(self.slider)
 
@@ -286,6 +285,27 @@ class IconListDialog(QDialog):
         self.cancel_button.setVisible(False)
         self.cancel_button.clicked.connect(self.reject)
         buttons_layout.addWidget(self.cancel_button)
+
+    def setIconSize(self, size):
+        size = min(max(size, 48), 128)
+        if size != self.icon_list_model.iconSize():
+            self.slider.setToolTip('Size: ' + str(size))
+            self.slider.blockSignals(True)
+            self.slider.setValue(size)
+            self.slider.blockSignals(False)
+            self.icon_list_model.setIconSize(size)
+            self.icon_list_view.setIconSize(QSize(size, size))
+
+    def eventFilter(self, watched, event):
+        if watched == self.icon_list_view.viewport() and event.type() == QEvent.Wheel:
+            if event.modifiers() == Qt.ControlModifier:
+                if event.delta() > 0:
+                    new_size = self.icon_list_model.iconSize() + 4
+                else:
+                    new_size = self.icon_list_model.iconSize() - 4
+                self.setIconSize(new_size)
+                return True
+        return False
 
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.Find) or event.key() == Qt.Key_F3:
