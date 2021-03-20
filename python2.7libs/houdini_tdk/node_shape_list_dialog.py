@@ -38,11 +38,11 @@ from .node_shape_delegate import NodeShapeDelegate
 from .fuzzy_filter_proxy_model import FuzzyFilterProxyModel
 
 
-class FindNodeShapeDialog(QDialog):
+class NodeShapeListDialog(QDialog):
     def __init__(self, parent=None):
-        super(FindNodeShapeDialog, self).__init__(parent, Qt.Window)
+        super(NodeShapeListDialog, self).__init__(parent, Qt.Window)
 
-        self.setWindowTitle('TDK: Find Node Shape')
+        self.setWindowTitle('TDK: Node Shapes')
         self.setWindowIcon(hou.qt.Icon('NETVIEW_shape_palette', 32, 32))
         self.resize(820, 500)
 
@@ -91,7 +91,7 @@ class FindNodeShapeDialog(QDialog):
             self.filter_field.setFocus()
             self.filter_field.selectAll()
         else:
-            super(FindNodeShapeDialog, self).keyPressEvent(event)
+            super(NodeShapeListDialog, self).keyPressEvent(event)
 
     def enableDialogMode(self):
         self.shape_list_view.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -100,8 +100,8 @@ class FindNodeShapeDialog(QDialog):
         self.cancel_button.setVisible(True)
 
     @classmethod
-    def getShapeName(cls, parent=hou.qt.mainWindow(), title='Find Node Shape', name=None):
-        window = FindNodeShapeDialog(parent)
+    def getShapeName(cls, parent=hou.qt.mainWindow(), title='Node Shapes', name=None):
+        window = NodeShapeListDialog(parent)
         window.setWindowTitle('TDK: ' + title)
         window.enableDialogMode()
 
@@ -118,5 +118,5 @@ class FindNodeShapeDialog(QDialog):
 
 
 def findNodeShape(**kwargs):
-    window = FindNodeShapeDialog(hou.qt.mainWindow())
+    window = NodeShapeListDialog(hou.qt.mainWindow())
     window.show()

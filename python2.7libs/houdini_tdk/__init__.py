@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from .find_icon import FindIconDialog, findIcon
-from .find_node_shape import FindNodeShapeDialog, findNodeShape
+from .node_shape_list_dialog import NodeShapeListDialog, findNodeShape
 from .generate_code import showGenerateCode
 from .hda_doctor import HDADoctorWindow
 from .make_hda_by_template import MakeHDAByTemplateDialog, showMakeHDAByTemplateDialog

@@ -34,7 +34,7 @@ except ImportError:
 import hou
 
 from .find_icon import FindIconDialog
-from .find_node_shape import FindNodeShapeDialog
+from .node_shape_list_dialog import NodeShapeListDialog
 from .notification import notify
 from .node_shape import NodeShape
 
@@ -409,7 +409,7 @@ class NodeShapeField(QWidget):
             return name
 
     def _pickShape(self):
-        shape_name = FindNodeShapeDialog.getShapeName(self, 'Pick Node Shape', self.edit.text())
+        shape_name = NodeShapeListDialog.getShapeName(self, 'Pick Node Shape', self.edit.text())
         if shape_name:
             self.edit.setText(shape_name)
 
