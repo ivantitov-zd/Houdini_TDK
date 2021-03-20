@@ -296,14 +296,19 @@ class IconListDialog(QDialog):
             self.icon_list_model.setIconSize(size)
             self.icon_list_view.setIconSize(QSize(size, size))
 
+    def zoomIn(self, amount=4):
+        self.setIconSize(self.icon_list_model.iconSize() + amount)
+
+    def zoomOut(self, amount=4):
+        self.setIconSize(self.icon_list_model.iconSize() - amount)
+
     def eventFilter(self, watched, event):
         if watched == self.icon_list_view.viewport() and event.type() == QEvent.Wheel:
             if event.modifiers() == Qt.ControlModifier:
                 if event.delta() > 0:
-                    new_size = self.icon_list_model.iconSize() + 4
+                    self.zoomIn()
                 else:
-                    new_size = self.icon_list_model.iconSize() - 4
-                self.setIconSize(new_size)
+                    self.zoomOut()
                 return True
         return False
 
@@ -311,6 +316,10 @@ class IconListDialog(QDialog):
         if event.matches(QKeySequence.Find) or event.key() == Qt.Key_F3:
             self.filter_field.setFocus()
             self.filter_field.selectAll()
+        elif event.matches(QKeySequence.ZoomIn):
+            self.zoomIn()
+        elif event.matches(QKeySequence.ZoomOut):
+            self.zoomOut()
         else:
             super(IconListDialog, self).keyPressEvent(event)
 
