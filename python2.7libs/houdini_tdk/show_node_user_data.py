@@ -118,7 +118,7 @@ def prettify(text):
         return '\n'.join(r.expand(r'\1 = \2;') for r in ini_regex.finditer(text))
 
     # \n is delimiter
-    ini_wo_semicolon_regex = re.compile(r'([\w\d\"]+)[\s\n]*:?=[\s\n]*([\w\d\S]+)(?:\n|$)')
+    ini_wo_semicolon_regex = re.compile(r'([\w\d\"]+)[\s]*:?=[\s]*([\w\d\S]+)(?:\n|$)')
     if ini_wo_semicolon_regex.match(text):
         return '\n'.join(r.expand(r'\1 = \2;') for r in ini_wo_semicolon_regex.finditer(text))
 
