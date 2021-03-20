@@ -30,48 +30,43 @@ except ImportError:
 import hou
 
 from .filter_field import FilterField
+from .slider import Slider
 from .fuzzy_filter_proxy_model import FuzzyFilterProxyModel
-
-ICON_SIZE = 64
-
-
-class IconCache:
-    # Icons
-    DEFAULT_ICON = hou.qt.Icon('MISC_tier_one', ICON_SIZE, ICON_SIZE)
-
-    # Data
-    data = {}
-
-    @staticmethod
-    def icon(name):
-        if name not in IconCache.data:
-            try:
-                IconCache.data[name] = hou.qt.Icon(name, ICON_SIZE, ICON_SIZE)
-            except hou.OperationFailed:
-                IconCache.data[name] = IconCache.DEFAULT_ICON
-        return IconCache.data[name]
 
 
 class IconListModel(QAbstractListModel):
     def __init__(self, parent=None):
         super(IconListModel, self).__init__(parent)
 
+        self._icon_size = 64
+
         # Data
         ICON_INDEX_FILE = hou.expandString('$HFS/houdini/config/Icons/SVGIcons.index')
         self.__data = tuple(sorted(hou.loadIndexDataFromFile(ICON_INDEX_FILE).keys()))
+
+    def iconSize(self):
+        return self._icon_size
+
+    def setIconSize(self, size):
+        self._icon_size = size
+        self.dataChanged.emit(self.index(0, 0), self.index(len(self.__data), 0), [Qt.DecorationRole])
 
     def rowCount(self, parent):
         return len(self.__data)
 
     def data(self, index, role):
+        if not index.isValid():
+            return
+
         icon_name = self.__data[index.row()]
+
         if role == Qt.DisplayRole:
             label = icon_name.replace('.svg', '')  # VOP_wood.svg -> VOP_wood
             if '_' in label:
                 label = ' '.join(label.split('_')[1:]).title()  # VOP_wood -> Wood
             return label
         elif role == Qt.DecorationRole:
-            return IconCache.icon(icon_name)
+            return hou.qt.Icon(icon_name, self._icon_size, self._icon_size)
         elif role == Qt.UserRole or role == Qt.ToolTipRole:
             return icon_name
 
@@ -90,7 +85,6 @@ class IconListView(QListView):
     def __init__(self):
         super(IconListView, self).__init__()
         self.setViewMode(QListView.IconMode)
-        self.setIconSize(QSize(ICON_SIZE, ICON_SIZE))
 
         self.setUniformItemSizes(True)
         self.setBatchSize(60)
@@ -145,7 +139,8 @@ class IconListView(QListView):
         indexes = self.selectedIndexes()
         if len(indexes) == 1:
             name = indexes[0].data(Qt.UserRole)
-            return hou.qt.Icon(name, ICON_SIZE, ICON_SIZE).pixmap(ICON_SIZE, ICON_SIZE)
+            icon_size = self.model().iconSize()
+            return hou.qt.Icon(name, icon_size, icon_size).pixmap(icon_size, icon_size)
 
     def copySelectedIcon(self):
         image = self._selectedImage()
@@ -237,21 +232,37 @@ class IconListDialog(QDialog):
         main_layout.setContentsMargins(4, 4, 4, 4)
         main_layout.setSpacing(4)
 
-        # Filter
-        self.filter_field = FilterField()
-        main_layout.addWidget(self.filter_field)
+        top_layout = QHBoxLayout()
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.setSpacing(4)
+        main_layout.addLayout(top_layout)
 
         # Icon List
         self.icon_list_model = IconListModel(self)
 
         self.filter_proxy_model = FuzzyFilterProxyModel(self)
         self.filter_proxy_model.setSourceModel(self.icon_list_model)
-        self.filter_field.textChanged.connect(self.filter_proxy_model.setFilterPattern)
 
         self.icon_list_view = IconListView()
         self.icon_list_view.setModel(self.filter_proxy_model)
         self.icon_list_view.itemDoubleClicked.connect(self.accept)
         main_layout.addWidget(self.icon_list_view)
+
+        # Filter
+        self.filter_field = FilterField()
+        self.filter_field.textChanged.connect(self.filter_proxy_model.setFilterPattern)
+        top_layout.addWidget(self.filter_field)
+
+        # Scale
+        self.slider = Slider(Qt.Horizontal)
+        self.slider.setFixedWidth(120)
+        self.slider.setDefaultValue(64)
+        self.slider.setRange(48, 128)
+        self.slider.valueChanged.connect(lambda v: self.slider.setToolTip(str(v)))
+        self.slider.valueChanged.connect(self.icon_list_model.setIconSize)
+        self.slider.valueChanged.connect(lambda v: self.icon_list_view.setIconSize(QSize(v, v)))
+        self.slider.setValue(64)
+        top_layout.addWidget(self.slider)
 
         # Buttons
         buttons_layout = QHBoxLayout()
