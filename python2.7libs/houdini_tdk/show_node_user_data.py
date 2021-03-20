@@ -207,7 +207,7 @@ class UserDataWindow(QWidget):
         self.word_wrap_toggle = QPushButton()
         self.word_wrap_toggle.setCheckable(True)
         self.word_wrap_toggle.setChecked(True)
-        self.word_wrap_toggle.setToolTip('Word Wrap')
+        self.word_wrap_toggle.setToolTip('Word-Wrap')
         self.word_wrap_toggle.setFixedSize(24, 24)
         self.word_wrap_toggle.setIcon(hou.qt.Icon('BUTTONS_decrease_indent', 16, 16))
         self.word_wrap_toggle.toggled.connect(self.setWordWrapEnabled)
