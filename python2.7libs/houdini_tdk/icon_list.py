@@ -194,8 +194,14 @@ class IconListView(QListView):
         self._menu.addAction(self._save_image_action)
 
     def _updateContextMenu(self):
-        selected_indices = self.selectedIndexes()
-        if len(selected_indices) == 1:
+        selection_size = len(self.selectedIndexes())
+
+        if selection_size == 0:
+            self._menu.setEnabled(False)
+        else:
+            self._menu.setEnabled(True)
+
+        if selection_size == 1:
             self._copy_image_action.setEnabled(True)
             self._save_image_action.setEnabled(True)
         else:
@@ -258,7 +264,7 @@ class IconListDialog(QDialog):
         self.slider.setFixedWidth(120)
         self.slider.setDefaultValue(64)
         self.slider.setRange(48, 128)
-        self.slider.valueChanged.connect(lambda v: self.slider.setToolTip(str(v)))
+        self.slider.valueChanged.connect(lambda v: self.slider.setToolTip('Size: ' + str(v)))
         self.slider.valueChanged.connect(self.icon_list_model.setIconSize)
         self.slider.valueChanged.connect(lambda v: self.icon_list_view.setIconSize(QSize(v, v)))
         self.slider.setValue(64)
