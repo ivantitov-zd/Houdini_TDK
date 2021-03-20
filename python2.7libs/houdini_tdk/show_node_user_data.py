@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import json
+import re
 
 try:
     from PyQt5.QtWidgets import *
@@ -28,10 +29,11 @@ except ImportError:
     from PySide2.QtWidgets import *
     from PySide2.QtGui import *
     from PySide2.QtCore import *
+from lxml import etree
 
 import hou
 
-from notification import notify
+from .notification import notify
 
 
 class UserDataItem:
@@ -92,14 +94,59 @@ class UserDataListView(QListView):
         self.setAlternatingRowColors(True)
 
 
+def prettify(text):
+    # JSON
+    try:
+        data = json.loads(text)
+        return json.dumps(data, indent=4)
+    except ValueError:
+        pass
+
+    # XML
+    try:
+        parser = etree.XMLParser(remove_blank_text=True, resolve_entities=False, strip_cdata=False)
+        data = etree.XML(text, parser)
+        data = etree.tostring(data, encoding='unicode', pretty_print=True)
+        return data
+    except etree.XMLSyntaxError:
+        pass
+
+    # INI-like
+    # \n allowed, delimiter is ;
+    ini_regex = re.compile(r'([\w\d\"]+)[\s\n]*:?=[\s\n]*([\w\d\S]+)\n*;')
+    if ini_regex.match(text):
+        return '\n'.join(r.expand(r'\1 = \2;') for r in ini_regex.finditer(text))
+
+    # \n is delimiter
+    ini_wo_semicolon_regex = re.compile(r'([\w\d\"]+)[\s\n]*:?=[\s\n]*([\w\d\S]+)(?:\n|$)')
+    if ini_wo_semicolon_regex.match(text):
+        return '\n'.join(r.expand(r'\1 = \2;') for r in ini_wo_semicolon_regex.finditer(text))
+
+    # Todo: Comma-separated sequence
+
+    return text
+
+
 class UserDataWindow(QWidget):
     def __init__(self, parent=None):
         super(UserDataWindow, self).__init__(parent, Qt.Window)
 
+        # Data
+        self._current_key = None
+        self._node = None
+
+        # State
+        self._pinned = True
+        self._auto_update = True
+        self._word_wrap = True
+        self._prettify = False
+
+        # Window
+        self.updateWindowTitle()
         self.setWindowIcon(hou.qt.Icon('TOP_jsondata', 32, 32))
 
         # Layout
-        main_layout = QVBoxLayout(self)
+        main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(4, 4, 4, 4)
         main_layout.setSpacing(4)
 
@@ -117,68 +164,78 @@ class UserDataWindow(QWidget):
         splitter.addWidget(self.user_data_list)
 
         # Data View
-        self.user_data_view = QTextEdit()
+        self.user_data_view = QTextBrowser()
+        self.user_data_view.setOpenLinks(True)
+        self.user_data_view.setOpenExternalLinks(True)
+        self.user_data_view.setPlaceholderText('Key has no data')
+        self.user_data_view.installEventFilter(self)
         splitter.addWidget(self.user_data_view)
 
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 3)
 
-        # Data
-        self._current_key = None
-        self._node = None
-
         # Update
-        bottom_layout = QHBoxLayout()
-        bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bottom_layout.setSpacing(4)
-        main_layout.addLayout(bottom_layout)
-
-        update_button = QPushButton()
-        update_button.setToolTip('Update from Node')
-        update_button.setFixedSize(24, 24)
-        update_button.setIcon(hou.qt.Icon('NETVIEW_reload', 16, 16))
-        update_button.clicked.connect(self.updateData)
-        bottom_layout.addWidget(update_button)
+        options_layout = QVBoxLayout()
+        options_layout.setContentsMargins(0, 0, 0, 0)
+        options_layout.setSpacing(4)
+        main_layout.addLayout(options_layout)
 
         self.update_timer = QTimer(self)
         self.update_timer.setInterval(500)
         self.update_timer.timeout.connect(self.updateData)
 
-        self.auto_update_toggle = QCheckBox('Auto Update')
-        self.auto_update_toggle.setFixedWidth(100)
+        self.pin_toggle = QPushButton()
+        self.pin_toggle.setCheckable(True)
+        self.pin_toggle.setChecked(True)
+        self.pin_toggle.setToolTip('Pin to node')
+        self.pin_toggle.setFixedSize(24, 24)
+        self.pin_toggle.setIcon(hou.qt.Icon('BUTTONS_pinned', 16, 16))
+        options_layout.addWidget(self.pin_toggle)
+
+        self.auto_update_toggle = QPushButton()
+        self.auto_update_toggle.setCheckable(True)
         self.auto_update_toggle.setChecked(True)
-        self.auto_update_toggle.toggled.connect(self._switchTimer)
-        bottom_layout.addWidget(self.auto_update_toggle, 0)
+        self.auto_update_toggle.setToolTip('Auto Update')
+        self.auto_update_toggle.setFixedSize(24, 24)
+        self.auto_update_toggle.setIcon(hou.qt.Icon('NETVIEW_reload', 16, 16))
+        self.auto_update_toggle.toggled.connect(self.__toggleUpdateTimer)
+        options_layout.addWidget(self.auto_update_toggle)
 
-        bottom_layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Ignored))
+        self.word_wrap_toggle = QPushButton()
+        self.word_wrap_toggle.setCheckable(True)
+        self.word_wrap_toggle.setChecked(True)
+        self.word_wrap_toggle.setToolTip('Word Wrap')
+        self.word_wrap_toggle.setFixedSize(24, 24)
+        self.word_wrap_toggle.setIcon(hou.qt.Icon('BUTTONS_decrease_indent', 16, 16))
+        self.word_wrap_toggle.toggled.connect(self.setWordWrapEnabled)
+        options_layout.addWidget(self.word_wrap_toggle)
 
-        self.prettify_json_button = QPushButton()
-        self.prettify_json_button.setToolTip('Prettify JSON')
-        self.prettify_json_button.setFixedSize(24, 24)
-        self.prettify_json_button.setIcon(hou.qt.Icon('TOP_jsondata', 16, 16))
-        self.prettify_json_button.clicked.connect(self._prettifyJSON)
-        bottom_layout.addWidget(self.prettify_json_button)
+        self.prettify_toggle = QPushButton()
+        self.prettify_toggle.setCheckable(True)
+        self.prettify_toggle.setChecked(False)
+        self.prettify_toggle.setToolTip('Prettify')
+        self.prettify_toggle.setFixedSize(24, 24)
+        self.prettify_toggle.setIcon(hou.qt.Icon('TOP_jsondata', 16, 16))
+        self.prettify_toggle.toggled.connect(self.setPrettifyEnabled)
+        options_layout.addWidget(self.prettify_toggle)
 
-    def _updatePrettifyJSONButtonVisibility(self):
-        text = self.user_data_view.toPlainText()
-        try:
-            data = json.loads(text)
+        options_layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Preferred, QSizePolicy.Expanding))
 
-            if text == json.dumps(data, indent=4):
-                raise ValueError
+    def updateWindowTitle(self):
+        title = 'TDK: Node User Data'
+        if self._node:
+            title += ': ' + self._node.path()
+        self.setWindowTitle(title)
 
-            self.prettify_json_button.setVisible(True)
-        except ValueError:
-            self.prettify_json_button.setVisible(False)
+    def setWordWrapEnabled(self, enable):
+        if enable:
+            self.user_data_view.setWordWrapMode(QTextOption.WrapAtWordBoundaryOrAnywhere)
+        else:
+            self.user_data_view.setWordWrapMode(QTextOption.NoWrap)
 
-    def _prettifyJSON(self):
-        text = self.user_data_view.toPlainText()
-        try:
-            data = json.loads(text)
-            text = json.dumps(data, indent=4)
-            self.user_data_view.setPlainText(text)
-        except ValueError:
-            return
+    def setPrettifyEnabled(self, enable):
+        self._prettify = enable
+        self.updateData()
 
     def _readData(self):
         selection_model = self.user_data_list.selectionModel()
@@ -188,28 +245,14 @@ class UserDataWindow(QWidget):
             return
 
         self._current_key = index.data(Qt.DisplayRole)
-        value = index.data(Qt.UserRole)
-        self.user_data_view.setText(value)
-        self._updatePrettifyJSONButtonVisibility()
+        data = index.data(Qt.UserRole)
 
-    def _switchTimer(self):
-        if self.update_timer.isActive():
-            self.update_timer.stop()
-        else:
-            self.update_timer.start()
+        if self._prettify:
+            data = prettify(data)
 
-    # def _removeCallbacks(self):
-    #     if self.node:
-    #         node.removeEventCallback((hou.nodeEventType.CustomDataChanged,), self.updateData)
+        self.user_data_view.setText(data)
 
-    def __del__(self):
-        # self._removeCallbacks()
-        self.update_timer.stop()
-
-    def updateData(self, auto=True):
-        if auto and not self.auto_update_toggle.isChecked():
-            return
-
+    def updateData(self):
         if self._node:
             self.user_data_model.updateDataFromNode(self._node)
 
@@ -218,14 +261,39 @@ class UserDataWindow(QWidget):
             self.user_data_list.setCurrentIndex(new_index)
 
     def setCurrentNode(self, node):
-        if self._node:
-            self._removeCallbacks()
-
         self._node = node
-        # node.addEventCallback((hou.nodeEventType.CustomDataChanged,), self.updateData)
+        self.updateData()
         self.update_timer.start()
-        self.updateData(False)
-        self.setWindowTitle('TDK: Node User Data: ' + node.path())
+        self.updateWindowTitle()
+
+    def __toggleUpdateTimer(self):
+        if self.update_timer.isActive():
+            self.update_timer.stop()
+        else:
+            self.update_timer.start()
+
+    def keyPressEvent(self, event):
+        if event.matches(QKeySequence.Refresh):
+            self.updateData()
+        else:
+            super(UserDataWindow, self).keyPressEvent(event)
+
+    def eventFilter(self, watched, event):
+        if watched == self.user_data_view and event.type() == QEvent.Wheel:
+            if event.modifiers() == Qt.ControlModifier:
+                if event.delta() > 0:
+                    self.user_data_view.zoomIn(2)
+                else:
+                    self.user_data_view.zoomOut(2)
+                return True
+        return False
+
+    def __del__(self):
+        self.update_timer.stop()
+
+    def hideEvent(self, event):
+        self.update_timer.stop()
+        super(UserDataWindow, self).hideEvent(event)
 
 
 def showNodeUserData(node=None, **kwargs):
