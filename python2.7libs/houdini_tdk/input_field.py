@@ -30,9 +30,7 @@ except ImportError:
 
 class InputField(QLineEdit):
     def keyPressEvent(self, event):
-        key = event.key()
-
-        if key == Qt.Key_Escape:
+        if event.matches(QKeySequence.Cancel):
             self.clear()
         else:
             super(InputField, self).keyPressEvent(event)

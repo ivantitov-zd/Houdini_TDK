@@ -37,6 +37,7 @@ from .icon_list import IconListDialog
 from .node_shape_list_dialog import NodeShapeListDialog
 from .notification import notify
 from .node_shape import NodeShape
+from .input_field import InputField
 
 
 def qColorFromHoudiniColor(color):
@@ -144,7 +145,7 @@ class IconField(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
-        self.edit = QLineEdit()
+        self.edit = InputField()
         layout.addWidget(self.edit)
 
         self.icon_preview = QLabel()
@@ -240,7 +241,7 @@ class LocationField(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
-        self.edit = QLineEdit(content)
+        self.edit = InputField(content)
         layout.addWidget(self.edit)
 
         self.pick_location_button = QPushButton()
@@ -274,7 +275,7 @@ class ColorField(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
-        self.edit = QLineEdit()
+        self.edit = InputField()
         self.edit.setText(self.node_color.name())
         self.edit.installEventFilter(self)
         layout.addWidget(self.edit)
@@ -368,7 +369,7 @@ class NodeShapeField(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
-        self.edit = QLineEdit(self.node_shape)
+        self.edit = InputField(self.node_shape)
         self.edit.installEventFilter(self)
         layout.addWidget(self.edit)
 
@@ -394,9 +395,6 @@ class NodeShapeField(QWidget):
                 modifiers = event.modifiers()
                 if button == Qt.LeftButton and modifiers == Qt.NoModifier:
                     self.edit.selectAll()
-                    return True
-                elif button == Qt.MiddleButton and modifiers == Qt.ControlModifier:
-                    self.edit.clear()
                     return True
         return False
 
@@ -437,26 +435,26 @@ class MakeHDAByTemplateDialog(QDialog):
         self.location_field = LocationField('$HOUDINI_USER_PREF_DIR/otls')
         form_layout.addRow('Location', self.location_field)
 
-        self.label_field = QLineEdit()
+        self.label_field = InputField()
         self.label_field.textChanged.connect(self._onLabelChanged)
         form_layout.addRow('Label', self.label_field)
 
-        self.name_field = QLineEdit()
+        self.name_field = InputField()
         self.name_field.textChanged.connect(self._onNameChanged)
         form_layout.addRow('Name', self.name_field)
 
-        self.author_field = QLineEdit()
+        self.author_field = InputField()
         self.author_field.textChanged.connect(self._onAuthorChanged)
         form_layout.addRow('Author', self.author_field)
 
-        self.sections = QLineEdit()
+        self.sections = InputField()
         self.sections.textChanged.connect(self._onSectionsChanged)
         form_layout.addRow('Sections', self.sections)
 
         self.icon_field = IconField()
         form_layout.addRow('Icon', self.icon_field)
 
-        self.version_field = QLineEdit('1.0')
+        self.version_field = InputField('1.0')
         form_layout.addRow('Version', self.version_field)
 
         self.color_field = ColorField(node)
