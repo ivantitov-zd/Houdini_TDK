@@ -122,7 +122,10 @@ def prettify(text):
     if ini_wo_semicolon_regex.match(text):
         return '\n'.join(r.expand(r'\1 = \2') for r in ini_wo_semicolon_regex.finditer(text))
 
-    # Todo: Comma-separated sequence
+    # Comma-separated sequence
+    comma_separated_seq_regex = re.compile(r'(?:\s*)(.+?)(?:\s*)(?:,|$)')
+    if comma_separated_seq_regex.match(text):
+        return ',\n'.join(comma_separated_seq_regex.findall(text))
 
     return text
 
