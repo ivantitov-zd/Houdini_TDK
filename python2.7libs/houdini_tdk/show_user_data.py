@@ -365,11 +365,15 @@ class UserDataWindow(QWidget):
                 else:
                     self.user_data_view.zoomOut(2)
                 return True
-        elif self._current_key == 'nodeshape' and \
-                watched == self.user_data_view.viewport() and event.type() == QEvent.Paint:
-            self.shape_preview.setFixedSize(event.rect().size())
-            self.shape_preview.render(watched, -self.user_data_view.rect().topLeft())
-
+        elif self._current_key == 'nodeshape' and watched == self.user_data_view.viewport():
+            if event.type() == QEvent.Resize:
+                self.shape_preview.setFixedSize(event.size())
+                self.shape_preview.recacheShape(20)
+            elif event.type() == QEvent.Paint:
+                pixmap = QPixmap(event.rect().size())
+                self.shape_preview.render(pixmap, QPoint())
+                painter = QPainter(watched)
+                painter.drawPixmap(event.rect().topLeft(), pixmap)
         return False
 
     def __del__(self):

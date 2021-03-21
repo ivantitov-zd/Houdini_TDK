@@ -39,8 +39,8 @@ class NodeShapePreview(QWidget):
         self._shape = None
         self._path = None
 
-    def recacheShape(self):
-        rect = self.rect().adjusted(1, 1, -1, -1)
+    def recacheShape(self, spacing=1):
+        rect = self.rect().adjusted(spacing, spacing, -spacing, -spacing)
         self._path = self._shape.fittedInRect(rect).painterPath()
         self.repaint()
 
@@ -70,10 +70,12 @@ class NodeShapePreview(QWidget):
 
         p = QPainter(self)
 
+        p.eraseRect(event.rect())
+
         rect_width = event.rect().width()
-        if rect_width < 500:
+        if rect_width < 800:
             p.setRenderHint(QPainter.Antialiasing)
-            if rect_width < 300:
+            if rect_width < 400:
                 p.setRenderHint(QPainter.HighQualityAntialiasing)
 
         p.setBrush(p.pen().color().darker())
