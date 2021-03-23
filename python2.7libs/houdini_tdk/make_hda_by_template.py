@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import print_function
 
 import os
+from lxml import etree
 
 try:
     from PyQt5.QtWidgets import *
@@ -50,7 +51,7 @@ def houdiniColorFromQColor(color):
 
 
 def makeNewHDAFromTemplateNode(template_node, label, name=None, namespace=None, icon=None,
-                               sections=None, version='1.0', location='$HOUDINI_USER_PREF_DIR/otls',
+                               tab_sections=None, version='1.0', location='$HOUDINI_USER_PREF_DIR/otls',
                                inherit_subnetwork=True, inherit_parm_template_group=True, color=None,
                                shape=None):
     location = hou.expandString(location)
@@ -98,15 +99,26 @@ def makeNewHDAFromTemplateNode(template_node, label, name=None, namespace=None, 
     if icon:
         new_def.setIcon(icon)
 
-    tools = new_def.sections()['Tools.shelf']
-    content = tools.contents()
-    sections = sections or 'Digital Assets'
-    try:
-        content = content[:content.index('<toolSubmenu>') + len('<toolSubmenu>')] + \
-                  sections + content[content.index('</toolSubmenu>'):]
-        tools.setContents(content)
-    except ValueError:
-        pass
+    if tab_sections and tab_sections.strip():
+        sections = (section.strip() for section in tab_sections.split(','))
+        try:
+            tools = new_def.sections()['Tools.shelf']
+            content = tools.contents()
+            parser = etree.XMLParser(remove_blank_text=True, resolve_entities=False, strip_cdata=False)
+            root = etree.fromstring(content.encode('utf-8'), parser)
+
+            tool = root.find('tool')
+            for submenu in tool.findall('toolSubmenu'):
+                tool.remove(submenu)
+
+            for section in sections:
+                submenu = etree.Element('toolSubmenu')
+                submenu.text = section
+                tool.append(submenu)
+
+            tools.setContents(etree.tostring(root, encoding='utf-8', pretty_print=True))
+        except KeyError:
+            pass
 
     if new_def.hasSection('PreFirstCreate') and extra_file_options.get('PreFirstCreate/IsPython'):
         pre_first_create_section = new_def.sections()['PreFirstCreate']
