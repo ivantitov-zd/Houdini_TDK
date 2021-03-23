@@ -31,11 +31,11 @@ except ImportError:
 
 import hou
 
-from .filter_field import FilterField
+from ..fuzzy_filter_proxy_model import FuzzyFilterProxyModel
+from ..widgets.filter_field import FilterField
 from .node_shape_list_model import NodeShapeListModel
 from .node_shape_list_view import NodeShapeListView
 from .node_shape_delegate import NodeShapeDelegate
-from .fuzzy_filter_proxy_model import FuzzyFilterProxyModel
 
 
 class NodeShapeListDialog(QDialog):

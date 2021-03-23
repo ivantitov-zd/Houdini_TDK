@@ -36,7 +36,7 @@ except ImportError:
 
 import hou
 
-from notification import notify
+from .notification import notify
 
 
 def _openCode(code, node, in_houdini):

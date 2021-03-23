@@ -113,7 +113,6 @@ EXCLUDED_SHAPES = ('vop', 'task', 'shop', 'cop2', 'subnet_input')
 
 
 class NodeShape(object):
-
     def __init__(self):
         self.__valid = False
         self.__name = None

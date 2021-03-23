@@ -16,11 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from .icon_list import IconListDialog, findIcon
-from .node_shapes import NodeShapeListDialog, findNodeShape
-from .generate_code import showGenerateCode
-from .hda_doctor import HDADoctorWindow
-from .make_hda_by_template import MakeHDAByTemplateDialog, showMakeHDAByTemplateDialog
-from .new_hda_version import NewVersionDialog, showNewVersionDialog
-from .show_user_data import UserDataWindow, showNodeUserData
-from .utils import openFileLocation
+try:
+    from PyQt5.QtWidgets import *
+    from PyQt5.QtGui import *
+    from PyQt5.QtCore import *
+
+    Signal = pyqtSignal
+except ImportError:
+    from PySide2.QtWidgets import *
+    from PySide2.QtGui import *
+    from PySide2.QtCore import *
+
+import hou
+
+
+class OperatorManagerTypesModel(QAbstractItemModel):
+    def __init__(self, parent=None):
+        super(OperatorManagerTypesModel, self).__init__(parent)

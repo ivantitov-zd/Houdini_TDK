@@ -34,7 +34,7 @@ from lxml import etree
 
 import hou
 
-from .node_shape_preview import NodeShapePreview
+from .node_shapes import NodeShapePreview
 from .notification import notify
 
 
@@ -65,12 +65,12 @@ class FilterEmptyProxyModel(QSortFilterProxyModel):
         return bool(data)
 
 
-class UserDataModel(QAbstractListModel):
+class UserDataKeyModel(QAbstractListModel):
     DEFAULT_ICON = hou.qt.Icon('DATATYPES_file', 16, 16)
     CACHED_DATA_ICON = hou.qt.Icon('NETVIEW_time_dependent_badge', 16, 16)
 
     def __init__(self, parent=None):
-        super(UserDataModel, self).__init__(parent)
+        super(UserDataKeyModel, self).__init__(parent)
 
         # Data
         self.__data = []
@@ -110,9 +110,9 @@ class UserDataModel(QAbstractListModel):
             return item.key
         elif role == Qt.DecorationRole:
             if item.cached:
-                return UserDataModel.CACHED_DATA_ICON
+                return UserDataKeyModel.CACHED_DATA_ICON
             else:
-                return UserDataModel.DEFAULT_ICON
+                return UserDataKeyModel.DEFAULT_ICON
         elif role == Qt.UserRole:
             return item.data
 
@@ -152,8 +152,6 @@ def prettify(text):
     if ini_wo_semicolon_regex.match(text):
         return '\n'.join(r.expand(r'\1 = \2') for r in ini_wo_semicolon_regex.finditer(text))
 
-    # Todo: CSV
-
     # Comma-separated sequence
     comma_separated_seq_regex = re.compile(r'(?:\s*)(.+?)(?:\s*)(?:,|$)')
     if comma_separated_seq_regex.match(text):
@@ -189,17 +187,17 @@ class UserDataWindow(QWidget):
         main_layout.addWidget(splitter)
 
         # Key List
-        self.user_data_model = UserDataModel()
+        self.user_data_key_model = UserDataKeyModel()
 
-        self.user_data_filter_model = FilterEmptyProxyModel()
-        self.user_data_filter_model.setSourceModel(self.user_data_model)
+        self.user_data_key_filter_model = FilterEmptyProxyModel()
+        self.user_data_key_filter_model.setSourceModel(self.user_data_key_model)
 
-        self.user_data_list = UserDataListView()
-        self.user_data_list.setModel(self.user_data_filter_model)
-        self.user_data_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        selection_model = self.user_data_list.selectionModel()
+        self.user_data_key_list = UserDataListView()
+        self.user_data_key_list.setModel(self.user_data_key_filter_model)
+        self.user_data_key_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        selection_model = self.user_data_key_list.selectionModel()
         selection_model.currentChanged.connect(self._readData)
-        splitter.addWidget(self.user_data_list)
+        splitter.addWidget(self.user_data_key_list)
 
         # Data View
         self.user_data_view = QTextEdit()
@@ -241,7 +239,7 @@ class UserDataWindow(QWidget):
         self.hide_empty_toggle.setToolTip('Hide Empty')
         self.hide_empty_toggle.setFixedSize(24, 24)
         self.hide_empty_toggle.setIcon(hou.qt.Icon('NETVIEW_hidden_flag', 16, 16))
-        self.hide_empty_toggle.toggled.connect(self.user_data_filter_model.setEnabled)
+        self.hide_empty_toggle.toggled.connect(self.user_data_key_filter_model.setEnabled)
         options_layout.addWidget(self.hide_empty_toggle)
 
         self.auto_update_toggle = QPushButton()
@@ -290,7 +288,7 @@ class UserDataWindow(QWidget):
         self.updateData()
 
     def _readData(self):
-        selection_model = self.user_data_list.selectionModel()
+        selection_model = self.user_data_key_list.selectionModel()
         index = selection_model.currentIndex()
 
         if not index.isValid():
@@ -333,12 +331,12 @@ class UserDataWindow(QWidget):
 
     def updateData(self):
         if self._node:
-            self.user_data_model.updateDataFromNode(self._node)
+            self.user_data_key_model.updateDataFromNode(self._node)
 
-        new_index = self.user_data_model.indexByKey(self._current_key)
-        new_index = self.user_data_filter_model.mapFromSource(new_index)
+        new_index = self.user_data_key_model.indexByKey(self._current_key)
+        new_index = self.user_data_key_filter_model.mapFromSource(new_index)
         if new_index.isValid():
-            self.user_data_list.setCurrentIndex(new_index)
+            self.user_data_key_list.setCurrentIndex(new_index)
 
     def setCurrentNode(self, node):
         self._node = node

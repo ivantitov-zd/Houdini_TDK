@@ -16,11 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from .icon_list import IconListDialog, findIcon
-from .node_shapes import NodeShapeListDialog, findNodeShape
-from .generate_code import showGenerateCode
-from .hda_doctor import HDADoctorWindow
-from .make_hda_by_template import MakeHDAByTemplateDialog, showMakeHDAByTemplateDialog
-from .new_hda_version import NewVersionDialog, showNewVersionDialog
-from .show_user_data import UserDataWindow, showNodeUserData
-from .utils import openFileLocation
+import hou
+
+
+def standardIconExists(name):
+    try:
+        hou.qt.Icon(name, 16, 16)
+        return True
+    except hou.OperationFailed:
+        return False

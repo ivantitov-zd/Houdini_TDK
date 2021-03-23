@@ -29,7 +29,7 @@ except ImportError:
     from PySide2.QtGui import *
     from PySide2.QtCore import *
 
-from houdini_tdk.node_shape_list_model import NodeShapeListModel
+from .node_shape_list_model import NodeShapeListModel
 
 qInstallMessageHandler(lambda *args: None)
 

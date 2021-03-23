@@ -35,11 +35,10 @@ except ImportError:
 import hou
 
 from .icon_list import IconListDialog, standardIconExists
-from .node_shape_list_dialog import NodeShapeListDialog
-from .node_shape_preview import NodeShapePreview
+from .node_shapes import NodeShapeListDialog, NodeShapePreview
 from .notification import notify
-from .node_shape import NodeShape
-from .input_field import InputField
+from .node_shapes import NodeShape
+from .widgets import InputField
 
 
 def qColorFromHoudiniColor(color):

@@ -33,8 +33,8 @@ except ImportError:
 
 import hou
 
-from notification import notify
-from slider import Slider
+from .notification import notify
+from .widgets import Slider
 
 
 def versionByTypeName(name):

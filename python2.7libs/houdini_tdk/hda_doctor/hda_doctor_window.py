@@ -18,8 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import print_function
 
-import getpass
-
 try:
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
@@ -182,7 +180,7 @@ class DefNamespaceMissing(HDANameInspection):
 
     @staticmethod
     def _namespaceFromUserName():
-        return getpass.getuser().replace(' ', '_').lower()
+        return hou.userName().lower()
 
     @classmethod
     def fixVariants(cls, namespace, name, version):
@@ -401,7 +399,7 @@ class DefLabelMissing(Inspection):
         return True
 
     @staticmethod
-    def _newLabelFromHDAName():
+    def _newLabelFromHDAName(definition):
         node_type = definition.nodeType()
         _, _, name, _ = node_type.nameComponents()
         return name.replace('_', ' ').title()
@@ -409,14 +407,14 @@ class DefLabelMissing(Inspection):
     @classmethod
     def fixVariants(cls, definition):
         return [
-            FixVariant(cls._newLabelFromHDAName(), 'Label from HDA name.'),
+            FixVariant(cls._newLabelFromHDAName(definition), 'Label from HDA name.'),
             None
         ]
 
     @classmethod
     def fix(cls, definition, variant=0, value=None):
         if variant == 0:
-            definition.setDescription(cls._newLabelFromHDAName())
+            definition.setDescription(cls._newLabelFromHDAName(definition))
         elif variant == 1 and value:  # Todo: Simplify
             definition.setDescription(value)
         else:
