@@ -30,114 +30,51 @@ except ImportError:
 import hou
 
 from .filter_field import FilterField
+from .slider import Slider
+from .fuzzy_filter_proxy_model import FuzzyFilterProxyModel
 
 
-class IconCache:
-    # Icons
-    DEFAULT_ICON = hou.qt.Icon('MISC_tier_one', 48, 48)
-
-    # Data
-    data = {}
-
-    @staticmethod
-    def icon(name):
-        if name not in IconCache.data:
-            try:
-                IconCache.data[name] = hou.qt.Icon(name, 48, 48)
-            except hou.OperationFailed:
-                IconCache.data[name] = IconCache.DEFAULT_ICON
-        return IconCache.data[name]
-
-
-def fuzzyMatch(pattern, text):
-    if pattern == text:
-        return True, 999999
-
+def standardIconExists(name):
     try:
-        pattern_start = text.index(pattern)
-        pattern_length = len(pattern)
-        return True, pattern_length * pattern_length + (1 - pattern_start / 500.0)
-    except ValueError:
-        pass
-
-    weight = 0
-    count = 0
-    index = 0
-    for char in text:
-        try:
-            if char == pattern[index]:
-                count += 1
-                index += 1
-            elif count != 0:
-                weight += count * count
-                count = 0
-        except IndexError:
-            pass
-
-    weight += count * count
-    if index < len(pattern):
-        return False, weight
-
-    return True, weight + (1 - text.index(pattern[0]) / 500.0)
-
-
-class FuzzyFilterProxyModel(QSortFilterProxyModel):
-    def __init__(self, parent=None):
-        super(FuzzyFilterProxyModel, self).__init__(parent)
-
-        self.setDynamicSortFilter(True)
-        self.setFilterCaseSensitivity(Qt.CaseInsensitive)
-        self.sort(0, Qt.DescendingOrder)
-
-        self._pattern = ''
-
-    def setFilterPattern(self, pattern):
-        self._pattern = pattern.lower()
-        self.invalidate()
-
-    def filterAcceptsRow(self, source_row, source_parent):
-        if not self._pattern:
-            return True
-
-        source_model = self.sourceModel()
-        text = source_model.data(source_model.index(source_row, 0, source_parent),
-                                 Qt.UserRole)
-        matches, _ = fuzzyMatch(self._pattern, text.lower())
-        return matches
-
-    def lessThan(self, source_left, source_right):
-        if not self._pattern:
-            return source_left.row() < source_right.row()
-
-        text1 = source_left.data(Qt.DisplayRole)
-        _, weight1 = fuzzyMatch(self._pattern, text1.lower())
-
-        text2 = source_right.data(Qt.DisplayRole)
-        _, weight2 = fuzzyMatch(self._pattern, text2.lower())
-
-        return weight1 < weight2
+        hou.qt.Icon(name, 16, 16)
+        return True
+    except hou.OperationFailed:
+        return False
 
 
 class IconListModel(QAbstractListModel):
     def __init__(self, parent=None):
         super(IconListModel, self).__init__(parent)
 
+        self._icon_size = 64
+
         # Data
         ICON_INDEX_FILE = hou.expandString('$HFS/houdini/config/Icons/SVGIcons.index')
         self.__data = tuple(sorted(hou.loadIndexDataFromFile(ICON_INDEX_FILE).keys()))
+
+    def iconSize(self):
+        return self._icon_size
+
+    def setIconSize(self, size):
+        self._icon_size = size
+        self.dataChanged.emit(self.index(0, 0), self.index(len(self.__data), 0), [Qt.DecorationRole])
 
     def rowCount(self, parent):
         return len(self.__data)
 
     def data(self, index, role):
+        if not index.isValid():
+            return
+
         icon_name = self.__data[index.row()]
+
         if role == Qt.DisplayRole:
             label = icon_name.replace('.svg', '')  # VOP_wood.svg -> VOP_wood
             if '_' in label:
                 label = ' '.join(label.split('_')[1:]).title()  # VOP_wood -> Wood
             return label
         elif role == Qt.DecorationRole:
-            return IconCache.icon(icon_name)
+            return hou.qt.Icon(icon_name, self._icon_size, self._icon_size)
         elif role == Qt.UserRole or role == Qt.ToolTipRole:
             return icon_name
 
@@ -156,8 +93,10 @@ class IconListView(QListView):
     def __init__(self):
         super(IconListView, self).__init__()
         self.setViewMode(QListView.IconMode)
-        self.setIconSize(QSize(48, 48))
+
         self.setUniformItemSizes(True)
+        self.setBatchSize(60)
+        self.setLayoutMode(QListView.Batched)
 
         self.setResizeMode(QListView.Adjust)
         self.setDragDropMode(QAbstractItemView.NoDragDrop)
@@ -208,7 +147,8 @@ class IconListView(QListView):
         indexes = self.selectedIndexes()
         if len(indexes) == 1:
             name = indexes[0].data(Qt.UserRole)
-            return hou.qt.Icon(name, 48, 48).pixmap(48, 48)
+            icon_size = self.model().iconSize()
+            return hou.qt.Icon(name, icon_size, icon_size).pixmap(icon_size, icon_size)
 
     def copySelectedIcon(self):
         image = self._selectedImage()
@@ -262,8 +202,14 @@ class IconListView(QListView):
         self._menu.addAction(self._save_image_action)
 
     def _updateContextMenu(self):
-        selected_indices = self.selectedIndexes()
-        if len(selected_indices) == 1:
+        selection_size = len(self.selectedIndexes())
+
+        if selection_size == 0:
+            self._menu.setEnabled(False)
+        else:
+            self._menu.setEnabled(True)
+
+        if selection_size == 1:
             self._copy_image_action.setEnabled(True)
             self._save_image_action.setEnabled(True)
         else:
@@ -287,11 +233,11 @@ class IconListView(QListView):
             self.itemDoubleClicked.emit(index)
 
 
-class FindIconDialog(QDialog):
+class IconListDialog(QDialog):
     def __init__(self, parent=None):
-        super(FindIconDialog, self).__init__(parent, Qt.Window)
+        super(IconListDialog, self).__init__(parent, Qt.Window)
 
-        self.setWindowTitle('TDK: Find Icon')
+        self.setWindowTitle('TDK: Icons')
         self.setWindowIcon(hou.qt.Icon('MISC_m', 32, 32))
         self.resize(820, 500)
 
@@ -300,21 +246,36 @@ class FindIconDialog(QDialog):
         main_layout.setContentsMargins(4, 4, 4, 4)
         main_layout.setSpacing(4)
 
-        # Filter
-        self.filter_field = FilterField()
-        main_layout.addWidget(self.filter_field)
+        top_layout = QHBoxLayout()
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.setSpacing(4)
+        main_layout.addLayout(top_layout)
 
         # Icon List
         self.icon_list_model = IconListModel(self)
 
         self.filter_proxy_model = FuzzyFilterProxyModel(self)
         self.filter_proxy_model.setSourceModel(self.icon_list_model)
-        self.filter_field.textChanged.connect(self.filter_proxy_model.setFilterPattern)
 
         self.icon_list_view = IconListView()
         self.icon_list_view.setModel(self.filter_proxy_model)
         self.icon_list_view.itemDoubleClicked.connect(self.accept)
+        self.icon_list_view.viewport().installEventFilter(self)
         main_layout.addWidget(self.icon_list_view)
+
+        # Filter
+        self.filter_field = FilterField()
+        self.filter_field.textChanged.connect(self.filter_proxy_model.setFilterPattern)
+        top_layout.addWidget(self.filter_field)
+
+        # Scale
+        self.slider = Slider(Qt.Horizontal)
+        self.slider.setFixedWidth(120)
+        self.slider.setDefaultValue(64)
+        self.slider.setRange(48, 128)
+        self.slider.valueChanged.connect(self.setIconSize)
+        self.slider.setValue(64)
+        top_layout.addWidget(self.slider)
 
         # Buttons
         buttons_layout = QHBoxLayout()
@@ -333,12 +294,42 @@ class FindIconDialog(QDialog):
         self.cancel_button.clicked.connect(self.reject)
         buttons_layout.addWidget(self.cancel_button)
 
+    def setIconSize(self, size):
+        size = min(max(size, 48), 128)
+        if size != self.icon_list_model.iconSize():
+            self.slider.setToolTip('Size: ' + str(size))
+            self.slider.blockSignals(True)
+            self.slider.setValue(size)
+            self.slider.blockSignals(False)
+            self.icon_list_model.setIconSize(size)
+            self.icon_list_view.setIconSize(QSize(size, size))
+
+    def zoomIn(self, amount=4):
+        self.setIconSize(self.icon_list_model.iconSize() + amount)
+
+    def zoomOut(self, amount=4):
+        self.setIconSize(self.icon_list_model.iconSize() - amount)
+
+    def eventFilter(self, watched, event):
+        if watched == self.icon_list_view.viewport() and event.type() == QEvent.Wheel:
+            if event.modifiers() == Qt.ControlModifier:
+                if event.delta() > 0:
+                    self.zoomIn()
+                else:
+                    self.zoomOut()
+                return True
+        return False
+
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.Find) or event.key() == Qt.Key_F3:
             self.filter_field.setFocus()
             self.filter_field.selectAll()
+        elif event.matches(QKeySequence.ZoomIn):
+            self.zoomIn()
+        elif event.matches(QKeySequence.ZoomOut):
+            self.zoomOut()
         else:
-            super(FindIconDialog, self).keyPressEvent(event)
+            super(IconListDialog, self).keyPressEvent(event)
 
     def enableDialogMode(self):
         self.icon_list_view.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -347,8 +338,8 @@ class FindIconDialog(QDialog):
         self.cancel_button.setVisible(True)
 
     @classmethod
-    def getIconName(cls, parent=hou.qt.mainWindow(), title='Find Icon', name=None):
-        window = FindIconDialog(parent)
+    def getIconName(cls, parent=hou.qt.mainWindow(), title='Icons', name=None):
+        window = IconListDialog(parent)
         window.setWindowTitle('TDK: ' + title)
         window.enableDialogMode()
 
@@ -361,9 +352,9 @@ class FindIconDialog(QDialog):
                     break
 
         if window.exec_() and window.icon_list_view.currentIndex().isValid():
-            return window.icon_list_view.currentIndex().data(Qt.UserRole)
+            return window.icon_list_view.currentIndex().data(Qt.UserRole).replace('.svg', '')
 
 
 def findIcon(**kwargs):
-    window = FindIconDialog(hou.qt.mainWindow())
+    window = IconListDialog(hou.qt.mainWindow())
     window.show()

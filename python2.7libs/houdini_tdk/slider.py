@@ -44,12 +44,10 @@ class Slider(QSlider):
         self.setValue(self._default_value)
 
     def setDefaultValue(self, value):
-        if reset and self.value() == self._default_value:
-            self.setValue(value)
         self._default_value = value
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MiddleButton:
+        if event.button() == Qt.MiddleButton:  # Todo: Revert to default
             hou.ui.openValueLadder(self.value(), self.setValue,
                                    data_type=hou.valueLadderDataType.Int)
             self._value_ladder_active = True

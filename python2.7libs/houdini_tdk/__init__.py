@@ -16,9 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from .find_icon import FindIconDialog, findIcon
-from .new_hda_version import NewVersionDialog, showNewVersionDialog
-from .show_node_user_data import UserDataWindow, showNodeUserData
-from .make_hda_by_template import MakeHDAByTemplateDialog, showMakeHDAByTemplateDialog
+from .icon_list import IconListDialog, findIcon
+from .node_shape_list_dialog import NodeShapeListDialog, findNodeShape
 from .generate_code import showGenerateCode
 from .hda_doctor import HDADoctorWindow
+from .make_hda_by_template import MakeHDAByTemplateDialog, showMakeHDAByTemplateDialog
+from .new_hda_version import NewVersionDialog, showNewVersionDialog
+from .show_user_data import UserDataWindow, showNodeUserData
+from .utils import openFileLocation

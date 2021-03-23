@@ -11,8 +11,6 @@
     <memberTool name="houdini_tdk::increment_hda_version::1.0"/>
     <memberTool name="houdini_tdk::show_node_user_data::1.0"/>
     <memberTool name="houdini_tdk::hda_from_template::1.0"/>
-    <memberTool name="show_hda_doc"/>
-    <memberTool name="Show Net Stats"/>
   </toolshelf>
 
   <tool name="houdini_tdk::find_icon::1.0" label="Find Icon" icon="MISC_m">
@@ -121,7 +119,7 @@ tdk.showMakeHDAFromTemplateDialog(**kwargs)
 
   <tool name="houdini_tdk::generate_code::1.1" label="Generate Code" icon="MISC_python">
     <helpText><![CDATA["""Generate Python code for selected nodes and copy to clipboard.
-Use Ctrl+Click to show generated code in Code Editor instead of coping.
+Use Ctrl+Click to show generated code in Code Editor instead of copying.
 Use Shift+Click to show in your default external Code Editor.
 Use Alt+Click to set up options."""]]></helpText>
     <script scriptType="python"><![CDATA["""
