@@ -228,7 +228,12 @@ class UserDataWindow(QWidget):
         self.pin_toggle.setToolTip('Pin to node')
         self.pin_toggle.setFixedSize(24, 24)
         self.pin_toggle.setIcon(hou.qt.Icon('BUTTONS_pinned', 16, 16))
+        self.pin_toggle.toggled.connect(self.__toggleUpdateNodeTimer)
         options_layout.addWidget(self.pin_toggle)
+
+        self.current_node_timer = QTimer(self)
+        self.current_node_timer.setInterval(300)
+        self.current_node_timer.timeout.connect(self.updateCurrentNode)
 
         self.hide_empty_toggle = QPushButton()
         self.hide_empty_toggle.setCheckable(True)
@@ -338,14 +343,30 @@ class UserDataWindow(QWidget):
     def setCurrentNode(self, node):
         self._node = node
         self.updateData()
-        self.update_timer.start()
+        self.__toggleUpdateTimer()
         self.updateWindowTitle()
 
+    def updateCurrentNode(self):
+        if self.pin_toggle.isChecked():
+            return
+
+        selected_nodes = hou.selectedNodes()
+        if len(selected_nodes) != 1:
+            return
+
+        self.setCurrentNode(selected_nodes[0])
+
     def __toggleUpdateTimer(self):
-        if self.update_timer.isActive():
-            self.update_timer.stop()
-        else:
+        if self.auto_update_toggle.isChecked():
             self.update_timer.start()
+        else:
+            self.update_timer.stop()
+
+    def __toggleUpdateNodeTimer(self):
+        if self.pin_toggle.isChecked():
+            self.current_node_timer.stop()
+        else:
+            self.current_node_timer.start()
 
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.Refresh):
@@ -378,9 +399,11 @@ class UserDataWindow(QWidget):
 
     def __del__(self):
         self.update_timer.stop()
+        self.current_node_timer.stop()
 
     def hideEvent(self, event):
         self.update_timer.stop()
+        self.current_node_timer.stop()
         super(UserDataWindow, self).hideEvent(event)
 
 
