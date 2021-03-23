@@ -23,6 +23,8 @@ except ImportError:
     from PySide2.QtCore import QAbstractListModel, QModelIndex
     from PySide2.QtGui import Qt
 
+import hou
+
 
 class IconListModel(QAbstractListModel):
     def __init__(self, parent=None):

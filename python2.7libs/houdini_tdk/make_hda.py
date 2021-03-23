@@ -395,9 +395,9 @@ class NodeShapeField(QWidget):
             self.edit.setText(shape_name)
 
 
-class MakeHDAByTemplateDialog(QDialog):
+class MakeHDADialog(QDialog):
     def __init__(self, node, parent=None):
-        super(MakeHDAByTemplateDialog, self).__init__(parent)
+        super(MakeHDADialog, self).__init__(parent)
 
         # Data
         self.node = node
@@ -581,7 +581,7 @@ class MakeHDAByTemplateDialog(QDialog):
         self.accept()
 
 
-def showMakeHDAByTemplateDialog(**kwargs):
+def showMakeHDADialog(**kwargs):
     if 'node' in kwargs:
         nodes = kwargs['node'],
     else:
@@ -597,5 +597,5 @@ def showMakeHDAByTemplateDialog(**kwargs):
         notify('Node cannot be user as a template', hou.severityType.Error)
         return
 
-    window = MakeHDAByTemplateDialog(nodes[0], hou.qt.mainWindow())
+    window = MakeHDADialog(nodes[0], hou.qt.mainWindow())
     window.show()

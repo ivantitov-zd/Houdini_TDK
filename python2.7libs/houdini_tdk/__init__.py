@@ -20,7 +20,7 @@ from .icon_list import IconListDialog, findIcon
 from .node_shapes import NodeShapeListDialog, findNodeShape
 from .generate_code import showGenerateCode
 from .hda_doctor import HDADoctorWindow
-from .make_hda_by_template import MakeHDAByTemplateDialog, showMakeHDAByTemplateDialog
+from .make_hda import MakeHDADialog, showMakeHDADialog
 from .new_hda_version import NewVersionDialog, showNewVersionDialog
 from .show_user_data import UserDataWindow, showNodeUserData
 from .utils import openFileLocation

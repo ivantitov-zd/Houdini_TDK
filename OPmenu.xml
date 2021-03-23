@@ -48,8 +48,8 @@ houdini_tdk.showNodeUserData(**kwargs)
 
             <separatorItem/>
 
-            <scriptItem id="opmenu.tdk_make_hda_by_template">
-                <label>Make HDA by Template...</label>
+            <scriptItem id="opmenu.tdk_make_hda">
+                <label>Make HDA...</label>
                 <context>
                     <expression>
                         node = kwargs['node']
@@ -59,7 +59,7 @@ houdini_tdk.showNodeUserData(**kwargs)
                 <scriptCode>
 import houdini_tdk as tdk
 
-tdk.showMakeHDAByTemplateDialog(**kwargs)
+tdk.showMakeHDADialog(**kwargs)
                 </scriptCode>
             </scriptItem>
 

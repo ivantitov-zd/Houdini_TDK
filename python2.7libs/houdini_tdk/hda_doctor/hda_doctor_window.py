@@ -731,6 +731,7 @@ class HDADoctorWindow(QWidget):
         self.analyses_model = AnalysesModel()
         choose_node_button.nodeSelected.connect(self.updateData)
         self.analyses_view.setModel(self.analyses_model)
+        # Todo: Fallback for icon in Houdini 18.0-
         tab_widget.addTab(self.analyses_view, hou.qt.Icon('VOP_usdprimvarreader', 16, 16), 'Analyses')
 
         inspections_view = InspectionsView()
