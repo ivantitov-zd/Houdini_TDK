@@ -403,7 +403,7 @@ class MakeHDADialog(QDialog):
         self.node = node
         self.__user_template_used = node.type().name() != 'tdk::template'
 
-        self.setWindowTitle('TDK: HDA by Template')
+        self.setWindowTitle('TDK: Make HDA')
         self.setWindowIcon(hou.qt.Icon('NODEFLAGS_template', 32, 32))
         self.resize(400, 250)
 
@@ -594,7 +594,7 @@ def showMakeHDADialog(**kwargs):
         notify('Too much nodes selected', hou.severityType.Error)
         return
     elif nodes[0].type().definition() is None:
-        notify('Node cannot be user as a template', hou.severityType.Error)
+        notify('Node cannot be used as a template', hou.severityType.Error)
         return
 
     window = MakeHDADialog(nodes[0], hou.qt.mainWindow())
