@@ -34,6 +34,14 @@ from .slider import Slider
 from .fuzzy_filter_proxy_model import FuzzyFilterProxyModel
 
 
+def standardIconExists(name):
+    try:
+        hou.qt.Icon(name, 16, 16)
+        return True
+    except hou.OperationFailed:
+        return False
+
+
 class IconListModel(QAbstractListModel):
     def __init__(self, parent=None):
         super(IconListModel, self).__init__(parent)

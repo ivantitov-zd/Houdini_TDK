@@ -33,7 +33,7 @@ except ImportError:
 
 import hou
 
-from .icon_list import IconListDialog
+from .icon_list import IconListDialog, standardIconExists
 from .node_shape_list_dialog import NodeShapeListDialog
 from .node_shape_preview import NodeShapePreview
 from .notification import notify
@@ -53,10 +53,6 @@ def makeNewHDAFromTemplateNode(template_node, label, name=None, namespace=None, 
                                sections=None, version='1.0', location='$HOUDINI_USER_PREF_DIR/otls',
                                inherit_subnetwork=True, inherit_parm_template_group=True, color=None,
                                shape=None):
-    template_node_type = template_node.type()
-    if template_node_type.name() != 'tdk::template':
-        raise TypeError
-
     location = hou.expandString(location)
     if not os.path.exists(location) or not os.path.isdir(location):
         raise IOError
@@ -78,6 +74,7 @@ def makeNewHDAFromTemplateNode(template_node, label, name=None, namespace=None, 
     else:
         new_type_name += '1.0'
 
+    template_node_type = template_node.type()
     template_def = template_node_type.definition()
 
     new_hda_file_name = new_type_name.replace(':', '_').replace('.', '_') + '.hda'
@@ -208,6 +205,10 @@ class IconField(QWidget):
             except hou.OperationFailed:
                 self.icon_preview.clear()
 
+    def setText(self, text):
+        self.edit.setText(text)
+        self.updateIconPreview()
+
     def _pickIconFromDisk(self):
         path = self.edit.text()
         if os.path.isdir(path):
@@ -305,6 +306,10 @@ class ColorField(QWidget):
     def text(self):
         return self.edit.text()
 
+    def setText(self, text):
+        self.edit.setText(text)
+        # self._onColorNameChanged(text)
+
     def color(self):
         color_name = self.edit.text()
         if QColor.isValidColor(color_name):
@@ -364,6 +369,10 @@ class NodeShapeField(QWidget):
     def text(self):
         return self.edit.text()
 
+    def setText(self, text):
+        self.edit.setText(text)
+        # self.shape_preview.setShape(text)
+
     def shape(self):
         name = self.edit.text()
         if NodeShape.isValidShape(name):
@@ -381,6 +390,7 @@ class MakeHDAByTemplateDialog(QDialog):
 
         # Data
         self.node = node
+        self.__user_template_used = node.type().name() != 'tdk::template'
 
         self.setWindowTitle('TDK: HDA by Template')
         self.setWindowIcon(hou.qt.Icon('NODEFLAGS_template', 32, 32))
@@ -467,9 +477,29 @@ class MakeHDAByTemplateDialog(QDialog):
         self.__author_changed = False
         self.__sections_changed = False
 
-        user_name = hou.userName()
-        self.author_field.setText(user_name)
-        self._onAuthorChanged(user_name)
+        # Fill Fields
+        _, namespace, name, version = node.type().nameComponents()
+
+        if self.__user_template_used:
+            label = name
+        else:
+            label = node.name()
+        label = label.replace('_', ' ').title()
+        self.label_field.setText(label)
+        self._onLabelChanged(label)
+
+        if self.__user_template_used:
+            author = namespace or hou.userName()
+        else:
+            author = hou.userName()
+        author = author.replace('_', ' ').title()
+        self.author_field.setText(author)
+        self._onAuthorChanged(author)
+
+        if self.__user_template_used:
+            icon_name = node.type().icon()
+            if standardIconExists(icon_name):
+                self.icon_field.setText(icon_name)
 
     def _onLabelChanged(self, label):
         self.__label_changed = True
@@ -545,14 +575,16 @@ def showMakeHDAByTemplateDialog(**kwargs):
         nodes = kwargs['node'],
     else:
         nodes = hou.selectedNodes()
+
     if not nodes:
         notify('No node selected', hou.severityType.Error)
         return
     elif len(nodes) > 1:
         notify('Too much nodes selected', hou.severityType.Error)
         return
-    elif not nodes[0].type().name().startswith('tdk::template'):
-        notify('Node is not TDK Template', hou.severityType.Error)
+    elif nodes[0].type().definition() is None:
+        notify('Node cannot be user as a template', hou.severityType.Error)
         return
+
     window = MakeHDAByTemplateDialog(nodes[0], hou.qt.mainWindow())
     window.show()

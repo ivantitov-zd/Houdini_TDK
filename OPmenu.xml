@@ -42,7 +42,7 @@ tdk.showGenerateCode(**kwargs)
 import houdini_tdk
 reload(houdini_tdk)
 
-houdini_tdk.showNodeUserData(cached=kwargs['shiftclick'], **kwargs)
+houdini_tdk.showNodeUserData(**kwargs)
                 </scriptCode>
             </scriptItem>
 
@@ -53,7 +53,7 @@ houdini_tdk.showNodeUserData(cached=kwargs['shiftclick'], **kwargs)
                 <context>
                     <expression>
                         node = kwargs['node']
-                        return node.type().name().startswith('tdk::template')
+                        return node.type().definition() is not None
                     </expression>
                 </context>
                 <scriptCode>
@@ -72,11 +72,11 @@ tdk.showMakeHDAByTemplateDialog(**kwargs)
                     </expression>
                 </context>
                 <scriptCode>
-from houdini_tdk.utils import openFileLocation
+import houdini_tdk as tdk
 
 node = kwargs['node']
 path = node.type().definition().libraryFilePath()
-openFileLocation(path)
+tdk.openFileLocation(path)
                 </scriptCode>
             </scriptItem>
 
