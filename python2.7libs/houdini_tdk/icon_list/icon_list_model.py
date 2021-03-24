@@ -40,8 +40,9 @@ class IconListModel(QAbstractListModel):
         return self._icon_size
 
     def setIconSize(self, size):
-        self._icon_size = size
-        self.dataChanged.emit(self.index(0, 0), self.index(len(self.__data), 0), [Qt.DecorationRole])
+        if size != self._icon_size:
+            self._icon_size = size
+            self.dataChanged.emit(self.index(0, 0), self.index(len(self.__data), 0), [Qt.DecorationRole])
 
     def rowCount(self, parent):
         return len(self.__data)

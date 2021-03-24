@@ -75,8 +75,8 @@ class IconListDialog(QDialog):
         self.slider.setFixedWidth(120)
         self.slider.setDefaultValue(64)
         self.slider.setRange(48, 128)
+        self.setIconSize(64)
         self.slider.valueChanged.connect(self.setIconSize)
-        self.slider.setValue(64)
         top_layout.addWidget(self.slider)
 
         # Buttons
@@ -98,13 +98,10 @@ class IconListDialog(QDialog):
 
     def setIconSize(self, size):
         size = min(max(size, 48), 128)
-        if size != self.icon_list_model.iconSize():
-            self.slider.setToolTip('Size: ' + str(size))
-            self.slider.blockSignals(True)
-            self.slider.setValue(size)
-            self.slider.blockSignals(False)
-            self.icon_list_model.setIconSize(size)
-            self.icon_list_view.setIconSize(QSize(size, size))
+        self.slider.setToolTip('Size: ' + str(size))
+        self.slider.setValue(size)
+        self.icon_list_model.setIconSize(size)
+        self.icon_list_view.setIconSize(QSize(size, size))
 
     def zoomIn(self, amount=4):
         self.setIconSize(self.icon_list_model.iconSize() + amount)

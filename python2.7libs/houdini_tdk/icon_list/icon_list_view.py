@@ -25,6 +25,8 @@ except ImportError:
     from PySide2.QtGui import Qt, QKeySequence
     from PySide2.QtWidgets import QListView, QAbstractItemView, QApplication, QFileDialog, QAction
 
+import hou
+
 
 class IconListView(QListView):
     # Signals
