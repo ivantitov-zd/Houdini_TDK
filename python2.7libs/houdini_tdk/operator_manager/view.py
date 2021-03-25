@@ -30,6 +30,16 @@ except ImportError:
 import hou
 
 
-class OperatorManagerFilesModel(QAbstractItemModel):
-    def __init__(self, parent=None):
-        super(OperatorManagerFilesModel, self).__init__(parent)
+class OperatorManagerView(QTreeView):
+    def __init__(self):
+        super(OperatorManagerView, self).__init__()
+
+        header = self.header()
+        header.setSectionsMovable(False)
+        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        header.hide()
+
+        self.setUniformRowHeights(True)
+        self.setIconSize(QSize(16, 16))
+
+        self.setAlternatingRowColors(True)

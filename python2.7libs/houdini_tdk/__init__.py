@@ -24,3 +24,4 @@ from .make_hda import MakeHDADialog, showMakeHDADialog
 from .new_hda_version import NewVersionDialog, showNewVersionDialog
 from .show_user_data import UserDataWindow, showNodeUserData
 from .utils import openFileLocation
+from .operator_manager import OperatorManagerWindow
