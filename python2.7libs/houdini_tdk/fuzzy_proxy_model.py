@@ -48,9 +48,9 @@ def fuzzyMatch(pattern, text):
     return True
 
 
-def fuzzyMatchScore(pattern, text):
+def fuzzyMatchWeight(pattern, text):
     if pattern == text:
-        return 999999
+        return len(pattern) ** 2 + 1
 
     weight = 0
     count = 0
@@ -78,14 +78,17 @@ class FuzzyProxyModel(QSortFilterProxyModel):
         super(FuzzyProxyModel, self).__init__(parent)
 
         self.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self.setSortCaseSensitivity(Qt.CaseInsensitive)
 
         self._accept_text_role = accept_text_role
-        self.comp_text_role = comp_text_role
+        self._comp_text_role = comp_text_role
 
         self._pattern = ''
+        self._pattern_case_insensitive = ''
 
     def setPattern(self, pattern):
-        self._pattern = pattern.lower()
+        self._pattern = pattern
+        self._pattern_case_insensitive = pattern.lower()
         self.invalidate()
 
     def filterAcceptsRow(self, source_row, source_parent):
@@ -95,7 +98,11 @@ class FuzzyProxyModel(QSortFilterProxyModel):
         source_model = self.sourceModel()
         current_index = source_model.index(source_row, 0, source_parent)
         text = current_index.data(self._accept_text_role)
-        matches = fuzzyMatch(self._pattern, text.lower())
+
+        if self.filterCaseSensitivity() == Qt.CaseInsensitive:
+            matches = fuzzyMatch(self._pattern_case_insensitive, text.lower())
+        else:
+            matches = fuzzyMatch(self._pattern, text)
 
         if not matches and source_model.hasChildren(current_index):
             for row in range(source_model.rowCount(current_index)):
@@ -108,14 +115,14 @@ class FuzzyProxyModel(QSortFilterProxyModel):
         if not self._pattern:
             return source_left.row() < source_right.row()
 
-        text1 = source_left.data(self.comp_text_role)
-        text2 = source_right.data(self.comp_text_role)
+        text1 = source_left.data(self._comp_text_role)
+        text2 = source_right.data(self._comp_text_role)
 
         if self.sortCaseSensitivity() == Qt.CaseInsensitive:
-            text1 = text1.lower()
-            text2 = text2.lower()
-
-        weight1 = fuzzyMatchScore(self._pattern, text1)
-        weight2 = fuzzyMatchScore(self._pattern, text2)
+            weight1 = fuzzyMatchWeight(self._pattern_case_insensitive, text1.lower())
+            weight2 = fuzzyMatchWeight(self._pattern_case_insensitive, text2.lower())
+        else:
+            weight1 = fuzzyMatchWeight(self._pattern, text1)
+            weight2 = fuzzyMatchWeight(self._pattern, text2)
 
         return weight1 < weight2
