@@ -31,7 +31,7 @@ except ImportError:
 
 import hou
 
-from ..fuzzy_filter_proxy_model import FuzzyFilterProxyModel
+from ..fuzzy_proxy_model import FuzzyProxyModel
 from ..widgets.filter_field import FilterField
 from .node_shape_list_model import NodeShapeListModel
 from .node_shape_list_view import NodeShapeListView
@@ -59,9 +59,9 @@ class NodeShapeListDialog(QDialog):
         self.shape_list_model = NodeShapeListModel(self)
         self.shape_list_model.updateNodeShapeList()
 
-        self.filter_proxy_model = FuzzyFilterProxyModel(self, Qt.DisplayRole)
+        self.filter_proxy_model = FuzzyProxyModel(self, Qt.DisplayRole)
         self.filter_proxy_model.setSourceModel(self.shape_list_model)
-        self.filter_field.textChanged.connect(self.filter_proxy_model.setFilterPattern)
+        self.filter_field.textChanged.connect(self.filter_proxy_model.setPattern)
 
         self.shape_list_view = NodeShapeListView()
         self.shape_list_view.setModel(self.filter_proxy_model)

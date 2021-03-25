@@ -30,8 +30,8 @@ except ImportError:
 import hou
 
 from ..widgets import FilterField
-from ..fuzzy_filter_proxy_model import FuzzyFilterProxyModel
-from .model import OperatorManagerFilesModel
+from ..fuzzy_proxy_model import FuzzyProxyModel
+from .model import OperatorManagerLibraryModel
 from .view import OperatorManagerView
 
 
@@ -50,12 +50,15 @@ class OperatorManagerWindow(QWidget):
         self.filter_field = FilterField()
         layout.addWidget(self.filter_field)
 
-        self.model = OperatorManagerFilesModel(self)
+        self.model = OperatorManagerLibraryModel(self)
         self.model.updateData()
 
-        # self.proxy_model = FuzzyFilterProxyModel(self)
-        # self.proxy_model.setSourceModel(self.model)
+        self.proxy_model = FuzzyProxyModel(self, Qt.DisplayRole)
+        self.proxy_model.setSourceModel(self.model)
+        self.filter_field.textChanged.connect(self.proxy_model.setPattern)
 
         self.view = OperatorManagerView()
-        self.view.setModel(self.model)
+        self.view.setSortingEnabled(False)
+        self.view.setModel(self.proxy_model)
+        self.view.expandAll()
         layout.addWidget(self.view)

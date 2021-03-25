@@ -39,11 +39,15 @@ class HDADefinitionProxy(object):
     def __init__(self, definition):
         self.definition = definition
         self._name = definition.nodeTypeName()
+        self._label = definition.description()
         self._icon = definition.icon()
         self._library_file_path = definition.libraryFilePath()
 
     def nodeTypeName(self):
         return self._name
+
+    def description(self):
+        return self._label
 
     def icon(self):
         return self._icon
@@ -55,9 +59,9 @@ class HDADefinitionProxy(object):
         return self.definition.__getattribute__(attr_name)
 
 
-class OperatorManagerFilesModel(QAbstractItemModel):
+class OperatorManagerLibraryModel(QAbstractItemModel):
     def __init__(self, parent=None):
-        super(OperatorManagerFilesModel, self).__init__(parent)
+        super(OperatorManagerLibraryModel, self).__init__(parent)
 
         self._libraries = ()
         self._definitions = {}
@@ -104,7 +108,7 @@ class OperatorManagerFilesModel(QAbstractItemModel):
             return len(self._definitions[parent.internalPointer()])
 
     def columnCount(self, parent):
-        return 1
+        return 2
 
     def parent(self, index):
         if not index.isValid():
@@ -134,7 +138,11 @@ class OperatorManagerFilesModel(QAbstractItemModel):
         if not index.isValid():
             return
 
-        if index.column() == 0:
+        if role == Qt.UserRole:
+            return index.internalPointer()
+
+        column = index.column()
+        if column == 0:
             if not index.parent().isValid():
                 lib_path = index.internalPointer()
                 if role == Qt.DisplayRole:
@@ -147,10 +155,13 @@ class OperatorManagerFilesModel(QAbstractItemModel):
                 definition = index.internalPointer()
                 if role == Qt.DisplayRole:
                     return definition.description()
-                elif role == Qt.ToolTipRole:
-                    return definition.nodeTypeName()
                 elif role == Qt.DecorationRole:
                     try:
                         return hou.qt.Icon(definition.icon(), ICON_SIZE, ICON_SIZE)
                     except hou.OperationFailed:
                         return EMPTY_ICON
+        elif column == 1:
+            if index.parent().isValid():
+                definition = index.internalPointer()
+                if role == Qt.DisplayRole:
+                    return definition.nodeTypeName()

@@ -29,7 +29,7 @@ except ImportError:
 
 import hou
 
-from ..fuzzy_filter_proxy_model import FuzzyFilterProxyModel
+from ..fuzzy_proxy_model import FuzzyProxyModel
 from ..widgets import FilterField, Slider
 from .icon_list_model import IconListModel
 from .icon_list_view import IconListView
@@ -56,7 +56,9 @@ class IconListDialog(QDialog):
         # Icon List
         self.icon_list_model = IconListModel(self)
 
-        self.filter_proxy_model = FuzzyFilterProxyModel(self)
+        self.filter_proxy_model = FuzzyProxyModel(self)
+        self.filter_proxy_model.setDynamicSortFilter(True)
+        self.filter_proxy_model.sort(0, Qt.DescendingOrder)
         self.filter_proxy_model.setSourceModel(self.icon_list_model)
 
         self.icon_list_view = IconListView()
@@ -67,7 +69,7 @@ class IconListDialog(QDialog):
 
         # Filter
         self.filter_field = FilterField()
-        self.filter_field.textChanged.connect(self.filter_proxy_model.setFilterPattern)
+        self.filter_field.textChanged.connect(self.filter_proxy_model.setPattern)
         top_layout.addWidget(self.filter_field)
 
         # Scale

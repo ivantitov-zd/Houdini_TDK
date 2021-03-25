@@ -32,50 +32,59 @@ except ImportError:
 
 def fuzzyMatch(pattern, text):
     if pattern == text:
-        return True, 999999
+        return True
 
+    index = 0
     try:
-        pattern_start = text.index(pattern)
-        pattern_length = len(pattern)
-        return True, pattern_length * pattern_length + (1 - pattern_start / 500.0)
-    except ValueError:
+        for char in text:
+            if char == pattern[index]:
+                index += 1
+    except IndexError:
         pass
+
+    if index < len(pattern):
+        return False
+
+    return True
+
+
+def fuzzyMatchScore(pattern, text):
+    if pattern == text:
+        return 999999
 
     weight = 0
     count = 0
     index = 0
-    for char in text:
-        try:
+    try:
+        for char in text:
             if char == pattern[index]:
                 count += 1
                 index += 1
             elif count != 0:
                 weight += count * count
                 count = 0
-        except IndexError:
-            pass
+    except IndexError:
+        pass
 
     weight += count * count
     if index < len(pattern):
-        return False, weight
+        return weight
 
-    return True, weight + (1 - text.index(pattern[0]) / 500.0)
+    return weight + (1 - text.index(pattern[0]) / 500.0)
 
 
-class FuzzyFilterProxyModel(QSortFilterProxyModel):
+class FuzzyProxyModel(QSortFilterProxyModel):
     def __init__(self, parent=None, accept_text_role=Qt.UserRole, comp_text_role=Qt.DisplayRole):
-        super(FuzzyFilterProxyModel, self).__init__(parent)
+        super(FuzzyProxyModel, self).__init__(parent)
+
+        self.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
         self._accept_text_role = accept_text_role
         self.comp_text_role = comp_text_role
 
-        self.setDynamicSortFilter(True)
-        self.setFilterCaseSensitivity(Qt.CaseInsensitive)
-        self.sort(0, Qt.DescendingOrder)
-
         self._pattern = ''
 
-    def setFilterPattern(self, pattern):
+    def setPattern(self, pattern):
         self._pattern = pattern.lower()
         self.invalidate()
 
@@ -84,8 +93,15 @@ class FuzzyFilterProxyModel(QSortFilterProxyModel):
             return True
 
         source_model = self.sourceModel()
-        text = source_model.data(source_model.index(source_row, 0, source_parent), self._accept_text_role)
-        matches, _ = fuzzyMatch(self._pattern, text.lower())
+        current_index = source_model.index(source_row, 0, source_parent)
+        text = current_index.data(self._accept_text_role)
+        matches = fuzzyMatch(self._pattern, text.lower())
+
+        if not matches and source_model.hasChildren(current_index):
+            for row in range(source_model.rowCount(current_index)):
+                if super(FuzzyProxyModel, self).filterAcceptsRow(row, current_index):
+                    return True
+
         return matches
 
     def lessThan(self, source_left, source_right):
@@ -93,9 +109,13 @@ class FuzzyFilterProxyModel(QSortFilterProxyModel):
             return source_left.row() < source_right.row()
 
         text1 = source_left.data(self.comp_text_role)
-        _, weight1 = fuzzyMatch(self._pattern, text1.lower())
-
         text2 = source_right.data(self.comp_text_role)
-        _, weight2 = fuzzyMatch(self._pattern, text2.lower())
+
+        if self.sortCaseSensitivity() == Qt.CaseInsensitive:
+            text1 = text1.lower()
+            text2 = text2.lower()
+
+        weight1 = fuzzyMatchScore(self._pattern, text1)
+        weight2 = fuzzyMatchScore(self._pattern, text2)
 
         return weight1 < weight2
