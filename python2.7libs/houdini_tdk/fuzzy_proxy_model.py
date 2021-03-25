@@ -91,22 +91,30 @@ class FuzzyProxyModel(QSortFilterProxyModel):
         self._pattern_case_insensitive = pattern.lower()
         self.invalidate()
 
+    def _match(self, index):
+        text = index.data(self._accept_text_role)
+        if self.filterCaseSensitivity() == Qt.CaseInsensitive:
+            matches = fuzzyMatch(self._pattern_case_insensitive, text.lower())
+        else:
+            matches = fuzzyMatch(self._pattern, text)
+        return matches
+
     def filterAcceptsRow(self, source_row, source_parent):
         if not self._pattern:
             return True
 
         source_model = self.sourceModel()
         current_index = source_model.index(source_row, 0, source_parent)
-        text = current_index.data(self._accept_text_role)
+        has_children = source_model.hasChildren(current_index)
 
-        if self.filterCaseSensitivity() == Qt.CaseInsensitive:
-            matches = fuzzyMatch(self._pattern_case_insensitive, text.lower())
+        if has_children:  # Todo: Optional
+            matches = False
         else:
-            matches = fuzzyMatch(self._pattern, text)
+            matches = self._match(current_index)
 
-        if not matches and source_model.hasChildren(current_index):
+        if not matches and has_children:
             for row in range(source_model.rowCount(current_index)):
-                if super(FuzzyProxyModel, self).filterAcceptsRow(row, current_index):
+                if self.filterAcceptsRow(row, current_index):
                     return True
 
         return matches
