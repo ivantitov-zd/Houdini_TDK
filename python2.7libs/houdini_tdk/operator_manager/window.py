@@ -150,7 +150,30 @@ class OperatorManagerWindow(QWidget):
         raise NotImplementedError
 
     def _onCreateInstance(self):
-        raise NotImplementedError
+        """
+        Creates instance of the selected node type definition and select it.
+        Currently, supported single selection only. Multiple selection is ignored.
+        """
+        if not self.view.isSingleSelection():
+            return
+
+        network = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
+        if network is None:  # No active network editor found
+            return
+
+        index = self.view.selectedIndex()
+        definition = index.data(Qt.UserRole)
+
+        root_node = network.pwd()
+
+        if definition.nodeTypeCategory() != root_node.childTypeCategory():
+            return  # Todo: Switch to corresponding network if possible
+
+        instance_node = root_node.createNode(definition.nodeTypeName(), exact_type_name=True)
+        instance_node.setCurrent(True, True)
+
+        rect = network.visibleBounds()
+        instance_node.setPosition(rect.center())
 
     def _onCreateNewHDA(self):
         raise NotImplementedError
