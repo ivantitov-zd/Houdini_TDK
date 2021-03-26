@@ -27,11 +27,7 @@ except ImportError:
     from PySide2.QtGui import *
     from PySide2.QtCore import *
 
-import hou
-
 from .delegate import OperatorManagerLibraryDelegate
-
-ICON_SIZE = 16
 
 
 class OperatorManagerView(QTreeView):
@@ -47,132 +43,48 @@ class OperatorManagerView(QTreeView):
         self.setIconSize(QSize(16, 16))
 
         self.setItemDelegate(OperatorManagerLibraryDelegate())
-        # self.setAlternatingRowColors(True)  # Disabled due to a bug that clipping delegate's text
+        # self.setAlternatingRowColors(True)  # Todo: Disabled due to a bug that clipping delegate's text
 
-        self.__createActions()
-        self.__createContextMenus()
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
-    def __createActions(self):
-        self._open_location_action = QAction(hou.qt.Icon('BUTTONS_folder', ICON_SIZE, ICON_SIZE), 'Open location')
+    def hasSelection(self):
+        """Returns True if selection model has selected items, False otherwise."""
+        return self.selectionModel().hasSelection()
 
-        self._install_library_action = QAction('Install')
+    def isSingleSelection(self):
+        """Returns True if selection contains only one row."""
+        return self.hasSelection() and len(self.selectionModel().selectedRows(0)) == 1
 
-        self._uninstall_library_action = QAction('Uninstall')
+    def isMultipleSelection(self):
+        """Returns True if selection contains more than one row."""
+        return self.hasSelection() and len(self.selectionModel().selectedRows(0)) > 1
 
-        self._reinstall_library_action = QAction(hou.qt.Icon('MISC_loading', ICON_SIZE, ICON_SIZE), 'Reinstall')
+    def selectedIndex(self):
+        """
+        Returns a single selected index.
+        Should be used only when isSingleSelection is True.
 
-        self._merge_with_library_action = QAction('Merge with Library')
+        Raised IndexError if no selection.
+        """
+        return self.selectionModel().selectedIndexes()[0]
 
-        self._pack_action = QAction(hou.qt.Icon('DESKTOP_otl', ICON_SIZE, ICON_SIZE), 'Pack')
+    def indexDepth(self, index):
+        """Returns level of nesting of the index. Root has level 0."""
+        depth = 0
+        while index.isValid():
+            index = index.parent()
+            depth += 1
+        return depth
 
-        self._unpack_action = QAction(hou.qt.Icon('DESKTOP_expanded_otl', ICON_SIZE, ICON_SIZE), 'Unpack')
+    def deselectDifferingDepth(self, target_index):
+        """Remove items with differing level of nesting from the selection model."""
+        selection_model = self.selectionModel()
+        target_depth = self.indexDepth(target_index)
+        for index in selection_model.selectedIndexes():
+            depth = self.indexDepth(index)
+            if depth != target_depth:
+                selection_model.select(index, QItemSelectionModel.Deselect)
 
-        self._backup_list_action = QAction(hou.qt.Icon('BUTTONS_history', ICON_SIZE, ICON_SIZE), 'Backups...')
-
-        self._open_type_properties_action = QAction(hou.qt.Icon('BUTTONS_gear_mini', ICON_SIZE, ICON_SIZE),
-                                                    'Open type properties...')
-
-        self._change_instances_to_action = QAction('Change instances to...')
-
-        self._run_hda_doctor_action = QAction(hou.qt.Icon('SOP_polydoctor', ICON_SIZE, ICON_SIZE), 'Run HDA Doctor...')
-
-        self._find_usages_action = QAction(hou.qt.Icon('BUTTONS_search', ICON_SIZE, ICON_SIZE), 'Find usages...')
-
-        self._find_dependencies_action = QAction(hou.qt.Icon('PANETYPES_network', ICON_SIZE, ICON_SIZE),
-                                                 'Find dependencies...')
-
-        self._show_statistics_action = QAction(hou.qt.Icon('BUTTONS_info', ICON_SIZE, ICON_SIZE), 'Show statistics...')
-
-        self._create_instance_action = QAction('Instance')
-
-        self._create_new_hda_action = QAction(hou.qt.Icon('SOP_compile_begin', ICON_SIZE, ICON_SIZE),
-                                              'New HDA...')
-
-        self._create_new_version_action = QAction(hou.qt.Icon('BUTTONS_multi_insertbefore', ICON_SIZE, ICON_SIZE),
-                                                  'New version...')
-
-        self._create_black_box_action = QAction(hou.qt.Icon('NETVIEW_hda_locked_badge', ICON_SIZE, ICON_SIZE),
-                                                'Black box...')
-
-        self._copy_action = QAction(hou.qt.Icon('BUTTONS_copy', ICON_SIZE, ICON_SIZE), 'Copy...')
-
-        self._move_action = QAction(hou.qt.Icon('BUTTONS_move_to_right', ICON_SIZE, ICON_SIZE), 'Move...')
-
-        self._rename_action = QAction(hou.qt.Icon('MISC_rename', ICON_SIZE, ICON_SIZE), 'Rename...')
-
-        self._add_alias_action = QAction(hou.qt.Icon('BUTTONS_tag', ICON_SIZE, ICON_SIZE), 'Add alias...')
-
-        self._delete_action = QAction(hou.qt.Icon('BUTTONS_delete', ICON_SIZE, ICON_SIZE), 'Delete')
-
-        self._hide_action = QAction(hou.qt.Icon('BUTTONS_close', ICON_SIZE, ICON_SIZE), 'Hide')
-
-        self._deprecate_action = QAction(hou.qt.Icon('BUTTONS_do_not', ICON_SIZE, ICON_SIZE), 'Deprecate')
-
-        self._compare_action = QAction(hou.qt.Icon('BUTTONS_restore', ICON_SIZE, ICON_SIZE), 'Compare...')
-
-    def __createContextMenus(self):
-        self._library_menu = QMenu(self)
-
-        self._library_menu.addAction(self._open_location_action)
-        self._library_menu.addSeparator()
-        self._library_menu.addAction(self._install_library_action)
-        self._library_menu.addAction(self._uninstall_library_action)
-        self._library_menu.addAction(self._reinstall_library_action)
-        self._library_menu.addSeparator()
-        self._library_menu.addAction(self._merge_with_library_action)
-        self._library_menu.addAction(self._pack_action)
-        self._library_menu.addAction(self._unpack_action)
-        self._library_menu.addSeparator()
-        self._library_menu.addAction(self._backup_list_action)
-
-        self._definition_menu = QMenu(self)
-
-        self._definition_menu.addAction(self._open_type_properties_action)
-        self._definition_menu.addAction(self._change_instances_to_action)
-
-        self._definition_inspect_menu = QMenu('Inspect', self)
-        self._definition_menu.addMenu(self._definition_inspect_menu)
-
-        self._definition_inspect_menu.addAction(self._run_hda_doctor_action)
-        self._definition_inspect_menu.addAction(self._find_usages_action)
-        self._definition_inspect_menu.addAction(self._find_dependencies_action)
-        self._definition_inspect_menu.addAction(self._show_statistics_action)
-
-        self._definition_create_menu = QMenu('Create', self)
-        self._definition_menu.addMenu(self._definition_create_menu)
-
-        self._definition_create_menu.addAction(self._create_instance_action)
-        self._definition_create_menu.addAction(self._create_new_hda_action)
-        self._definition_create_menu.addAction(self._create_new_version_action)
-        self._definition_create_menu.addAction(self._create_black_box_action)
-
-        self._definition_edit_menu = QMenu('Edit', self)
-        self._definition_menu.addMenu(self._definition_edit_menu)
-
-        self._definition_edit_menu.addAction(self._copy_action)
-        self._definition_edit_menu.addSeparator()
-        self._definition_edit_menu.addAction(self._move_action)
-        self._definition_edit_menu.addAction(self._rename_action)
-        self._definition_edit_menu.addAction(self._add_alias_action)
-        self._definition_edit_menu.addSeparator()
-        self._definition_edit_menu.addAction(self._delete_action)
-        self._definition_edit_menu.addAction(self._hide_action)
-        self._definition_edit_menu.addAction(self._deprecate_action)
-
-        self._definition_menu.addAction(self._compare_action)
-
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.showContextMenu)
-
-    def showContextMenu(self):
-        index = self.currentIndex()
-
-        if not index.isValid():
-            return
-
-        if isinstance(index.data(Qt.UserRole), basestring):
-            self._library_menu.exec_(QCursor.pos())
-        else:
-            icon = index.model().index(index.row(), 0, index.parent()).data(Qt.DecorationRole)
-            self._create_instance_action.setIcon(icon)
-            self._definition_menu.exec_(QCursor.pos())
+    def deselectDifferringParent(self, target_index):
+        raise NotImplementedError

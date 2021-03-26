@@ -39,13 +39,13 @@ class OperatorManagerLibraryDelegate(QStyledItemDelegate):
             painter.save()
 
             row_rect = QRectF(option.rect)
-            row_rect.setLeft(45)
             row_rect.setRight(option.widget.width())
 
             icon_rect = QRectF(option.rect)
             icon_rect.setRight(45)
 
             text_rect = QRectF(row_rect)
+            text_rect.setLeft(45)
             text_rect.setRight(row_rect.right() - 30)
 
             selection_rect = QRectF(row_rect)
@@ -56,7 +56,7 @@ class OperatorManagerLibraryDelegate(QStyledItemDelegate):
             super(OperatorManagerLibraryDelegate, self).paint(painter, option, index)
             painter.restore()
 
-            if option.state & QStyle.State_Selected and index.column() == 0:
+            if option.state & QStyle.State_Selected:
                 painter.fillRect(selection_rect, option.palette.highlight())
 
             metrics = painter.fontMetrics()

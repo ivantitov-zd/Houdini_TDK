@@ -98,7 +98,9 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
         self.endResetModel()
 
     def hasChildren(self, parent):
-        if not parent.isValid() or not parent.parent().isValid():
+        if not parent.isValid():
+            return bool(self._libraries)
+        elif isinstance(parent.internalPointer(), basestring):
             return True
 
         return False
@@ -117,11 +119,11 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
             return QModelIndex()
 
         item = index.internalPointer()
-        if not isinstance(item, basestring):
+        if isinstance(item, basestring):
+            return QModelIndex()
+        else:
             lib_path = item.libraryFilePath()
             return self.createIndex(self._definitions[lib_path].index(item), 0, lib_path)
-        else:
-            return QModelIndex()
 
     def index(self, row, column, parent):
         if not self.hasIndex(row, column, parent):
