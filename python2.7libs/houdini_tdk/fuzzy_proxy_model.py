@@ -48,29 +48,38 @@ def fuzzyMatch(pattern, text):
     return True
 
 
-def fuzzyMatchWeight(pattern, text):
+def fuzzyMatchWeight(pattern, text, cache={}):
+    pattern_length = len(pattern)
+
+    if pattern_length <= 2:
+        cache_token = pattern + '_' + text
+        if cache_token in cache:
+            return cache[cache_token]
+
     if pattern == text:
-        return len(pattern) ** 2 + 1
+        weight = pattern_length * pattern_length + 1
+    else:
+        weight = 0
+        count = 0
+        index = 0
+        try:
+            for char in text:
+                if char == pattern[index]:
+                    count += 1
+                    index += 1
+                elif count != 0:
+                    weight += count * count
+                    count = 0
+        except IndexError:
+            pass
 
-    weight = 0
-    count = 0
-    index = 0
-    try:
-        for char in text:
-            if char == pattern[index]:
-                count += 1
-                index += 1
-            elif count != 0:
-                weight += count * count
-                count = 0
-    except IndexError:
-        pass
+        weight += count * count
+        if index >= pattern_length:
+            weight = weight + (1 - text.index(pattern[0]) / 1000.0)
 
-    weight += count * count
-    if index < len(pattern):
-        return weight
-
-    return weight + (1 - text.index(pattern[0]) / 500.0)
+    if pattern_length <= 2:
+        cache[cache_token] = weight
+    return weight
 
 
 class FuzzyProxyModel(QSortFilterProxyModel):

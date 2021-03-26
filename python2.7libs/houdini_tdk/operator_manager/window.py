@@ -33,6 +33,7 @@ from ..widgets import FilterField
 from ..fuzzy_proxy_model import FuzzyProxyModel
 from .model import OperatorManagerLibraryModel
 from .view import OperatorManagerView
+from .model.library import TextRole
 
 
 class OperatorManagerWindow(QWidget):
@@ -48,17 +49,24 @@ class OperatorManagerWindow(QWidget):
         layout.setSpacing(4)
 
         self.filter_field = FilterField()
+        self.filter_field.textChanged.connect(self._onFilterChange)
         layout.addWidget(self.filter_field)
 
         self.model = OperatorManagerLibraryModel(self)
         self.model.updateData()
 
-        self.proxy_model = FuzzyProxyModel(self, Qt.DisplayRole)
-        self.proxy_model.setSourceModel(self.model)
-        self.filter_field.textChanged.connect(self.proxy_model.setPattern)
+        self.filter_proxy_model = FuzzyProxyModel(self, TextRole, TextRole)
+        self.filter_proxy_model.setDynamicSortFilter(True)
+        self.filter_proxy_model.sort(0, Qt.DescendingOrder)
+        self.filter_proxy_model.setSourceModel(self.model)
 
         self.view = OperatorManagerView()
-        self.view.setSortingEnabled(False)
-        self.view.setModel(self.proxy_model)
-        self.view.expandAll()
+        self.view.setModel(self.filter_proxy_model)
         layout.addWidget(self.view)
+
+    def _onFilterChange(self, pattern):
+        # Pre-collapse all to speed up live filtering
+        self.view.collapseAll()
+        self.filter_proxy_model.setPattern(pattern)
+        if pattern:
+            self.view.expandAll()

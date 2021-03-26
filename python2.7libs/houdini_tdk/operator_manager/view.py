@@ -29,6 +29,8 @@ except ImportError:
 
 import hou
 
+from .delegate import OperatorManagerLibraryDelegate
+
 ICON_SIZE = 16
 
 
@@ -44,7 +46,8 @@ class OperatorManagerView(QTreeView):
         self.setUniformRowHeights(True)
         self.setIconSize(QSize(16, 16))
 
-        self.setAlternatingRowColors(True)
+        self.setItemDelegate(OperatorManagerLibraryDelegate())
+        # self.setAlternatingRowColors(True)  # Disabled due to a bug that clipping delegate's text
 
         self.__createActions()
         self.__createContextMenus()
@@ -167,7 +170,7 @@ class OperatorManagerView(QTreeView):
         if not index.isValid():
             return
 
-        if isinstance(index.data(Qt.UserRole), str):
+        if isinstance(index.data(Qt.UserRole), basestring):
             self._library_menu.exec_(QCursor.pos())
         else:
             icon = index.model().index(index.row(), 0, index.parent()).data(Qt.DecorationRole)

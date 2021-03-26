@@ -34,6 +34,8 @@ INSTALLED_ICON = hou.qt.Icon('TOP_status_cooked', ICON_SIZE, ICON_SIZE)
 NOT_INSTALLED_ICON = hou.qt.Icon('TOP_status_error', ICON_SIZE, ICON_SIZE)
 EMPTY_ICON = hou.qt.Icon('MISC_empty', ICON_SIZE, ICON_SIZE)
 
+TextRole = Qt.UserRole + 1
+
 
 class HDADefinitionProxy(object):
     def __init__(self, definition):
@@ -115,7 +117,7 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
             return QModelIndex()
 
         item = index.internalPointer()
-        if not isinstance(item, str):
+        if not isinstance(item, basestring):
             lib_path = item.libraryFilePath()
             return self.createIndex(self._definitions[lib_path].index(item), 0, lib_path)
         else:
@@ -145,7 +147,7 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
         if column == 0:
             if not index.parent().isValid():
                 lib_path = index.internalPointer()
-                if role == Qt.DisplayRole:
+                if role == TextRole:
                     return lib_path
                 elif role == Qt.ToolTipRole:
                     return lib_path
@@ -153,7 +155,7 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
                     return INSTALLED_ICON
             else:
                 definition = index.internalPointer()
-                if role == Qt.DisplayRole:
+                if role in (Qt.DisplayRole, TextRole):
                     return definition.description()
                 elif role == Qt.DecorationRole:
                     try:
@@ -163,5 +165,5 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
         elif column == 1:
             if index.parent().isValid():
                 definition = index.internalPointer()
-                if role == Qt.DisplayRole:
+                if role in (Qt.DisplayRole, TextRole):
                     return definition.nodeTypeName()
