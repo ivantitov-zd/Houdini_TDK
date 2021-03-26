@@ -43,35 +43,26 @@ class OperatorManagerLibraryDelegate(QStyledItemDelegate):
             row_rect.setRight(option.widget.width())
 
             icon_rect = QRectF(option.rect)
-            icon_rect.setLeft(0)
             icon_rect.setRight(45)
 
             text_rect = QRectF(row_rect)
             text_rect.setRight(row_rect.right() - 30)
 
-            additional_selection_rect = QRectF(row_rect)
-            additional_selection_rect.setLeft(option.rect.right() + 1)
+            selection_rect = QRectF(row_rect)
+            selection_rect.setLeft(icon_rect.right())
 
             painter.save()
-            painter.setClipping(True)
-            painter.setClipRect(icon_rect)
+            option.rect = icon_rect.toRect()
             super(OperatorManagerLibraryDelegate, self).paint(painter, option, index)
             painter.restore()
 
             if option.state & QStyle.State_Selected and index.column() == 0:
-                painter.fillRect(additional_selection_rect, option.palette.highlight())
+                painter.fillRect(selection_rect, option.palette.highlight())
 
             metrics = painter.fontMetrics()
-            text = metrics.elidedText(index.data(TextRole), Qt.ElideMiddle, text_rect.width(), Qt.TextSingleLine)
+            text = metrics.elidedText(index.data(TextRole), Qt.ElideMiddle, text_rect.width())
 
-            text_image = QImage(text_rect.size().toSize(), QImage.Format_ARGB32_Premultiplied)
-            text_image.fill(Qt.transparent)
-            p = QPainter(text_image)
-            p.setPen(option.palette.text().color())
-            p.drawText(0, 0, text_rect.width(), text_rect.height(), Qt.AlignVCenter | Qt.AlignLeft, text)
-            p.end()
-
-            painter.drawImage(text_rect.topLeft(), text_image)
+            painter.drawText(text_rect, Qt.AlignVCenter | Qt.AlignLeft, text)
 
             painter.restore()
         else:
