@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import os
+
 try:
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
@@ -32,11 +34,42 @@ import hou
 from ..widgets import FilterField
 from ..fuzzy_proxy_model import FuzzyProxyModel
 from ..utils import openFileLocation
-from .model import OperatorManagerLibraryModel
+from .model import OperatorManagerLibraryModel, TextRole
 from .view import OperatorManagerView
-from .model.library import TextRole
 
 ICON_SIZE = 16
+
+
+def repackHDA(library_path):
+    if not os.path.exists(library_path):
+        return
+
+    library_dir, name = os.path.split(library_path)
+    temp_repack_path = os.path.join(library_dir, 'temp_' + name.replace('.', '_'))
+
+    try:
+        if os.path.isfile(library_path):
+            hou.hda.expandToDirectory(library_path, temp_repack_path)
+        else:
+            hou.hda.collapseFromDirectory(temp_repack_path, library_path)
+
+        backup_library_path = os.path.join(library_dir, 'temp_' + name + '_backup')
+        os.rename(library_path, backup_library_path)
+    except hou.OperationFailed:
+        return
+    except OSError:
+        os.remove(temp_repack_path)
+        return
+
+    try:
+        os.rename(temp_repack_path, library_path)
+        os.remove(backup_library_path)
+    except OSError:
+        os.rename(backup_library_path, library_path)
+        os.remove(temp_repack_path)
+        return
+
+    hou.hda.reloadFile(library_path)
 
 
 class OperatorManagerWindow(QWidget):
@@ -79,6 +112,24 @@ class OperatorManagerWindow(QWidget):
         if pattern:
             self.view.expandAll()
 
+    def _onExpand(self):
+        """ Expands selected items."""
+        for index in self.view.selectedIndexes():
+            self.view.expand(index)
+
+    def _onCollapse(self):
+        """Collapses selected items."""
+        for index in self.view.selectedIndexes():
+            self.view.collapse(index)
+
+    def _onExpandAll(self):
+        """Expands all items."""
+        self.view.expandAll()
+
+    def _onCollapseAll(self):
+        """Collapses all items."""
+        self.view.collapseAll()
+
     def _onOpenLocation(self):
         """
         Opens location of the selected library or library of the selected node type.
@@ -89,7 +140,15 @@ class OperatorManagerWindow(QWidget):
             openFileLocation(index.data(Qt.UserRole))
 
     def _onInstall(self):
-        raise NotImplementedError
+        """
+        Uninstall all node types containing in the selected library from the current Houdini session.
+        Currently, supported single selection only. Multiple selection is ignored.
+        """
+        if self.view.isSingleSelection():
+            index = self.view.selectedIndex()
+            library_path = index.data(Qt.UserRole)
+            hou.hda.installFile(library_path)
+            # Todo: Change item state to installed
 
     def _onUninstall(self):
         """
@@ -98,8 +157,8 @@ class OperatorManagerWindow(QWidget):
         """
         if self.view.isSingleSelection():
             index = self.view.selectedIndex()
-            lib_file_path = index.data(Qt.UserRole)
-            hou.hda.uninstallFile(lib_file_path)
+            library_path = index.data(Qt.UserRole)
+            hou.hda.uninstallFile(library_path)
             # Todo: Change item state to uninstalled
 
     def _onReload(self):
@@ -109,19 +168,42 @@ class OperatorManagerWindow(QWidget):
         """
         if self.view.isSingleSelection():
             index = self.view.selectedIndex()
-            lib_file_path = index.data(Qt.UserRole)
-            hou.hda.reloadFile(lib_file_path)
+            library_path = index.data(Qt.UserRole)
+            hou.hda.reloadFile(library_path)
+
+    def _onReloadAll(self):
+        """Reload the HDA files and update node type definitions in the current Houdini session."""
+        hou.hda.reloadAllFiles(False)
+        self.view.model().updateData()
+
+    def _onRescanAndReloadAll(self):
+        """
+        Reload the HDA files and update node type definitions in the current Houdini session.
+        Houdini will check the hda directories for any new hda files and load them too.
+        """
+        hou.hda.reloadAllFiles(True)
+        self.view.model().updateData()
 
     def _onMergeWithLibrary(self):
         raise NotImplementedError
 
-    def _onPack(self):
-        raise NotImplementedError
+    def _onConvertToPacked(self):
+        if self.view.isSingleSelection():
+            index = self.view.selectedIndex()
+            library_path = index.data(Qt.UserRole)
+            repackHDA(library_path)
 
-    def _onUnpack(self):
-        raise NotImplementedError
+    def _onConvertToUnpacked(self):
+        """
+        Expands the contents of the HDA file in into the directory.
+        Currently, supported single selection only. Multiple selection is ignored.
+        """
+        if self.view.isSingleSelection():
+            index = self.view.selectedIndex()
+            library_path = index.data(Qt.UserRole)
+            repackHDA(library_path)
 
-    def _onBackupList(self):
+    def _onShowBackups(self):
         raise NotImplementedError
 
     def _onOpenTypeProperties(self):
@@ -136,6 +218,12 @@ class OperatorManagerWindow(QWidget):
 
     def _onChangeInstancesTo(self):
         raise NotImplementedError
+        if self.view.isSingleSelection():
+            index = self.view.selectedIndex()
+            definition = index.data(Qt.UserRole)
+            target_node_type = None  # Todo
+            for node in definition.type().instances():
+                node.changeNodeType(target_node_type)
 
     def _onRunHDADoctor(self):
         raise NotImplementedError
@@ -146,7 +234,7 @@ class OperatorManagerWindow(QWidget):
     def _onFindDependencies(self):
         raise NotImplementedError
 
-    def _onShowStatistics(self):
+    def _onShowNetworkStatistics(self):
         raise NotImplementedError
 
     def _onCreateInstance(self):
@@ -209,6 +297,18 @@ class OperatorManagerWindow(QWidget):
         raise NotImplementedError
 
     def __createActions(self):
+        self._expand_action = QAction('Expand')
+        self._expand_action.triggered.connect(self._onExpand)
+
+        self._collapse_action = QAction('Collapse')
+        self._collapse_action.triggered.connect(self._onCollapse)
+
+        self._expand_all_action = QAction('Expand all')
+        self._expand_all_action.triggered.connect(self._onExpandAll)
+
+        self._collapse_all_action = QAction('Collapse all')
+        self._collapse_all_action.triggered.connect(self._onCollapseAll)
+
         self._open_location_action = QAction(hou.qt.Icon('BUTTONS_folder', ICON_SIZE, ICON_SIZE), 'Open location')
         self._open_location_action.triggered.connect(self._onOpenLocation)
 
@@ -221,17 +321,26 @@ class OperatorManagerWindow(QWidget):
         self._reload_library_action = QAction(hou.qt.Icon('MISC_loading', ICON_SIZE, ICON_SIZE), 'Reload')
         self._reload_library_action.triggered.connect(self._onReload)
 
-        self._merge_with_library_action = QAction('Merge with Library')
+        self._reload_all_libraries_action = QAction(hou.qt.Icon('MISC_loading', ICON_SIZE, ICON_SIZE), 'Reload all')
+        self._reload_all_libraries_action.triggered.connect(self._onReloadAll)
+
+        self._rescan_and_reload_all_action = QAction(hou.qt.Icon('MISC_loading', ICON_SIZE, ICON_SIZE),
+                                                     'Rescan and reload all')
+        self._rescan_and_reload_all_action.triggered.connect(self._onRescanAndReloadAll)
+
+        self._merge_with_library_action = QAction('Merge with library')
         self._merge_with_library_action.triggered.connect(self._onMergeWithLibrary)
 
-        self._pack_action = QAction(hou.qt.Icon('DESKTOP_otl', ICON_SIZE, ICON_SIZE), 'Pack')
-        self._pack_action.triggered.connect(self._onPack)
+        self._convert_to_packed_action = QAction(hou.qt.Icon('DESKTOP_otl', ICON_SIZE, ICON_SIZE),
+                                                 'Convert to packed format')
+        self._convert_to_packed_action.triggered.connect(self._onConvertToPacked)
 
-        self._unpack_action = QAction(hou.qt.Icon('DESKTOP_expanded_otl', ICON_SIZE, ICON_SIZE), 'Unpack')
-        self._unpack_action.triggered.connect(self._onUnpack)
+        self._convert_to_unpacked_action = QAction(hou.qt.Icon('DESKTOP_expanded_otl', ICON_SIZE, ICON_SIZE),
+                                                   'Convert to unpacked format')
+        self._convert_to_unpacked_action.triggered.connect(self._onConvertToUnpacked)
 
-        self._backup_list_action = QAction(hou.qt.Icon('BUTTONS_history', ICON_SIZE, ICON_SIZE), 'Backups...')
-        self._backup_list_action.triggered.connect(self._onBackupList)
+        self._show_backups_action = QAction(hou.qt.Icon('BUTTONS_history', ICON_SIZE, ICON_SIZE), 'Show backups...')
+        self._show_backups_action.triggered.connect(self._onShowBackups)
 
         self._open_type_properties_action = QAction(hou.qt.Icon('BUTTONS_gear_mini', ICON_SIZE, ICON_SIZE),
                                                     'Open type properties...')
@@ -250,8 +359,9 @@ class OperatorManagerWindow(QWidget):
                                                  'Find dependencies...')
         self._find_dependencies_action.triggered.connect(self._onFindDependencies)
 
-        self._show_statistics_action = QAction(hou.qt.Icon('BUTTONS_info', ICON_SIZE, ICON_SIZE), 'Show statistics...')
-        self._show_statistics_action.triggered.connect(self._onShowStatistics)
+        self._show_network_statistics_action = QAction(hou.qt.Icon('BUTTONS_info', ICON_SIZE, ICON_SIZE),
+                                                       'Show network statistics...')
+        self._show_network_statistics_action.triggered.connect(self._onShowNetworkStatistics)
 
         self._create_instance_action = QAction('Instance')
         self._create_instance_action.triggered.connect(self._onCreateInstance)
@@ -294,17 +404,23 @@ class OperatorManagerWindow(QWidget):
     def __createContextMenus(self):
         self._library_menu = QMenu(self)
 
-        self._library_menu.addAction(self._open_location_action)
-        self._library_menu.addSeparator()
         self._library_menu.addAction(self._install_library_action)
         self._library_menu.addAction(self._uninstall_library_action)
         self._library_menu.addAction(self._reload_library_action)
+        self._library_menu.addAction(self._reload_all_libraries_action)
+        self._library_menu.addAction(self._rescan_and_reload_all_action)
         self._library_menu.addSeparator()
         self._library_menu.addAction(self._merge_with_library_action)
-        self._library_menu.addAction(self._pack_action)
-        self._library_menu.addAction(self._unpack_action)
+        self._library_menu.addAction(self._convert_to_packed_action)
+        self._library_menu.addAction(self._convert_to_unpacked_action)
         self._library_menu.addSeparator()
-        self._library_menu.addAction(self._backup_list_action)
+        self._library_menu.addAction(self._open_location_action)
+        self._library_menu.addAction(self._show_backups_action)
+        self._library_menu.addSeparator()
+        self._library_menu.addAction(self._expand_action)
+        self._library_menu.addAction(self._collapse_action)
+        self._library_menu.addAction(self._expand_all_action)
+        self._library_menu.addAction(self._collapse_all_action)
 
         self._definition_menu = QMenu(self)
 
@@ -317,7 +433,8 @@ class OperatorManagerWindow(QWidget):
         self._definition_inspect_menu.addAction(self._run_hda_doctor_action)
         self._definition_inspect_menu.addAction(self._find_usages_action)
         self._definition_inspect_menu.addAction(self._find_dependencies_action)
-        self._definition_inspect_menu.addAction(self._show_statistics_action)
+        self._definition_inspect_menu.addAction(self._show_network_statistics_action)
+        self._definition_inspect_menu.addAction(self._compare_action)
 
         self._definition_create_menu = QMenu('Create', self)
         self._definition_menu.addMenu(self._definition_create_menu)
@@ -339,8 +456,6 @@ class OperatorManagerWindow(QWidget):
         self._definition_edit_menu.addAction(self._delete_action)
         self._definition_edit_menu.addAction(self._hide_action)
         self._definition_edit_menu.addAction(self._deprecate_action)
-
-        self._definition_menu.addAction(self._compare_action)
 
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.view.customContextMenuRequested.connect(self.showContextMenu)

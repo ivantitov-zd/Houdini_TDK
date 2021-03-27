@@ -65,12 +65,12 @@ class OperatorManagerView(QTreeView):
         Returns a single selected index.
         Should be used only when isSingleSelection is True.
 
-        Raised IndexError if no selection.
+        Raises IndexError if no selection.
         """
         return self.selectionModel().selectedIndexes()[0]
 
     def indexDepth(self, index):
-        """Returns level of nesting of the index. Root has level 0."""
+        """Returns level of nesting of the index. Root index has level 0."""
         depth = 0
         while index.isValid():
             index = index.parent()
@@ -78,13 +78,18 @@ class OperatorManagerView(QTreeView):
         return depth
 
     def deselectDifferingDepth(self, target_index):
-        """Remove items with differing level of nesting from the selection model."""
+        """Removes items with differing level of nesting from the selection model."""
         selection_model = self.selectionModel()
         target_depth = self.indexDepth(target_index)
+        deselection = QItemSelection()
         for index in selection_model.selectedIndexes():
+            if index.column() != 0:
+                continue
+
             depth = self.indexDepth(index)
             if depth != target_depth:
-                selection_model.select(index, QItemSelectionModel.Deselect)
+                deselection.select(index, index)
+        selection_model.select(deselection, QItemSelectionModel.Deselect | QItemSelectionModel.Rows)
 
     def deselectDifferringParent(self, target_index):
         raise NotImplementedError

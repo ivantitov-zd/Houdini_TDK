@@ -142,21 +142,25 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
         if not index.isValid():
             return
 
+        item_data = index.internalPointer()
+
         if role == Qt.UserRole:
-            return index.internalPointer()
+            return item_data
 
         column = index.column()
         if column == 0:
             if not index.parent().isValid():
-                lib_path = index.internalPointer()
+                library_path = item_data
                 if role == TextRole:
-                    return lib_path
+                    return library_path
                 elif role == Qt.ToolTipRole:
-                    return lib_path
+                    import os
+                    return '{}\nFile size: {:.4f} MB'.format(library_path,
+                                                             os.stat(library_path).st_size / 1024. / 1024.)
                 elif role == Qt.DecorationRole:
                     return INSTALLED_ICON
             else:
-                definition = index.internalPointer()
+                definition = item_data
                 if role in (Qt.DisplayRole, TextRole):
                     return definition.description()
                 elif role == Qt.DecorationRole:
@@ -165,7 +169,11 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
                     except hou.OperationFailed:
                         return EMPTY_ICON
         elif column == 1:
-            if index.parent().isValid():
-                definition = index.internalPointer()
+            if not index.parent().isValid():
+                library_path = item_data
+                if role == Qt.ToolTipRole:
+                    return library_path
+            else:
+                definition = item_data
                 if role in (Qt.DisplayRole, TextRole):
                     return definition.nodeTypeName()

@@ -130,7 +130,7 @@ class FuzzyProxyModel(QSortFilterProxyModel):
 
     def lessThan(self, source_left, source_right):
         if not self._pattern:
-            return source_left.row() < source_right.row()
+            return source_left.row() > source_right.row()
 
         text1 = source_left.data(self._comp_text_role)
         text2 = source_right.data(self._comp_text_role)
@@ -143,3 +143,6 @@ class FuzzyProxyModel(QSortFilterProxyModel):
             weight2 = fuzzyMatchWeight(self._pattern, text2)
 
         return weight1 < weight2
+
+    def __getattr__(self, attr_name):
+        return self.sourceModel().__getattribute__(attr_name)
