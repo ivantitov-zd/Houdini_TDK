@@ -155,7 +155,7 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
                     return library_path
                 elif role == Qt.ToolTipRole:
                     import os
-                    return '{}\nFile size: {:.4f} MB'.format(library_path,
+                    return '{}\nFile size: {:.3f} MB'.format(library_path,
                                                              os.stat(library_path).st_size / 1024. / 1024.)
                 elif role == Qt.DecorationRole:
                     return INSTALLED_ICON

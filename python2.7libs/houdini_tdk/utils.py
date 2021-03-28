@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 import webbrowser
+import shutil
 
 
 def openFileLocation(file_path):
@@ -15,3 +16,10 @@ def openFileLocation(file_path):
         subprocess.call('explorer /select,"{0}"'.format(file_path.replace('/', '\\')))
     else:
         webbrowser.open('file://' + os.path.dirname(file_path))
+
+
+def removePath(path):
+    if os.path.isfile(path):
+        os.remove(path)
+    else:
+        shutil.rmtree(path, True)

@@ -33,7 +33,7 @@ import hou
 
 from ..widgets import FilterField
 from ..fuzzy_proxy_model import FuzzyProxyModel
-from ..utils import openFileLocation
+from ..utils import openFileLocation, removePath
 from .model import OperatorManagerLibraryModel, TextRole
 from .view import OperatorManagerView
 
@@ -45,7 +45,7 @@ def repackHDA(library_path):
         return
 
     library_dir, name = os.path.split(library_path)
-    temp_repack_path = os.path.join(library_dir, 'temp_' + name.replace('.', '_'))
+    temp_repack_path = os.path.join(library_dir, 'temp_' + name)
 
     try:
         if os.path.isfile(library_path):
@@ -58,15 +58,15 @@ def repackHDA(library_path):
     except hou.OperationFailed:
         return
     except OSError:
-        os.remove(temp_repack_path)
+        removePath(temp_repack_path)
         return
 
     try:
         os.rename(temp_repack_path, library_path)
-        os.remove(backup_library_path)
+        removePath(backup_library_path)
     except OSError:
         os.rename(backup_library_path, library_path)
-        os.remove(temp_repack_path)
+        removePath(temp_repack_path)
         return
 
     hou.hda.reloadFile(library_path)
