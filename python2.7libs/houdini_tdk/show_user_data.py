@@ -299,6 +299,8 @@ class UserDataWindow(QWidget):
 
         if key == 'nodeshape':
             self.shape_preview.setShape(data)
+            self.shape_preview.setFixedSize(self.user_data_view.viewport().size())
+            self.shape_preview.recacheShape(20)
 
         if self._prettify:
             data = prettify(data)
