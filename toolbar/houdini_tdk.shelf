@@ -147,7 +147,7 @@ tdk.showMakeHDADialog(**kwargs)
 ]]></script>
   </tool>
 
-  <tool name="houdini_tdk::new_hda_version::1.0" label="New HDA Version" icon="BUTTONS_list_add">
+  <tool name="houdini_tdk::new_hda_version::1.0" label="New HDA Version" icon="BUTTONS_multi_insertbefore">
     <helpText><![CDATA["""Increment HDA version of the selected node"""]]></helpText>
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
