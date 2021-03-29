@@ -69,7 +69,8 @@ class OperatorManagerView(QTreeView):
         """
         return self.selectionModel().selectedIndexes()[0]
 
-    def indexDepth(self, index):
+    @staticmethod
+    def _indexDepth(index):
         """Returns level of nesting of the index. Root index has level 0."""
         depth = 0
         while index.isValid():
@@ -80,13 +81,13 @@ class OperatorManagerView(QTreeView):
     def deselectDifferingDepth(self, target_index):
         """Removes items with differing level of nesting from the selection model."""
         selection_model = self.selectionModel()
-        target_depth = self.indexDepth(target_index)
+        target_depth = self._indexDepth(target_index)
         deselection = QItemSelection()
         for index in selection_model.selectedIndexes():
             if index.column() != 0:
                 continue
 
-            depth = self.indexDepth(index)
+            depth = self._indexDepth(index)
             if depth != target_depth:
                 deselection.select(index, index)
         selection_model.select(deselection, QItemSelectionModel.Deselect | QItemSelectionModel.Rows)

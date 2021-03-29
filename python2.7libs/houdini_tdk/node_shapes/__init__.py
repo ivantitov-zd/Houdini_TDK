@@ -16,6 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from .node_shape_list_dialog import NodeShapeListDialog, findNodeShape
-from .node_shape_preview import NodeShapePreview
+from .dialog import NodeShapeListDialog, findNodeShape
+from .preview import NodeShapePreview
 from .node_shape import NodeShape

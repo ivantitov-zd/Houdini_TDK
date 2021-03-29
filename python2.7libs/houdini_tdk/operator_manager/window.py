@@ -101,8 +101,8 @@ class OperatorManagerWindow(QWidget):
         self.view.setModel(self.filter_proxy_model)
         layout.addWidget(self.view)
 
-        self.__createActions()
-        self.__createContextMenus()
+        self._createActions()
+        self._createContextMenus()
 
     def _onFilterChange(self, pattern):
         """Delivers pattern from filter field to filter proxy model."""
@@ -296,7 +296,7 @@ class OperatorManagerWindow(QWidget):
     def _onCompare(self):
         raise NotImplementedError
 
-    def __createActions(self):
+    def _createActions(self):
         self._expand_action = QAction('Expand')
         self._expand_action.triggered.connect(self._onExpand)
 
@@ -401,7 +401,7 @@ class OperatorManagerWindow(QWidget):
         self._compare_action = QAction(hou.qt.Icon('BUTTONS_restore', ICON_SIZE, ICON_SIZE), 'Compare...')
         self._compare_action.triggered.connect(self._onCompare)
 
-    def __createContextMenus(self):
+    def _createContextMenus(self):
         self._library_menu = QMenu(self)
 
         self._library_menu.addAction(self._install_library_action)
@@ -458,9 +458,9 @@ class OperatorManagerWindow(QWidget):
         self._definition_edit_menu.addAction(self._deprecate_action)
 
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.view.customContextMenuRequested.connect(self.showContextMenu)
+        self.view.customContextMenuRequested.connect(self._showContextMenu)
 
-    def showContextMenu(self):
+    def _showContextMenu(self):
         index = self.view.currentIndex()
 
         if not index.isValid():
