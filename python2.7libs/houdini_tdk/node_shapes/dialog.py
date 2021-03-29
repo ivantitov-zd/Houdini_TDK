@@ -33,9 +33,9 @@ import hou
 
 from ..fuzzy_proxy_model import FuzzyProxyModel
 from ..widgets.filter_field import FilterField
-from .node_shape_list_model import NodeShapeListModel
-from .node_shape_list_view import NodeShapeListView
-from .node_shape_delegate import NodeShapeDelegate
+from .model import NodeShapeListModel
+from .view import NodeShapeListView
+from .delegate import NodeShapeDelegate
 
 
 class NodeShapeListDialog(QDialog):
