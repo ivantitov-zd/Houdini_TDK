@@ -36,6 +36,7 @@ from ..fuzzy_proxy_model import FuzzyProxyModel
 from ..utils import openFileLocation, removePath
 from .model import OperatorManagerLibraryModel, TextRole
 from .view import OperatorManagerView
+from .backup_list import BackupListWindow
 
 ICON_SIZE = 16
 
@@ -204,7 +205,12 @@ class OperatorManagerWindow(QWidget):
             repackHDA(library_path)
 
     def _onShowBackups(self):
-        raise NotImplementedError
+        if self.view.isSingleSelection():
+            index = self.view.selectedIndex()
+            library_path = index.data(Qt.UserRole)
+            backup_list = BackupListWindow()
+            backup_list.setLibrary(library_path)
+            backup_list.show()
 
     def _onOpenTypeProperties(self):
         """
