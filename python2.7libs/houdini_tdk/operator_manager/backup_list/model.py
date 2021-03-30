@@ -111,7 +111,6 @@ class BackupListModel(QAbstractItemModel):
         _, f_timestamp, file_size = index.internalPointer()
 
         column = index.column()
-
         if column == 0:
             if role == Qt.DisplayRole:
                 return self._backup_file_names[index.row()]

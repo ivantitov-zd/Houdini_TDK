@@ -29,8 +29,6 @@ except ImportError:
 
 import hou
 
-from ...widgets import FilterField
-from ...fuzzy_proxy_model import FuzzyProxyModel
 from ...utils import openFileLocation
 from .view import BackupListView
 from .model import BackupListModel

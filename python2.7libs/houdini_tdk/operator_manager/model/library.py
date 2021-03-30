@@ -38,6 +38,8 @@ TextRole = Qt.UserRole + 1
 
 
 class HDADefinitionProxy(object):
+    __slots__ = 'definition', '_name', '_label', '_icon', '_library_file_path'
+
     def __init__(self, definition):
         self.definition = definition
         self._name = definition.nodeTypeName()

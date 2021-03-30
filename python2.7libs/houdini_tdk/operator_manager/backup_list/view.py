@@ -57,3 +57,9 @@ class BackupListView(QTreeView):
         Raises IndexError if no selection.
         """
         return self.selectionModel().selectedIndexes()[0]
+
+    def keyPressEvent(self, event):
+        if event.matches(QKeySequence.Refresh):
+            self.model().updateData()
+        else:
+            super(BackupListView, self).keyPressEvent(event)
