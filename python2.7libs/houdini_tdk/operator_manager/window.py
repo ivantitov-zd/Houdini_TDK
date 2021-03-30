@@ -37,6 +37,7 @@ from ..utils import openFileLocation, removePath
 from .model import OperatorManagerLibraryModel, TextRole
 from .view import OperatorManagerView
 from .backup_list import BackupListWindow
+from .usage_list import UsageListWindow
 
 ICON_SIZE = 16
 
@@ -235,7 +236,12 @@ class OperatorManagerWindow(QWidget):
         raise NotImplementedError
 
     def _onFindUsages(self):
-        raise NotImplementedError
+        if self.view.isSingleSelection():
+            index = self.view.selectedIndex()
+            definition = index.data(Qt.UserRole)
+            usage_window = UsageListWindow()
+            usage_window.setDefinition(definition)
+            usage_window.show()
 
     def _onFindDependencies(self):
         raise NotImplementedError
