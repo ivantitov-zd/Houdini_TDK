@@ -1,18 +1,24 @@
 ## Access
-- Shelf named **Tool Development Kit**
-- Node context menu named **TDK Actions**
+- [Shelf named **Tool Development Kit**](#shelf)
+- [Node context menu named **TDK Actions**](#node-context-menu)
 
 ## Tools
 - [Make HDA](#make-hda)
 - [Templates](#templates)
+- [Operator Manager](#operator-manager)
 - [HDA Doctor](#hda-doctor-beta)
 - [New HDA Version](#new-hda-version)
 - [Generate Code](#generate-code)
 - [Show Node User Data](#show-node-user-data)
-- [Node context menu](#node-context-menu)
 - [Network Statistics](#network-statistics)
 - [Find Icon](#find-icon)
 - [Find Node Shape](#find-node-shape)
+
+#### Shelf
+
+
+#### Node context menu
+
 
 #### Make HDA
 
@@ -20,6 +26,8 @@
 
 #### Templates
 Template HDAs that allows you to quickly create new HDAs based on them.
+
+#### Operator Manager
 
 #### HDA Doctor *Beta*
 Tool that allows you to test your HDA with a set of inspections that check for compliance with high standards of HDA development.
