@@ -74,7 +74,7 @@ def repackHDA(library_path):
     hou.hda.reloadFile(library_path)
 
 
-class OperatorManagerWindow(QWidget):
+class OperatorManagerWindow(QDialog):
     def __init__(self, parent=hou.qt.mainWindow()):
         super(OperatorManagerWindow, self).__init__(parent, Qt.Window)
 
@@ -131,6 +131,11 @@ class OperatorManagerWindow(QWidget):
     def _onCollapseAll(self):
         """Collapses all items."""
         self.view.collapseAll()
+
+    def _onCopyPath(self):
+        """Copy library path(s) to the clipboard."""
+        paths = (index.data(Qt.UserRole) for index in self.view.selectedIndexes() if index.column() == 0)
+        QApplication.clipboard().setText('\n'.join(paths))
 
     def _onOpenLocation(self):
         """
@@ -247,7 +252,12 @@ class OperatorManagerWindow(QWidget):
         raise NotImplementedError
 
     def _onShowNetworkStatistics(self):
-        raise NotImplementedError
+        if self.view.isSingleSelection():
+            index = self.view.selectedIndex()
+            definition = index.data(Qt.UserRole)
+            # network_stats_list = NetworkStatisticsWindow()
+            # network_stats_list.setLibrary(definition)
+            # network_stats_list.show()
 
     def _onCreateInstance(self):
         """
@@ -321,7 +331,10 @@ class OperatorManagerWindow(QWidget):
         self._collapse_all_action = QAction('Collapse all')
         self._collapse_all_action.triggered.connect(self._onCollapseAll)
 
-        self._open_location_action = QAction(hou.qt.Icon('BUTTONS_folder', ICON_SIZE, ICON_SIZE), 'Open location')
+        self._copy_path_action = QAction(hou.qt.Icon('BUTTONS_chooser_file', ICON_SIZE, ICON_SIZE), 'Copy path')
+        self._copy_path_action.triggered.connect(self._onCopyPath)
+
+        self._open_location_action = QAction(hou.qt.Icon('BUTTONS_folder', ICON_SIZE, ICON_SIZE), 'Open location...')
         self._open_location_action.triggered.connect(self._onOpenLocation)
 
         self._install_library_action = QAction('Install')
@@ -426,6 +439,7 @@ class OperatorManagerWindow(QWidget):
         self._library_menu.addAction(self._convert_to_packed_action)
         self._library_menu.addAction(self._convert_to_unpacked_action)
         self._library_menu.addSeparator()
+        self._library_menu.addAction(self._copy_path_action)
         self._library_menu.addAction(self._open_location_action)
         self._library_menu.addAction(self._show_backups_action)
         self._library_menu.addSeparator()

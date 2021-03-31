@@ -35,7 +35,10 @@ class UsageListView(QTreeView):
         super(UsageListView, self).__init__()
 
         header = self.header()
+        header.setStretchLastSection(False)
         header.setSectionResizeMode(QHeaderView.Stretch)
+        header.setDefaultSectionSize(120)
+        header.setDefaultAlignment(Qt.AlignCenter)
 
         self.setUniformRowHeights(True)
 

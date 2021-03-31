@@ -114,9 +114,12 @@ class FuzzyProxyModel(QSortFilterProxyModel):
 
         source_model = self.sourceModel()
         current_index = source_model.index(source_row, 0, source_parent)
-        has_children = source_model.hasChildren(current_index)
+        try:
+            has_children = source_model.hasChildren(current_index)
+        except TypeError:
+            has_children = False
 
-        if has_children:  # Todo: Optional
+        if has_children:
             matches = False
         else:
             matches = self._match(current_index)

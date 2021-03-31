@@ -61,7 +61,10 @@ class UsageListWindow(QWidget):
 
         self.view = UsageListView()
         self.view.setModel(self.fuzzy_proxy_model)
-        self.view.selectionModel().currentChanged.connect(self._selectNode)
+        header = self.view.header()
+        header.setSectionResizeMode(0, QHeaderView.Interactive)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        self.view.selectionModel().selectionChanged.connect(self._selectNode)
         layout.addWidget(self.view)
 
     def updateWindowTitle(self):
@@ -84,18 +87,20 @@ class UsageListWindow(QWidget):
         if editor is None:  # No active network editor found
             return
 
-        index = self.view.currentIndex()
+        index = self.view.selectedIndex()
         if not index.isValid():
             return
 
         node = index.data(Qt.UserRole + 1)
         if not node.exists():
+            editor.flashMessage('STATUS_error', 'Node was deleted', 2)
             return
 
-        here = editor.pwd().path()
-        if here != node.parent().path():
-            nodegraphview.changeNetwork(editor, node.parent())
+        with hou.undos.disabler():
+            here = editor.pwd().path()
+            if here != node.parent().path():
+                nodegraphview.changeNetwork(editor, node.parent())
 
-        nodes = (node,)
-        nodegraphview.modifySelection(None, editor, nodes)
-        nodegraphview.frameItems(editor, nodes)
+            nodes = (node,)
+            nodegraphview.modifySelection(None, editor, nodes)
+            nodegraphview.frameItems(editor, nodes)

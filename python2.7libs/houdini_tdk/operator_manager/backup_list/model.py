@@ -89,8 +89,6 @@ class BackupListModel(QAbstractItemModel):
         if orientation == Qt.Horizontal:
             if role == Qt.DisplayRole:
                 return names[section]
-            elif role == Qt.TextAlignmentRole:
-                return Qt.AlignCenter
 
     def parent(self, index):
         return QModelIndex()
