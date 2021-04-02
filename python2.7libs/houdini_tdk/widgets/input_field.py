@@ -27,8 +27,18 @@ except ImportError:
     from PySide2.QtGui import *
     from PySide2.QtCore import *
 
+from .field_base import FieldBase
 
-class InputField(QLineEdit):
+
+class InputField(FieldBase):
+    def __init__(self, text=None, label_text=None, label_width=None):
+        super(InputField, self).__init__(label_text, label_width)
+
+        self.text_field = QLineEdit()
+        if text:
+            self.text_field.setText(text)
+        self.layout().addWidget(self.text_field)
+
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.Cancel):
             self.clear()
@@ -40,3 +50,6 @@ class InputField(QLineEdit):
             self.clear()
         else:
             super(InputField, self).mousePressEvent(event)
+
+    def __getattr__(self, attr_name):
+        return self.text_field.__getattribute__(attr_name)

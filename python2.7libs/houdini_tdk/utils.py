@@ -22,6 +22,11 @@ import sys
 import webbrowser
 import shutil
 
+try:
+    from PyQt5.QtGui import QColor
+except ImportError:
+    from PySide2.QtGui import QColor
+
 
 def openFileLocation(file_path):
     """
@@ -43,3 +48,11 @@ def removePath(path):
         os.remove(path)
     else:
         shutil.rmtree(path, True)
+
+
+def qColorFromHoudiniColor(color):
+    return QColor.fromRgbF(*color.rgb())
+
+
+def houdiniColorFromQColor(color):
+    return hou.Color(color.getRgbF()[:3])

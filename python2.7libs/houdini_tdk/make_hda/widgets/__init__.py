@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from .field_base import FieldBase
-from .input_field import InputField
-from .filter_field import FilterField
-from .slider import Slider
+from .location_field import LocationField
+from .icon_field import IconField
+from .color_field import ColorField
+from .node_shape_field import NodeShapeField
