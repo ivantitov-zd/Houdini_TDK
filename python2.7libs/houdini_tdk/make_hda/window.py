@@ -29,12 +29,12 @@ except ImportError:
 
 import hou
 
-from ..icon_list import standardIconExists
-from ..notification import notify
 from ..widgets import InputField
-from .widgets import LocationField, IconField, ColorField, NodeShapeField
+from ..notification import notify
+from ..icon_list import standardIconExists
 from ..utils import houdiniColorFromQColor, qColorFromHoudiniColor
-from .utils import makeHDAFromNode
+from .widgets import LocationField, IconField, ColorField, NodeShapeField
+from .utils import makeHDA, copyHDA, moveHDA
 
 
 class MakeHDADialog(QDialog):
@@ -173,7 +173,7 @@ class MakeHDADialog(QDialog):
         self.open_type_properties_toggle.setChecked(check)
 
     def fillFromNodeType(self, node_type, inherit_meta=False):
-        tdk_template_used = node_type.name() == 'tdk::template'
+        tdk_template_used = node_type.name().startswith('tdk::template')
 
         _, namespace, name, version = node_type.nameComponents()
 
@@ -225,7 +225,7 @@ class MakeHDADialog(QDialog):
     def fillFromNode(self, node, inherit_meta=False):
         self.fillFromNodeType(node.type(), inherit_meta)
 
-        tdk_template_used = node.type().name() == 'tdk::template'
+        tdk_template_used = node.type().name().startswith('tdk::template')
 
         # Label
         if tdk_template_used or not inherit_meta:
@@ -314,21 +314,21 @@ class MakeHDADialog(QDialog):
 
         color = window.color_field.color()
         shape = window.shape_field.shape()
-        definition = makeHDAFromNode(window.node,
-                                     window.label_field.text(),
-                                     window.name_field.text(),
-                                     window.namespace_field.text(),
-                                     window.icon_field.text(),
-                                     window.sections.text(),
-                                     window.version_field.text(),
-                                     window.location_field.path(),
-                                     window.inherit_subnetwork_toggle.isChecked(),
-                                     window.inherit_parm_template_group_toggle.isChecked(),
-                                     color,
-                                     shape)
+        definition = makeHDA(source,
+                             window.label_field.text(),
+                             window.name_field.text(),
+                             window.namespace_field.text(),
+                             window.icon_field.text(),
+                             window.sections.text(),
+                             window.version_field.text(),
+                             window.location_field.path(),
+                             window.inherit_subnetwork_toggle.isChecked(),
+                             window.inherit_parm_template_group_toggle.isChecked(),
+                             color,
+                             shape)
         if window.install_toggle.isChecked():
             hou.hda.installFile(definition.libraryFilePath())
-            if window.replace_node_toggle.isChecked():
+            if isinstance(source, hou.Node) and window.replace_node_toggle.isChecked():
                 window.node = window.node.changeNodeType(definition.nodeTypeName(), keep_network_contents=False)
                 window.node.setCurrent(True, True)
 
@@ -339,7 +339,7 @@ class MakeHDADialog(QDialog):
                     definition.nodeType().setDefaultShape(shape)
 
             if window.open_type_properties_toggle.isChecked():
-                if window.replace_node_toggle.isChecked():
+                if isinstance(source, hou.Node) and window.replace_node_toggle.isChecked():
                     hou.ui.openTypePropertiesDialog(window.node)
                 else:
                     hou.ui.openTypePropertiesDialog(definition.nodeType())
@@ -352,14 +352,24 @@ class MakeHDADialog(QDialog):
 
         window.setAllFieldsDisabled(True)
         window.location_field.setEnabled(True)
+        window.use_source_file_toggle.hide()
+
         window.color_field.hide()
         window.shape_field.hide()
+
         window.setAllOptionsDisabled()
+        window.setAllOptionsHidden()
+        window.install_toggle.show()
+        window.install_toggle.setEnabled(True)
+        window.install_toggle.setChecked(False)
+        window.open_type_properties_toggle.show()
 
         window.fillFromSource(source)
 
         if not window.exec_():
             return
+
+        copyHDA(source, window.location_field.path())
 
     @staticmethod
     def moveHDA(source):
@@ -367,16 +377,26 @@ class MakeHDADialog(QDialog):
         window.setWindowTitle('Move HDA')
         window.setWindowIcon(hou.qt.Icon('BUTTONS_move_to_right', 32, 32))
 
-        window.setAllFieldsDisabled()
+        window.setAllFieldsDisabled(True)
         window.location_field.setEnabled(True)
+        window.use_source_file_toggle.hide()
+
         window.color_field.hide()
         window.shape_field.hide()
+
+        window.setAllOptionsDisabled()
         window.setAllOptionsHidden()
+        window.install_toggle.show()
+        window.install_toggle.setEnabled(True)
+        window.install_toggle.setChecked(False)
+        window.open_type_properties_toggle.show()
 
         window.fillFromSource(source)
 
         if not window.exec_():
             return
+
+        moveHDA(source, window.location_field.path())
 
 
 def showMakeHDADialog(**kwargs):
