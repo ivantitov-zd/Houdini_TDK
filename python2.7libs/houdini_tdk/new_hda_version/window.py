@@ -16,88 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from __future__ import print_function
-
 import os
 
 try:
-    from PyQt5.QtWidgets import *
-    from PyQt5.QtGui import *
-    from PyQt5.QtCore import *
-
-    Signal = pyqtSignal
+    from PyQt5.QtGui import Qt
+    from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QFormLayout, QLabel, QCheckBox, QSpacerItem, QSizePolicy,
+                                 QPushButton)
 except ImportError:
-    from PySide2.QtWidgets import *
-    from PySide2.QtGui import *
-    from PySide2.QtCore import *
+    from PySide2.QtGui import Qt
+    from PySide2.QtWidgets import (QDialog, QVBoxLayout, QFormLayout, QLabel, QCheckBox, QSpacerItem, QSizePolicy,
+                                   QPushButton)
 
-import hou
-
-from .notification import notify
-from .widgets import Slider
-
-
-def versionByTypeName(name):
-    split_count = name.count('::')
-    if split_count == 2:
-        version = name.split('::')[-1]
-    elif split_count == 1 and name[-1].isdigit():
-        version = name.split('::')[-1]
-    else:
-        version = '1.0'
-    return version
-
-
-def nextVersion(version, component=0):
-    if isinstance(version, basestring):
-        values = [int(value) for value in version.split('.')]
-    elif isinstance(version, (list, tuple)):
-        values = version
-    else:
-        raise TypeError
-    try:
-        values[component] += 1
-    except IndexError:
-        values += [0] * (component - len(values)) + [1]
-    values = values[:component + 1] + [0] * (len(values) - component - 1)
-    return '.'.join(str(value) for value in values)
-
-
-def nextVersionTypeName(name, component):
-    next_version = nextVersion(versionByTypeName(name), component)
-    split_count = name.count('::')
-    if split_count == 2:
-        new_type_name = '::'.join(name.split('::')[:2])
-    elif split_count == 1 and name[-1].isdigit():
-        new_type_name = name.split('::')[0]
-    else:
-        new_type_name = name
-    new_type_name += '::' + next_version
-    return new_type_name
-
-
-def incrementHDAVersion(node, component, use_original_file):
-    node_type = node.type()
-    type_name = node_type.name()
-
-    new_type_name = nextVersionTypeName(type_name, component)
-
-    definition = node_type.definition()
-    file_path = definition.libraryFilePath()
-    if use_original_file:
-        new_file_path = file_path
-    else:
-        ext = os.path.splitext(file_path)[-1]
-        new_file_name = new_type_name.replace(':', '_').replace('.', '_') + ext
-        new_file_path = os.path.join(os.path.dirname(file_path), new_file_name).replace('\\', '/')
-    definition.copyToHDAFile(new_file_path, new_type_name)
-
-    hou.hda.installFile(new_file_path)
-    new_definition = hou.hda.definitionsInFile(new_file_path)[0]  # Todo: fix potential bug
-
-    new_definition.updateFromNode(node)
-
-    node.changeNodeType(new_type_name, keep_network_contents=False)
+from ..notification import notify
+from ..widgets import Slider
+from .utils import versionByTypeName, nextVersionTypeName, incrementHDAVersion
 
 
 class NewVersionDialog(QDialog):
