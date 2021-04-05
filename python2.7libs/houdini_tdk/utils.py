@@ -27,6 +27,8 @@ try:
 except ImportError:
     from PySide2.QtGui import QColor
 
+import hou
+
 
 def openFileLocation(file_path):
     """
