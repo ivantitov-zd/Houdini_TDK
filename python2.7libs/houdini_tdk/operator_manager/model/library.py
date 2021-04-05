@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import os
+
 try:
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
@@ -153,12 +155,12 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
         if column == 0:
             if not index.parent().isValid():
                 library_path = item_data
-                if role == TextRole:
+                if role == Qt.DisplayRole:
+                    return os.path.dirname(library_path)
+                elif role == TextRole:
                     return library_path
                 elif role == Qt.ToolTipRole:
-                    import os
-                    return '{}\nFile size: {:.3f} MB'.format(library_path,
-                                                             os.stat(library_path).st_size / 1024. / 1024.)
+                    return library_path
                 elif role == Qt.DecorationRole:
                     return INSTALLED_ICON
             else:
@@ -173,6 +175,8 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
         elif column == 1:
             if not index.parent().isValid():
                 library_path = item_data
+                if role == Qt.DisplayRole:
+                    return os.path.basename(library_path)
                 if role == Qt.ToolTipRole:
                     return library_path
             else:

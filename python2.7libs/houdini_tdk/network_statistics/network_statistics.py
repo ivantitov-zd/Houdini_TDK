@@ -1,6 +1,6 @@
 """
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2021  Ivan Titov
+Copyright (C) 2021 Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -270,6 +270,7 @@ class NetworkStatsView(QTreeView):
         header = self.header()
         header.setSectionsMovable(False)
         header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        header.setResizeContentsPrecision(1)
         header.hide()
 
         self.setUniformRowHeights(True)

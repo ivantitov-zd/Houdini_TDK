@@ -32,9 +32,11 @@ except ImportError:
 import hou
 
 from ..widgets import FilterField
-from ..fuzzy_proxy_model import FuzzyProxyModel
+from ..make_hda import MakeHDADialog
 from ..utils import openFileLocation, removePath
-from .model import OperatorManagerLibraryModel, TextRole
+from ..fuzzy_proxy_model import FuzzyProxyModel
+from .model import OperatorManagerLibraryModel, OperatorManagerNodeTypeModel, TextRole
+from .model.library import HDADefinitionProxy
 from .view import OperatorManagerView
 from .backup_list import BackupListWindow
 from .usage_list import UsageListWindow
@@ -42,7 +44,7 @@ from .usage_list import UsageListWindow
 ICON_SIZE = 16
 
 
-def repackHDA(library_path):
+def repackHDA(library_path, expand=True):
     if not os.path.exists(library_path):
         return
 
@@ -50,7 +52,7 @@ def repackHDA(library_path):
     temp_repack_path = os.path.join(library_dir, 'temp_' + name)
 
     try:
-        if os.path.isfile(library_path):
+        if expand:
             hou.hda.expandToDirectory(library_path, temp_repack_path)
         else:
             hou.hda.collapseFromDirectory(temp_repack_path, library_path)
@@ -90,32 +92,37 @@ class OperatorManagerWindow(QDialog):
         self.filter_field.textChanged.connect(self._onFilterChange)
         layout.addWidget(self.filter_field)
 
-        self.model = OperatorManagerLibraryModel(self)
-        self.model.updateData()
+        self.library_model = OperatorManagerLibraryModel(self)
+        self.node_type_model = OperatorManagerNodeTypeModel(self)
 
-        self.filter_proxy_model = FuzzyProxyModel(self, TextRole, TextRole)
-        self.filter_proxy_model.setDynamicSortFilter(True)
+        self._filter_proxy_model = FuzzyProxyModel(self, TextRole, TextRole)
+        self._filter_proxy_model.setDynamicSortFilter(True)
         # Order is dictated by the weights of the fuzzy match function (bigger = better)
-        self.filter_proxy_model.sort(0, Qt.DescendingOrder)
-        self.filter_proxy_model.setSourceModel(self.model)
+        self._filter_proxy_model.sort(0, Qt.DescendingOrder)
+        self._filter_proxy_model.setSourceModel(self.library_model)
 
         self.view = OperatorManagerView()
-        self.view.setModel(self.filter_proxy_model)
+        self.view.setModel(self._filter_proxy_model)
         layout.addWidget(self.view)
 
         self._createActions()
         self._createContextMenus()
 
+        self.updateData()
+
     def _onFilterChange(self, pattern):
         """Delivers pattern from filter field to filter proxy model."""
         # Pre-collapse all to speed up live filtering
         self.view.collapseAll()
-        self.filter_proxy_model.setPattern(pattern)
+        self._filter_proxy_model.setPattern(pattern)
         if pattern:
             self.view.expandAll()
 
+    def updateData(self):
+        self.view.model().updateData()
+
     def _onExpand(self):
-        """ Expands selected items."""
+        """Expands selected items."""
         for index in self.view.selectedIndexes():
             self.view.expand(index)
 
@@ -156,6 +163,7 @@ class OperatorManagerWindow(QDialog):
             library_path = index.data(Qt.UserRole)
             hou.hda.installFile(library_path)
             # Todo: Change item state to installed
+            self.updateData()
 
     def _onUninstall(self):
         """
@@ -167,50 +175,61 @@ class OperatorManagerWindow(QDialog):
             library_path = index.data(Qt.UserRole)
             hou.hda.uninstallFile(library_path)
             # Todo: Change item state to uninstalled
+            self.updateData()
 
     def _onReload(self):
-        """
-        Reload the contents of an HDA file, loading any updated digital asset definitions inside it.
-        Currently, supported single selection only. Multiple selection is ignored.
-        """
-        if self.view.isSingleSelection():
-            index = self.view.selectedIndex()
+        """Reload the contents of an HDA file, loading any updated digital asset definitions inside it."""
+        for index in self.view.selectedIndexes():
+            if index.column() != 0:
+                continue
+
             library_path = index.data(Qt.UserRole)
             hou.hda.reloadFile(library_path)
+            self.updateData()
 
     def _onReloadAll(self):
         """Reload the HDA files and update node type definitions in the current Houdini session."""
         hou.hda.reloadAllFiles(False)
-        self.view.model().updateData()
+        self.updateData()
 
     def _onRescanAndReloadAll(self):
         """
         Reload the HDA files and update node type definitions in the current Houdini session.
-        Houdini will check the hda directories for any new hda files and load them too.
+        Houdini will check the HDA directories for any new hda files and load them too.
         """
         hou.hda.reloadAllFiles(True)
-        self.view.model().updateData()
+        self.updateData()
 
     def _onMergeWithLibrary(self):
         raise NotImplementedError
 
     def _onConvertToPacked(self):
-        if self.view.isSingleSelection():
-            index = self.view.selectedIndex()
-            library_path = index.data(Qt.UserRole)
-            repackHDA(library_path)
-
-    def _onConvertToUnpacked(self):
         """
-        Expands the contents of the HDA file in into the directory.
+        Collapses the contents of the directory into the HDA file.
         Currently, supported single selection only. Multiple selection is ignored.
         """
         if self.view.isSingleSelection():
             index = self.view.selectedIndex()
             library_path = index.data(Qt.UserRole)
             repackHDA(library_path)
+            self.updateData()
+
+    def _onConvertToUnpacked(self):
+        """
+        Expands the contents of the HDA file into the directory.
+        Currently, supported single selection only. Multiple selection is ignored.
+        """
+        if self.view.isSingleSelection():
+            index = self.view.selectedIndex()
+            library_path = index.data(Qt.UserRole)
+            repackHDA(library_path)
+            self.updateData()
 
     def _onShowBackups(self):
+        """
+        Shows backup list window for the selected library.
+        Currently, supported single selection only. Multiple selection is ignored.
+        """
         if self.view.isSingleSelection():
             index = self.view.selectedIndex()
             library_path = index.data(Qt.UserRole)
@@ -219,10 +238,7 @@ class OperatorManagerWindow(QDialog):
             backup_list.show()
 
     def _onOpenTypeProperties(self):
-        """
-        Opens Type Properties window for the selected definition node type.
-        Currently, supported single selection only. Multiple selection is ignored.
-        """
+        """Opens Type Properties window for the selected definition node type."""
         if self.view.isSingleSelection():
             index = self.view.selectedIndex()
             definition = index.data(Qt.UserRole)
@@ -241,6 +257,10 @@ class OperatorManagerWindow(QDialog):
         raise NotImplementedError
 
     def _onFindUsages(self):
+        """
+        Shows usages list window for the selected library.
+        Currently, supported single selection only. Multiple selection is ignored.
+        """
         if self.view.isSingleSelection():
             index = self.view.selectedIndex()
             definition = index.data(Qt.UserRole)
@@ -258,6 +278,9 @@ class OperatorManagerWindow(QDialog):
             # network_stats_list = NetworkStatisticsWindow()
             # network_stats_list.setLibrary(definition)
             # network_stats_list.show()
+
+    def _onCompare(self):
+        raise NotImplementedError
 
     def _onCreateInstance(self):
         """
@@ -286,7 +309,17 @@ class OperatorManagerWindow(QDialog):
         instance_node.setPosition(rect.center())
 
     def _onCreateNewHDA(self):
-        raise NotImplementedError
+        if not self.view.isSingleSelection():
+            return
+
+        index = self.view.selectedIndex()
+        source = index.data(Qt.UserRole)
+
+        if isinstance(source, HDADefinitionProxy):
+            source = source.definition
+
+        MakeHDADialog.makeHDA(source)
+        self.updateData()
 
     def _onCreateNewVersion(self):
         raise NotImplementedError
@@ -295,10 +328,30 @@ class OperatorManagerWindow(QDialog):
         raise NotImplementedError
 
     def _onCopy(self):
-        raise NotImplementedError
+        if not self.view.isSingleSelection():
+            return
+
+        index = self.view.selectedIndex()
+        source = index.data(Qt.UserRole)
+
+        if isinstance(source, HDADefinitionProxy):
+            source = source.definition
+
+        MakeHDADialog.copyHDA(source)
+        self.updateData()
 
     def _onMove(self):
-        raise NotImplementedError
+        if not self.view.isSingleSelection():
+            return
+
+        index = self.view.selectedIndex()
+        source = index.data(Qt.UserRole)
+
+        if isinstance(source, HDADefinitionProxy):
+            source = source.definition
+
+        MakeHDADialog.moveHDA(source)
+        self.updateData()
 
     def _onRename(self):
         raise NotImplementedError
@@ -307,15 +360,23 @@ class OperatorManagerWindow(QDialog):
         raise NotImplementedError
 
     def _onDelete(self):
-        raise NotImplementedError
+        if not self.view.isSingleSelection():
+            return
+
+        index = self.view.selectedIndex()
+        source = index.data(Qt.UserRole)
+        if isinstance(source, hou.NodeType):
+            source = source.definition()
+
+        button = QMessageBox.question(self, 'Delete', 'Delete {} HDA?'.format(source.nodeTypeName()))
+        if button == QMessageBox.Yes:
+            source.destroy()
+            self.updateData()
 
     def _onHide(self):
         raise NotImplementedError
 
     def _onDeprecate(self):
-        raise NotImplementedError
-
-    def _onCompare(self):
         raise NotImplementedError
 
     def _createActions(self):
@@ -380,13 +441,16 @@ class OperatorManagerWindow(QDialog):
         self._find_usages_action = QAction(hou.qt.Icon('BUTTONS_search', ICON_SIZE, ICON_SIZE), 'Find usages...')
         self._find_usages_action.triggered.connect(self._onFindUsages)
 
-        self._find_dependencies_action = QAction(hou.qt.Icon('PANETYPES_network', ICON_SIZE, ICON_SIZE),
-                                                 'Find dependencies...')
-        self._find_dependencies_action.triggered.connect(self._onFindDependencies)
+        # self._find_dependencies_action = QAction(hou.qt.Icon('PANETYPES_network', ICON_SIZE, ICON_SIZE),
+        #                                          'Find dependencies...')
+        # self._find_dependencies_action.triggered.connect(self._onFindDependencies)
 
         self._show_network_statistics_action = QAction(hou.qt.Icon('BUTTONS_info', ICON_SIZE, ICON_SIZE),
                                                        'Show network statistics...')
         self._show_network_statistics_action.triggered.connect(self._onShowNetworkStatistics)
+
+        # self._compare_action = QAction(hou.qt.Icon('BUTTONS_restore', ICON_SIZE, ICON_SIZE), 'Compare...')
+        # self._compare_action.triggered.connect(self._onCompare)
 
         self._create_instance_action = QAction('Instance')
         self._create_instance_action.triggered.connect(self._onCreateInstance)
@@ -408,23 +472,20 @@ class OperatorManagerWindow(QDialog):
         self._move_action = QAction(hou.qt.Icon('BUTTONS_move_to_right', ICON_SIZE, ICON_SIZE), 'Move...')
         self._move_action.triggered.connect(self._onMove)
 
-        self._rename_action = QAction(hou.qt.Icon('MISC_rename', ICON_SIZE, ICON_SIZE), 'Rename...')
-        self._rename_action.triggered.connect(self._onRename)
+        # self._rename_action = QAction(hou.qt.Icon('MISC_rename', ICON_SIZE, ICON_SIZE), 'Rename...')
+        # self._rename_action.triggered.connect(self._onRename)
 
-        self._add_alias_action = QAction(hou.qt.Icon('BUTTONS_tag', ICON_SIZE, ICON_SIZE), 'Add alias...')
-        self._add_alias_action.triggered.connect(self._onAddAlias)
+        # self._add_alias_action = QAction(hou.qt.Icon('BUTTONS_tag', ICON_SIZE, ICON_SIZE), 'Add alias...')
+        # self._add_alias_action.triggered.connect(self._onAddAlias)
 
         self._delete_action = QAction(hou.qt.Icon('BUTTONS_delete', ICON_SIZE, ICON_SIZE), 'Delete')
         self._delete_action.triggered.connect(self._onDelete)
 
-        self._hide_action = QAction(hou.qt.Icon('BUTTONS_close', ICON_SIZE, ICON_SIZE), 'Hide')
-        self._hide_action.triggered.connect(self._onHide)
+        # self._hide_action = QAction(hou.qt.Icon('BUTTONS_close', ICON_SIZE, ICON_SIZE), 'Hide')
+        # self._hide_action.triggered.connect(self._onHide)
 
-        self._deprecate_action = QAction(hou.qt.Icon('BUTTONS_do_not', ICON_SIZE, ICON_SIZE), 'Deprecate')
-        self._deprecate_action.triggered.connect(self._onDeprecate)
-
-        self._compare_action = QAction(hou.qt.Icon('BUTTONS_restore', ICON_SIZE, ICON_SIZE), 'Compare...')
-        self._compare_action.triggered.connect(self._onCompare)
+        # self._deprecate_action = QAction(hou.qt.Icon('BUTTONS_do_not', ICON_SIZE, ICON_SIZE), 'Deprecate')
+        # self._deprecate_action.triggered.connect(self._onDeprecate)
 
     def _createContextMenus(self):
         self._library_menu = QMenu(self)
@@ -458,9 +519,9 @@ class OperatorManagerWindow(QDialog):
 
         self._definition_inspect_menu.addAction(self._run_hda_doctor_action)
         self._definition_inspect_menu.addAction(self._find_usages_action)
-        self._definition_inspect_menu.addAction(self._find_dependencies_action)
+        # self._definition_inspect_menu.addAction(self._find_dependencies_action)
         self._definition_inspect_menu.addAction(self._show_network_statistics_action)
-        self._definition_inspect_menu.addAction(self._compare_action)
+        # self._definition_inspect_menu.addAction(self._compare_action)
 
         self._definition_create_menu = QMenu('Create', self)
         self._definition_menu.addMenu(self._definition_create_menu)
@@ -476,12 +537,12 @@ class OperatorManagerWindow(QDialog):
         self._definition_edit_menu.addAction(self._copy_action)
         self._definition_edit_menu.addSeparator()
         self._definition_edit_menu.addAction(self._move_action)
-        self._definition_edit_menu.addAction(self._rename_action)
-        self._definition_edit_menu.addAction(self._add_alias_action)
+        # self._definition_edit_menu.addAction(self._rename_action)
+        # self._definition_edit_menu.addAction(self._add_alias_action)
         self._definition_edit_menu.addSeparator()
         self._definition_edit_menu.addAction(self._delete_action)
-        self._definition_edit_menu.addAction(self._hide_action)
-        self._definition_edit_menu.addAction(self._deprecate_action)
+        # self._definition_edit_menu.addAction(self._hide_action)
+        # self._definition_edit_menu.addAction(self._deprecate_action)
 
         self.view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.view.customContextMenuRequested.connect(self._showContextMenu)

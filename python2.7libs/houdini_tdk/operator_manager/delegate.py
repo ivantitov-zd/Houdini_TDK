@@ -27,43 +27,7 @@ except ImportError:
     from PySide2.QtGui import *
     from PySide2.QtCore import *
 
-from .model import TextRole
-
 
 class OperatorManagerLibraryDelegate(QStyledItemDelegate):
     def paint(self, painter, option, index):
-        if isinstance(index.data(Qt.UserRole), basestring):
-            if index.column() == 1:
-                return
-
-            painter.save()
-
-            row_rect = QRectF(option.rect)
-            row_rect.setRight(option.widget.width())
-
-            icon_rect = QRectF(option.rect)
-            icon_rect.setRight(45)
-
-            text_rect = QRectF(row_rect)
-            text_rect.setLeft(45)
-            text_rect.setRight(row_rect.right() - 30)
-
-            selection_rect = QRectF(row_rect)
-            selection_rect.setLeft(icon_rect.right())
-
-            painter.save()
-            option.rect = icon_rect.toRect()
-            super(OperatorManagerLibraryDelegate, self).paint(painter, option, index)
-            painter.restore()
-
-            if option.state & QStyle.State_Selected:
-                painter.fillRect(selection_rect, option.palette.highlight())
-
-            metrics = painter.fontMetrics()
-            text = metrics.elidedText(index.data(TextRole), Qt.ElideMiddle, text_rect.width())
-
-            painter.drawText(text_rect, Qt.AlignVCenter | Qt.AlignLeft, text)
-
-            painter.restore()
-        else:
-            super(OperatorManagerLibraryDelegate, self).paint(painter, option, index)
+        super(OperatorManagerLibraryDelegate, self).paint(painter, option, index)

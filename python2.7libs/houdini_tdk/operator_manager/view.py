@@ -43,7 +43,7 @@ class OperatorManagerView(QTreeView):
         self.setIconSize(QSize(16, 16))
 
         self.setItemDelegate(OperatorManagerLibraryDelegate())
-        # self.setAlternatingRowColors(True)  # Todo: Disabled due to a bug that clipping delegate's text
+        self.setAlternatingRowColors(True)
 
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
