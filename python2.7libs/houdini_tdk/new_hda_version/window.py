@@ -27,6 +27,8 @@ except ImportError:
     from PySide2.QtWidgets import (QDialog, QVBoxLayout, QFormLayout, QLabel, QCheckBox, QSpacerItem, QSizePolicy,
                                    QPushButton)
 
+import hou
+
 from ..notification import notify
 from ..widgets import Slider
 from .utils import versionByTypeName, nextVersionTypeName, incrementHDAVersion
