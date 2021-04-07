@@ -57,23 +57,23 @@ class UsageListModel(QAbstractItemModel):
     def __init__(self, parent=None):
         super(UsageListModel, self).__init__(parent)
 
-        self._definition = None
+        self._node_type = None
         self._nodes = ()
 
     def updateData(self):
-        if not self._definition:
+        if not self._node_type:
             return
 
         self.beginResetModel()
 
-        nodes = sorted(map(NodeProxy, self._definition.nodeType().instances()),
+        nodes = sorted(map(NodeProxy, self._node_type.instances()),
                        key=lambda node: node.path().count('/'))
         self._nodes = tuple(nodes)
 
         self.endResetModel()
 
-    def setDefinition(self, definition):
-        self._definition = definition
+    def setNodeType(self, node_type):
+        self._node_type = node_type
         self.updateData()
 
     def hasChildren(self, parent):

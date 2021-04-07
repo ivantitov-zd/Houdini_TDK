@@ -39,18 +39,23 @@ EMPTY_ICON = hou.qt.Icon('MISC_empty', ICON_SIZE, ICON_SIZE)
 TextRole = Qt.UserRole + 1
 
 
-class HDADefinitionProxy(object):
-    __slots__ = 'definition', '_name', '_label', '_icon', '_library_file_path'
+class NodeTypeProxy(object):
+    def __init__(self, node_type):
+        self.node_type = node_type
+        self._name = node_type.name()
+        self._name_with_category = node_type.nameWithCategory()
+        self._label = node_type.description()
+        self._icon = node_type.icon()
+        if node_type.definition() is None:
+            self._library_file_path = 'Internal'
+        else:
+            self._library_file_path = node_type.definition().libraryFilePath()
 
-    def __init__(self, definition):
-        self.definition = definition
-        self._name = definition.nodeTypeName()
-        self._label = definition.description()
-        self._icon = definition.icon()
-        self._library_file_path = definition.libraryFilePath()
-
-    def nodeTypeName(self):
+    def name(self):
         return self._name
+
+    def nameWithCategory(self):
+        return self._name_with_category
 
     def description(self):
         return self._label
@@ -62,7 +67,7 @@ class HDADefinitionProxy(object):
         return self._library_file_path
 
     def __getattr__(self, attr_name):
-        return self.definition.__getattribute__(attr_name)
+        return self.node_type.__getattribute__(attr_name)
 
 
 class OperatorManagerLibraryModel(QAbstractItemModel):
@@ -70,33 +75,37 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
         super(OperatorManagerLibraryModel, self).__init__(parent)
 
         self._libraries = ()
-        self._definitions = {}
+        self._types = {}
 
     def updateData(self):
         self.beginResetModel()
 
         single_def_libs = {}
         multiple_def_libs = []
-        self._definitions = {}
+        self._types = {}
+        internal_types = []
 
         for category in hou.nodeTypeCategories().values():
             for node_type in category.nodeTypes().values():
                 definition = node_type.definition()
                 if definition is None:
+                    internal_types.append(NodeTypeProxy(node_type))
                     continue
 
                 lib_path = definition.libraryFilePath()
-                if lib_path not in self._definitions:
+                if lib_path not in self._types:
                     definitions = hou.hda.definitionsInFile(lib_path)
                     if len(definitions) == 1:
-                        _, _, name, version = definitions[0].nodeType().nameComponents()
-                        single_def_libs[lib_path] = name + version
+                        single_def_libs[lib_path] = definitions[0].nodeType().nameWithCategory()
                     else:
                         multiple_def_libs.append(lib_path)
-                    self._definitions[lib_path] = map(HDADefinitionProxy, definitions)
+                    self._types[lib_path] = tuple(sorted((NodeTypeProxy(d.nodeType()) for d in definitions),
+                                                         key=lambda tp: tp.nameWithCategory()))
 
         single_def_libs = tuple(sorted(single_def_libs.keys(), key=single_def_libs.get))
-        multiple_def_libs = tuple(sorted(multiple_def_libs))
+        self._types['Internal'] = tuple(sorted(internal_types,
+                                               key=lambda t: t.nameComponents()[2] + t.nameWithCategory()))
+        multiple_def_libs = tuple(sorted(multiple_def_libs)) + ('Internal',)
         self._libraries = single_def_libs + multiple_def_libs
 
         self.endResetModel()
@@ -113,7 +122,7 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
         if not parent.isValid():
             return len(self._libraries)
         else:
-            return len(self._definitions[parent.internalPointer()])
+            return len(self._types[parent.internalPointer()])
 
     def columnCount(self, parent):
         return 2
@@ -127,7 +136,7 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
             return QModelIndex()
         else:
             lib_path = item.libraryFilePath()
-            return self.createIndex(self._definitions[lib_path].index(item), 0, lib_path)
+            return self.createIndex(self._types[lib_path].index(item), 0, lib_path)
 
     def index(self, row, column, parent):
         if not self.hasIndex(row, column, parent):
@@ -137,7 +146,7 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
             return self.createIndex(row, column, self._libraries[row])
         else:
             current_lib_path = parent.internalPointer()
-            return self.createIndex(row, column, self._definitions[current_lib_path][row])
+            return self.createIndex(row, column, self._types[current_lib_path][row])
 
     def flags(self, index):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
@@ -147,9 +156,6 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
             return
 
         item_data = index.internalPointer()
-
-        if role == Qt.UserRole:
-            return item_data
 
         column = index.column()
         if column == 0:
@@ -163,23 +169,31 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
                     return library_path
                 elif role == Qt.DecorationRole:
                     return INSTALLED_ICON
+                elif role == Qt.UserRole:
+                    return library_path
             else:
-                definition = item_data
+                node_type_proxy = item_data
                 if role in (Qt.DisplayRole, TextRole):
-                    return definition.description()
+                    return node_type_proxy.description()
                 elif role == Qt.DecorationRole:
                     try:
-                        return hou.qt.Icon(definition.icon(), ICON_SIZE, ICON_SIZE)
+                        return hou.qt.Icon(node_type_proxy.icon(), ICON_SIZE, ICON_SIZE)
                     except hou.OperationFailed:
                         return EMPTY_ICON
+                elif role == Qt.UserRole:
+                    return node_type_proxy.node_type
         elif column == 1:
             if not index.parent().isValid():
                 library_path = item_data
                 if role == Qt.DisplayRole:
                     return os.path.basename(library_path)
-                if role == Qt.ToolTipRole:
+                elif role == Qt.ToolTipRole:
+                    return library_path
+                elif role == Qt.UserRole:
                     return library_path
             else:
-                definition = item_data
+                node_type_proxy = item_data
                 if role in (Qt.DisplayRole, TextRole):
-                    return definition.nodeTypeName()
+                    return node_type_proxy.nameWithCategory()
+                elif role == Qt.UserRole:
+                    return node_type_proxy.node_type

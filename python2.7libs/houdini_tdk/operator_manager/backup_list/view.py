@@ -35,7 +35,9 @@ class BackupListView(QTreeView):
         super(BackupListView, self).__init__()
 
         header = self.header()
-        header.setSectionResizeMode(QHeaderView.Stretch)
+        header.setStretchLastSection(False)
+        header.setSectionResizeMode(0, QHeaderView.Fixed)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
         header.setDefaultAlignment(Qt.AlignCenter)
 
         self.setUniformRowHeights(True)

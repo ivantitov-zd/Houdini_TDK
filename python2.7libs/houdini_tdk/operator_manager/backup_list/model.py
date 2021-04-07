@@ -85,7 +85,7 @@ class BackupListModel(QAbstractItemModel):
         return 3
 
     def headerData(self, section, orientation, role):
-        names = ('Name', 'Created', 'Size')
+        names = ('Created', 'File', 'Size')
         if orientation == Qt.Horizontal:
             if role == Qt.DisplayRole:
                 return names[section]
@@ -109,10 +109,10 @@ class BackupListModel(QAbstractItemModel):
         _, f_timestamp, file_size = index.internalPointer()
 
         column = index.column()
-        if column == 0:
+        if column == 1:
             if role == Qt.DisplayRole:
                 return self._backup_file_names[index.row()]
-        elif column == 1:
+        elif column == 0:
             if role == Qt.DisplayRole:
                 return f_timestamp
             elif role == Qt.TextAlignmentRole:

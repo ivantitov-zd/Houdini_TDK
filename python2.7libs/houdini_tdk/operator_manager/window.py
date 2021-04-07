@@ -33,10 +33,10 @@ import hou
 
 from ..widgets import FilterField
 from ..make_hda import MakeHDADialog
-from ..utils import openFileLocation, removePath
+from ..utils import openLocation, removePath
 from ..fuzzy_proxy_model import FuzzyProxyModel
 from .model import OperatorManagerLibraryModel, OperatorManagerNodeTypeModel, TextRole
-from .model.library import HDADefinitionProxy
+from .model.library import NodeTypeProxy
 from .view import OperatorManagerView
 from .backup_list import BackupListWindow
 from .usage_list import UsageListWindow
@@ -97,7 +97,7 @@ class OperatorManagerWindow(QDialog):
 
         self._filter_proxy_model = FuzzyProxyModel(self, TextRole, TextRole)
         self._filter_proxy_model.setDynamicSortFilter(True)
-        # Order is dictated by the weights of the fuzzy match function (bigger = better)
+        # Order is dictated by the weights of the fuzzy match function (bigger is better)
         self._filter_proxy_model.sort(0, Qt.DescendingOrder)
         self._filter_proxy_model.setSourceModel(self.library_model)
 
@@ -149,33 +149,39 @@ class OperatorManagerWindow(QDialog):
         Opens location of the selected library or library of the selected node type.
         Currently, supported single selection only. Multiple selection is ignored.
         """
-        if self.view.isSingleSelection():
-            index = self.view.selectedIndex()
-            openFileLocation(index.data(Qt.UserRole))
+        if not self.view.isSingleSelection():
+            return
+
+        index = self.view.selectedIndex()
+        openLocation(index.data(Qt.UserRole))
 
     def _onInstall(self):
         """
-        Uninstall all node types containing in the selected library from the current Houdini session.
+        Install all node types containing in the selected library to the current Houdini session.
         Currently, supported single selection only. Multiple selection is ignored.
         """
-        if self.view.isSingleSelection():
-            index = self.view.selectedIndex()
-            library_path = index.data(Qt.UserRole)
-            hou.hda.installFile(library_path)
-            # Todo: Change item state to installed
-            self.updateData()
+        if not self.view.isSingleSelection():
+            return
+
+        index = self.view.selectedIndex()
+        library_path = index.data(Qt.UserRole)
+        hou.hda.installFile(library_path)
+        # Todo: Change item state to installed
+        self.updateData()
 
     def _onUninstall(self):
         """
         Uninstall all node types containing in the selected library from the current Houdini session.
         Currently, supported single selection only. Multiple selection is ignored.
         """
-        if self.view.isSingleSelection():
-            index = self.view.selectedIndex()
-            library_path = index.data(Qt.UserRole)
-            hou.hda.uninstallFile(library_path)
-            # Todo: Change item state to uninstalled
-            self.updateData()
+        if not self.view.isSingleSelection():
+            return
+
+        index = self.view.selectedIndex()
+        library_path = index.data(Qt.UserRole)
+        hou.hda.uninstallFile(library_path)
+        # Todo: Change item state to uninstalled
+        self.updateData()
 
     def _onReload(self):
         """Reload the contents of an HDA file, loading any updated digital asset definitions inside it."""
@@ -208,50 +214,60 @@ class OperatorManagerWindow(QDialog):
         Collapses the contents of the directory into the HDA file.
         Currently, supported single selection only. Multiple selection is ignored.
         """
-        if self.view.isSingleSelection():
-            index = self.view.selectedIndex()
-            library_path = index.data(Qt.UserRole)
-            repackHDA(library_path)
-            self.updateData()
+        if not self.view.isSingleSelection():
+            return
+
+        index = self.view.selectedIndex()
+        library_path = index.data(Qt.UserRole)
+        repackHDA(library_path, expand=False)
+        self.updateData()
 
     def _onConvertToUnpacked(self):
         """
         Expands the contents of the HDA file into the directory.
         Currently, supported single selection only. Multiple selection is ignored.
         """
-        if self.view.isSingleSelection():
-            index = self.view.selectedIndex()
-            library_path = index.data(Qt.UserRole)
-            repackHDA(library_path)
-            self.updateData()
+        if not self.view.isSingleSelection():
+            return
+
+        index = self.view.selectedIndex()
+        library_path = index.data(Qt.UserRole)
+        repackHDA(library_path)
+        self.updateData()
 
     def _onShowBackups(self):
         """
         Shows backup list window for the selected library.
         Currently, supported single selection only. Multiple selection is ignored.
         """
-        if self.view.isSingleSelection():
-            index = self.view.selectedIndex()
-            library_path = index.data(Qt.UserRole)
-            backup_list = BackupListWindow()
-            backup_list.setLibrary(library_path)
-            backup_list.show()
+        if not self.view.isSingleSelection():
+            return
+
+        index = self.view.selectedIndex()
+        library_path = index.data(Qt.UserRole)
+        backup_list = BackupListWindow()
+        backup_list.setLibrary(library_path)
+        backup_list.show()
 
     def _onOpenTypeProperties(self):
-        """Opens Type Properties window for the selected definition node type."""
-        if self.view.isSingleSelection():
-            index = self.view.selectedIndex()
-            definition = index.data(Qt.UserRole)
-            hou.ui.openTypePropertiesDialog(definition.nodeType())
+        """Opens Type Properties window for the selected node type."""
+        if not self.view.isSingleSelection():
+            return
+
+        index = self.view.selectedIndex()
+        node_type = index.data(Qt.UserRole)
+        hou.ui.openTypePropertiesDialog(node_type)
 
     def _onChangeInstancesTo(self):
         raise NotImplementedError
-        if self.view.isSingleSelection():
-            index = self.view.selectedIndex()
-            definition = index.data(Qt.UserRole)
-            target_node_type = None  # Todo
-            for node in definition.type().instances():
-                node.changeNodeType(target_node_type)
+        if not self.view.isSingleSelection():
+            return
+
+        index = self.view.selectedIndex()
+        node_type = index.data(Qt.UserRole)
+        target_node_type = None  # Todo
+        for node in node_type.instances():
+            node.changeNodeType(target_node_type)
 
     def _onRunHDADoctor(self):
         raise NotImplementedError
@@ -263,9 +279,9 @@ class OperatorManagerWindow(QDialog):
         """
         if self.view.isSingleSelection():
             index = self.view.selectedIndex()
-            definition = index.data(Qt.UserRole)
+            node_type = index.data(Qt.UserRole)
             usage_window = UsageListWindow()
-            usage_window.setDefinition(definition)
+            usage_window.setNodeType(node_type)
             usage_window.show()
 
     def _onFindDependencies(self):
@@ -274,9 +290,9 @@ class OperatorManagerWindow(QDialog):
     def _onShowNetworkStatistics(self):
         if self.view.isSingleSelection():
             index = self.view.selectedIndex()
-            definition = index.data(Qt.UserRole)
+            node_type = index.data(Qt.UserRole)
             # network_stats_list = NetworkStatisticsWindow()
-            # network_stats_list.setLibrary(definition)
+            # network_stats_list.setSource(node_type)
             # network_stats_list.show()
 
     def _onCompare(self):
@@ -284,7 +300,7 @@ class OperatorManagerWindow(QDialog):
 
     def _onCreateInstance(self):
         """
-        Creates instance of the selected node type definition and select it.
+        Creates instance of the selected node type and select it.
         Currently, supported single selection only. Multiple selection is ignored.
         """
         if not self.view.isSingleSelection():
@@ -295,14 +311,14 @@ class OperatorManagerWindow(QDialog):
             return
 
         index = self.view.selectedIndex()
-        definition = index.data(Qt.UserRole)
+        node_type = index.data(Qt.UserRole)
 
         root_node = network.pwd()
 
-        if definition.nodeTypeCategory() != root_node.childTypeCategory():
+        if node_type.category() != root_node.childTypeCategory():
             return  # Todo: Switch to corresponding network if possible
 
-        instance_node = root_node.createNode(definition.nodeTypeName(), exact_type_name=True)
+        instance_node = root_node.createNode(node_type.name(), exact_type_name=True)
         instance_node.setCurrent(True, True)
 
         rect = network.visibleBounds()
@@ -313,12 +329,9 @@ class OperatorManagerWindow(QDialog):
             return
 
         index = self.view.selectedIndex()
-        source = index.data(Qt.UserRole)
+        node_type = index.data(Qt.UserRole)
 
-        if isinstance(source, HDADefinitionProxy):
-            source = source.definition
-
-        MakeHDADialog.makeHDA(source)
+        MakeHDADialog.makeHDA(node_type)
         self.updateData()
 
     def _onCreateNewVersion(self):
@@ -332,12 +345,9 @@ class OperatorManagerWindow(QDialog):
             return
 
         index = self.view.selectedIndex()
-        source = index.data(Qt.UserRole)
+        node_type = index.data(Qt.UserRole)
 
-        if isinstance(source, HDADefinitionProxy):
-            source = source.definition
-
-        MakeHDADialog.copyHDA(source)
+        MakeHDADialog.copyHDA(node_type)
         self.updateData()
 
     def _onMove(self):
@@ -345,12 +355,9 @@ class OperatorManagerWindow(QDialog):
             return
 
         index = self.view.selectedIndex()
-        source = index.data(Qt.UserRole)
+        node_type = index.data(Qt.UserRole)
 
-        if isinstance(source, HDADefinitionProxy):
-            source = source.definition
-
-        MakeHDADialog.moveHDA(source)
+        MakeHDADialog.moveHDA(node_type)
         self.updateData()
 
     def _onRename(self):
@@ -364,13 +371,15 @@ class OperatorManagerWindow(QDialog):
             return
 
         index = self.view.selectedIndex()
-        source = index.data(Qt.UserRole)
-        if isinstance(source, hou.NodeType):
-            source = source.definition()
+        node_type = index.data(Qt.UserRole)
 
-        button = QMessageBox.question(self, 'Delete', 'Delete {} HDA?'.format(source.nodeTypeName()))
+        definition = node_type.definition()
+        if definition is None:
+            return  # Todo: Show message
+
+        button = QMessageBox.question(self, 'Delete', 'Delete {} HDA?'.format(node_type.name()))
         if button == QMessageBox.Yes:
-            source.destroy()
+            definition.destroy()
             self.updateData()
 
     def _onHide(self):

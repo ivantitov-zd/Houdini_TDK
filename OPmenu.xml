@@ -39,10 +39,9 @@ tdk.showGenerateCode(**kwargs)
             <scriptItem id="opmenu.tdk_show_node_user_data">
                 <label>Show Node User Data...</label>
                 <scriptCode>
-import houdini_tdk
-reload(houdini_tdk)
+import houdini_tdk as tdk
 
-houdini_tdk.showNodeUserData(**kwargs)
+tdk.showNodeUserData(**kwargs)
                 </scriptCode>
             </scriptItem>
 
@@ -76,7 +75,7 @@ import houdini_tdk as tdk
 
 node = kwargs['node']
 path = node.type().definition().libraryFilePath()
-tdk.openFileLocation(path)
+tdk.openLocation(path)
                 </scriptCode>
             </scriptItem>
 

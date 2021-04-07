@@ -30,19 +30,19 @@ except ImportError:
 import hou
 
 
-def openFileLocation(file_path):
+def openLocation(path):
     """
-    Opens default explorer and goes to the file_path directory.
-    In Windows OS also selects the file.
+    Opens default explorer and goes to the path directory.
+    In Windows OS also selects the target file or folder.
     """
-    if not os.path.exists(file_path):
+    if not os.path.exists(path):
         raise FileNotFoundError
 
     if sys.platform.startswith('win'):
         # Windows Explorer requires backslashes
-        subprocess.call('explorer /select,"{0}"'.format(file_path.replace('/', '\\')))
+        subprocess.call('explorer /select,"{0}"'.format(path.replace('/', '\\')))
     else:
-        webbrowser.open('file://' + os.path.dirname(file_path))
+        webbrowser.open('file://' + os.path.dirname(path))
 
 
 def removePath(path):

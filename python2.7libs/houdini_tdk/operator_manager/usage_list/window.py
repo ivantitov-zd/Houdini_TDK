@@ -40,7 +40,7 @@ class UsageListWindow(QWidget):
     def __init__(self, parent=hou.qt.mainWindow()):
         super(UsageListWindow, self).__init__(parent, Qt.Window)
 
-        self._definition = None
+        self._node_type = None
 
         self.updateWindowTitle()
         self.setWindowIcon(hou.qt.Icon('BUTTONS_history', 32, 32))
@@ -69,13 +69,13 @@ class UsageListWindow(QWidget):
 
     def updateWindowTitle(self):
         title = 'TDK: Usages'
-        if self._definition:
-            title += ': ' + self._definition.nodeTypeName()
+        if self._node_type:
+            title += ': ' + self._node_type.nameWithCategory()
         self.setWindowTitle(title)
 
-    def setDefinition(self, definition):
-        self.model.setDefinition(definition)
-        self._definition = definition
+    def setNodeType(self, node_type):
+        self.model.setNodeType(node_type)
+        self._node_type = node_type
         self.updateWindowTitle()
 
     def _selectNode(self):

@@ -29,7 +29,6 @@ except ImportError:
 
 import hou
 
-from ...utils import openFileLocation
 from .view import BackupListView
 from .model import BackupListModel
 
