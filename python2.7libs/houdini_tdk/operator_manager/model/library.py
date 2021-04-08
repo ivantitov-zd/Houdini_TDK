@@ -40,6 +40,8 @@ TextRole = Qt.UserRole + 1
 
 
 class NodeTypeProxy(object):
+    __slots__ = 'node_type', '_name', '_name_with_category', '_label', '_icon', '_library_file_path'
+
     def __init__(self, node_type):
         self.node_type = node_type
         self._name = node_type.name()
