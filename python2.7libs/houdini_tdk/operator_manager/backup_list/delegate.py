@@ -17,15 +17,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 try:
-    from PyQt5.QtWidgets import *
-    from PyQt5.QtGui import *
-    from PyQt5.QtCore import *
-
-    Signal = pyqtSignal
+    from PyQt5.QtWidgets import QStyledItemDelegate
+    from PyQt5.QtCore import Qt
 except ImportError:
-    from PySide2.QtWidgets import *
-    from PySide2.QtGui import *
-    from PySide2.QtCore import *
+    from PySide2.QtWidgets import QStyledItemDelegate
+    from PySide2.QtCore import Qt
 
 
 class BackupListDelegate(QStyledItemDelegate):
