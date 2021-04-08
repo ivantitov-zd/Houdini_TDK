@@ -35,9 +35,8 @@ class BackupListView(QTreeView):
         super(BackupListView, self).__init__()
 
         header = self.header()
+        header.setResizeContentsPrecision(1)
         header.setStretchLastSection(False)
-        header.setSectionResizeMode(0, QHeaderView.Fixed)
-        header.setSectionResizeMode(1, QHeaderView.Stretch)
         header.setDefaultAlignment(Qt.AlignCenter)
 
         self.setUniformRowHeights(True)
@@ -48,6 +47,12 @@ class BackupListView(QTreeView):
 
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
+
+    def setSectionsResizeMode(self):
+        header = self.header()
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
 
     def hasSelection(self):
         """Returns True if selection model has selected items, False otherwise."""

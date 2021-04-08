@@ -30,10 +30,10 @@ except ImportError:
 
 class BackupListDelegate(QStyledItemDelegate):
     def sizeHint(self, option, index):
-        if index.column() != 0:
+        if index.column() != 1:
             text = index.data(Qt.DisplayRole)
             metrics = QFontMetrics(option.font)
-            text_width = metrics.horizontalAdvance(text) + 20
+            text_width = metrics.horizontalAdvance(text) + 30
             size = super(BackupListDelegate, self).sizeHint(option, index)
             size.setWidth(text_width)
             return size

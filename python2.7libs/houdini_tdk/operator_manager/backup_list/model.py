@@ -33,6 +33,15 @@ except ImportError:
     from PySide2.QtGui import *
     from PySide2.QtCore import *
 
+CREATED_COLUMN_INDEX = 0
+FILE_COLUMN_INDEX = 1
+SIZE_COLUMN_INDEX = 2
+COLUMN_NAMES = {
+    CREATED_COLUMN_INDEX: 'Created',
+    FILE_COLUMN_INDEX: 'File',
+    SIZE_COLUMN_INDEX: 'Size'
+}
+
 
 class BackupListModel(QAbstractItemModel):
     def __init__(self, parent=None):
@@ -44,6 +53,9 @@ class BackupListModel(QAbstractItemModel):
         self._backup_data = {}
 
     def updateData(self):
+        if not self._library:
+            return
+
         self.beginResetModel()
 
         path, library_file_name = os.path.split(self._library)
@@ -85,10 +97,9 @@ class BackupListModel(QAbstractItemModel):
         return 3
 
     def headerData(self, section, orientation, role):
-        names = ('Created', 'File', 'Size')
         if orientation == Qt.Horizontal:
             if role == Qt.DisplayRole:
-                return names[section]
+                return COLUMN_NAMES[section]
 
     def parent(self, index):
         return QModelIndex()
@@ -109,15 +120,16 @@ class BackupListModel(QAbstractItemModel):
         _, f_timestamp, file_size = index.internalPointer()
 
         column = index.column()
-        if column == 1:
+
+        if column == FILE_COLUMN_INDEX:
             if role == Qt.DisplayRole:
                 return self._backup_file_names[index.row()]
-        elif column == 0:
+        elif column == CREATED_COLUMN_INDEX:
             if role == Qt.DisplayRole:
                 return f_timestamp
             elif role == Qt.TextAlignmentRole:
                 return Qt.AlignCenter
-        elif column == 2:
+        elif column == SIZE_COLUMN_INDEX:
             if role == Qt.DisplayRole:
                 return file_size
             elif role == Qt.TextAlignmentRole:

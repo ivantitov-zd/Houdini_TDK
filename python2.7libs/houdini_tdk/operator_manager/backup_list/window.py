@@ -64,6 +64,7 @@ class BackupListWindow(QWidget):
 
     def setLibrary(self, library_path):
         self.model.setLibrary(library_path)
+        self.view.setSectionsResizeMode()
         self._library_path = library_path
         self.updateWindowTitle()
 
