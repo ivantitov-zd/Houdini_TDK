@@ -29,17 +29,6 @@ except ImportError:
 
 
 class BackupListDelegate(QStyledItemDelegate):
-    def sizeHint(self, option, index):
-        if index.column() != 1:
-            text = index.data(Qt.DisplayRole)
-            metrics = QFontMetrics(option.font)
-            text_width = metrics.horizontalAdvance(text) + 30
-            size = super(BackupListDelegate, self).sizeHint(option, index)
-            size.setWidth(text_width)
-            return size
-        else:
-            return super(BackupListDelegate, self).sizeHint(option, index)
-
     def paint(self, painter, option, index):
         if index.column() == 1:
             option.textElideMode = Qt.ElideLeft
