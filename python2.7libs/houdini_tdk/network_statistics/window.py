@@ -21,6 +21,8 @@ try:
 except ImportError:
     from PySide2.QtWidgets import QDialog, QVBoxLayout
 
+import hou
+
 from .view import NetworkStatsView
 from .model import NetworkStatsModel
 
