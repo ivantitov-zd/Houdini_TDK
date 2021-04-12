@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
+from operator import attrgetter
 
 try:
     from PyQt5.QtWidgets import *
@@ -31,45 +32,14 @@ except ImportError:
 
 import hou
 
+from .node_type_proxy import NodeTypeProxy
+
 ICON_SIZE = 16
 INSTALLED_ICON = hou.qt.Icon('TOP_status_cooked', ICON_SIZE, ICON_SIZE)
 NOT_INSTALLED_ICON = hou.qt.Icon('TOP_status_error', ICON_SIZE, ICON_SIZE)
 EMPTY_ICON = hou.qt.Icon('MISC_empty', ICON_SIZE, ICON_SIZE)
 
 TextRole = Qt.UserRole + 1
-
-
-class NodeTypeProxy(object):
-    __slots__ = 'node_type', '_name', '_name_with_category', '_label', '_icon', '_library_file_path'
-
-    def __init__(self, node_type):
-        self.node_type = node_type
-        self._name = node_type.name()
-        self._name_with_category = node_type.nameWithCategory()
-        self._label = node_type.description()
-        self._icon = node_type.icon()
-        if node_type.definition() is None:
-            self._library_file_path = 'Internal'
-        else:
-            self._library_file_path = node_type.definition().libraryFilePath()
-
-    def name(self):
-        return self._name
-
-    def nameWithCategory(self):
-        return self._name_with_category
-
-    def description(self):
-        return self._label
-
-    def icon(self):
-        return self._icon
-
-    def libraryFilePath(self):
-        return self._library_file_path
-
-    def __getattr__(self, attr_name):
-        return self.node_type.__getattribute__(attr_name)
 
 
 class OperatorManagerLibraryModel(QAbstractItemModel):
@@ -102,7 +72,7 @@ class OperatorManagerLibraryModel(QAbstractItemModel):
                     else:
                         multiple_def_libs.append(lib_path)
                     self._types[lib_path] = tuple(sorted((NodeTypeProxy(d.nodeType()) for d in definitions),
-                                                         key=lambda tp: tp.nameWithCategory()))
+                                                         key=attrgetter('nameWithCategory')))
 
         single_def_libs = tuple(sorted(single_def_libs.keys(), key=single_def_libs.get))
         self._types['Internal'] = tuple(sorted(internal_types,

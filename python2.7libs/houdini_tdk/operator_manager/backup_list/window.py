@@ -62,9 +62,15 @@ class BackupListWindow(QWidget):
             title += ': ' + self._library_path
         self.setWindowTitle(title)
 
+    def _setSectionsResizeMode(self):
+        header = self.view.header()
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+
     def setLibrary(self, library_path):
         self.model.setLibrary(library_path)
-        self.view.setSectionsResizeMode()
+        self._setSectionsResizeMode()
         self._library_path = library_path
         self.updateWindowTitle()
 

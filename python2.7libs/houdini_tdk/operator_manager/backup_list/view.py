@@ -49,12 +49,6 @@ class BackupListView(QTreeView):
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
 
-    def setSectionsResizeMode(self):
-        header = self.header()
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.Stretch)
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
-
     def hasSelection(self):
         """Returns True if selection model has selected items, False otherwise."""
         return self.selectionModel().hasSelection()

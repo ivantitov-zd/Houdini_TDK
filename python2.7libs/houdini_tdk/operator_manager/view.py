@@ -44,6 +44,7 @@ class OperatorManagerView(QTreeView):
 
         self.setItemDelegate(OperatorManagerLibraryDelegate())
         self.setAlternatingRowColors(True)
+        self.setStyleSheet('QTreeView::item {padding: 0 10px;}')
 
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)

@@ -36,7 +36,7 @@ from ..make_hda import MakeHDADialog
 from ..utils import openLocation, removePath
 from ..fuzzy_proxy_model import FuzzyProxyModel
 from .model import OperatorManagerLibraryModel, OperatorManagerNodeTypeModel, TextRole
-from .model.library import NodeTypeProxy
+from .model.node_type_proxy import NodeTypeProxy
 from .view import OperatorManagerView
 from .backup_list import BackupListWindow
 from .usage_list import UsageListWindow
@@ -95,14 +95,14 @@ class OperatorManagerWindow(QDialog):
         self.library_model = OperatorManagerLibraryModel(self)
         self.node_type_model = OperatorManagerNodeTypeModel(self)
 
-        self._filter_proxy_model = FuzzyProxyModel(self, TextRole, TextRole)
-        self._filter_proxy_model.setDynamicSortFilter(True)
-        # Order is dictated by the weights of the fuzzy match function (bigger is better)
-        self._filter_proxy_model.sort(0, Qt.DescendingOrder)
-        self._filter_proxy_model.setSourceModel(self.library_model)
+        # self._filter_proxy_model = FuzzyProxyModel(self, TextRole, TextRole)
+        # self._filter_proxy_model.setDynamicSortFilter(True)
+        # # Order is dictated by the weights of the fuzzy match function (bigger is better)
+        # self._filter_proxy_model.sort(0, Qt.DescendingOrder)
+        # self._filter_proxy_model.setSourceModel(self.node_type_model)
 
         self.view = OperatorManagerView()
-        self.view.setModel(self._filter_proxy_model)
+        self.view.setModel(self.node_type_model)
         layout.addWidget(self.view)
 
         self._createActions()
@@ -120,6 +120,19 @@ class OperatorManagerWindow(QDialog):
 
     def updateData(self):
         self.view.model().updateData()
+
+    def _setSectionsResizeMode(self, model_index):
+        header = self.view.header()
+        if model_index == 0:
+            pass
+        elif model_index == 1:
+            pass
+        else:
+            raise ValueError
+
+    def setCurrentModel(self, model_index):
+        self.view.setModel((self.library_model, self.node_type_model)[model_index])
+        self._setSectionsResizeMode(model_index)
 
     def _onExpand(self):
         """Expands selected items."""
