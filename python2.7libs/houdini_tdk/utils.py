@@ -36,7 +36,7 @@ def openLocation(path):
     In Windows OS also selects the target file or folder.
     """
     if not os.path.exists(path):
-        raise FileNotFoundError
+        raise IOError('Path "{}" not exists'.format(path))
 
     if sys.platform.startswith('win'):
         # Windows Explorer requires backslashes
