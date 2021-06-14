@@ -328,9 +328,15 @@ class MakeHDADialog(QDialog):
                              shape)
         if window.install_toggle.isChecked():
             hou.hda.installFile(definition.libraryFilePath())
-            if isinstance(source, hou.Node) and window.replace_node_toggle.isChecked():
-                window.node = window.node.changeNodeType(definition.nodeTypeName(), keep_network_contents=False)
-                window.node.setCurrent(True, True)
+
+            if isinstance(source, hou.Node):
+                node = source
+            else:
+                node = None
+
+            if node and window.replace_node_toggle.isChecked():
+                node = node.changeNodeType(definition.nodeTypeName(), keep_network_contents=False)
+                node.setCurrent(True, True)
 
                 if color:
                     definition.nodeType().setDefaultColor(houdiniColorFromQColor(color))
@@ -339,8 +345,8 @@ class MakeHDADialog(QDialog):
                     definition.nodeType().setDefaultShape(shape)
 
             if window.open_type_properties_toggle.isChecked():
-                if isinstance(source, hou.Node) and window.replace_node_toggle.isChecked():
-                    hou.ui.openTypePropertiesDialog(window.node)
+                if node and window.replace_node_toggle.isChecked():
+                    hou.ui.openTypePropertiesDialog(node)
                 else:
                     hou.ui.openTypePropertiesDialog(definition.nodeType())
 
