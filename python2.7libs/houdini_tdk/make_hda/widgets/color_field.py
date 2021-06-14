@@ -19,11 +19,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 try:
     from PyQt5.QtCore import QEvent
     from PyQt5.QtGui import Qt, QColor
-    from PyQt5.QtWidgets import QWidget, QHBoxLayout
+    from PyQt5.QtWidgets import QWidget, QHBoxLayout, QColorDialog
 except ImportError:
     from PySide2.QtCore import QEvent
     from PySide2.QtGui import Qt, QColor
-    from PySide2.QtWidgets import QWidget, QHBoxLayout
+    from PySide2.QtWidgets import QWidget, QHBoxLayout, QColorDialog
 
 import hou
 
@@ -42,10 +42,10 @@ class ColorField(FieldBase):
         self.layout().addWidget(self.text_field)
 
         self.pick_color_button = hou.qt.ColorSwatchButton()
+        self.pick_color_button.disconnect(self.pick_color_button)
         self.pick_color_button.setToolTip('Pick color')
         self.pick_color_button.setFixedSize(52, 24)
-
-        self.pick_color_button.colorChanged.connect(self._onColorPicked)
+        self.pick_color_button.clicked.connect(self.pickColor)
         self.layout().addWidget(self.pick_color_button)
         self.text_field.textChanged.connect(self._onColorNameChanged)
 
@@ -87,6 +87,12 @@ class ColorField(FieldBase):
 
     def _onColorNameChanged(self, name):
         self.pick_color_button.setColor(QColor(name))
+
+    def pickColor(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self._onColorPicked(color)
+            self._onColorNameChanged(color.name())
 
     def _onColorPicked(self, color):
         self.text_field.blockSignals(True)
