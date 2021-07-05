@@ -18,7 +18,7 @@
     <helpText><![CDATA["""Show Find Icon window"""]]></helpText>
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2021  Ivan Titov
+Copyright (C) 2021 Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ tdk.findIcon(**kwargs)
 ]]></helpText>
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2021  Ivan Titov
+Copyright (C) 2021 Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -74,7 +74,7 @@ Use Shift+Click to show in your default external Code Editor.
 Use Alt+Click to set up options."""]]></helpText>
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2021  Ivan Titov
+Copyright (C) 2021 Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -99,7 +99,7 @@ tdk.showGenerateCode(**kwargs)
   <tool name="houdini_tdk::hda_doctor::1.0" label="HDA Doctor" icon="SOP_polydoctor">
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2021  Ivan Titov
+Copyright (C) 2021 Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -125,7 +125,7 @@ hou.session.hda_doctor_window.show()
   <tool name="houdini_tdk::make_hda::1.0" label="Make HDA" icon="SOP_compile_begin">
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2021  Ivan Titov
+Copyright (C) 2021 Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -151,7 +151,7 @@ tdk.showMakeHDADialog(**kwargs)
     <helpText><![CDATA["""Increment HDA version of the selected node"""]]></helpText>
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
-Copyright (C) 2021  Ivan Titov
+Copyright (C) 2021 Ivan Titov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
