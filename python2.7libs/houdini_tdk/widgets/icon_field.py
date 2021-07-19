@@ -27,37 +27,40 @@ except ImportError:
 
 import hou
 
-from ...icon_list import IconListDialog
-from ...widgets import FieldBase, InputField
+from .input_field import InputField
 
 
-class IconField(FieldBase):
+class IconField(QWidget):
     def __init__(self, initial_icon_name=''):
-        super(IconField, self).__init__('Icon', 80)
+        super(IconField, self).__init__()
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
 
         self.text_field = InputField(initial_icon_name)
-        self.layout().addWidget(self.text_field)
+        layout.addWidget(self.text_field)
 
         self.icon_preview = QLabel()
         self.icon_preview.setToolTip('Icon preview')
         self.icon_preview.setFixedSize(24, 24)
         self.icon_preview.setAlignment(Qt.AlignCenter)
-        self.layout().addWidget(self.icon_preview)
+        layout.addWidget(self.icon_preview)
         self.text_field.textChanged.connect(self.updateIconPreview)
 
-        self.pick_icon_from_disk_button = QPushButton()
-        self.pick_icon_from_disk_button.setToolTip('Pick icon from disk')
-        self.pick_icon_from_disk_button.setFixedSize(24, 24)
-        self.pick_icon_from_disk_button.setIcon(hou.qt.Icon('BUTTONS_chooser_file', 16, 16))
-        self.pick_icon_from_disk_button.clicked.connect(self.pickIconFromDisk)
-        self.layout().addWidget(self.pick_icon_from_disk_button)
+        self.pick_from_disk_button = QPushButton()
+        self.pick_from_disk_button.setToolTip('Pick icon from disk')
+        self.pick_from_disk_button.setFixedSize(24, 24)
+        self.pick_from_disk_button.setIcon(hou.qt.Icon('BUTTONS_chooser_file', 16, 16))
+        self.pick_from_disk_button.clicked.connect(self.pickIconFromDisk)
+        layout.addWidget(self.pick_from_disk_button)
 
-        self.pick_icon_from_houdini_button = QPushButton()
-        self.pick_icon_from_houdini_button.setToolTip('Pick icon from Houdini')
-        self.pick_icon_from_houdini_button.setFixedSize(24, 24)
-        self.pick_icon_from_houdini_button.setIcon(hou.qt.Icon('OBJ_hlight', 16, 16))
-        self.pick_icon_from_houdini_button.clicked.connect(self.pickIconFromHoudini)
-        self.layout().addWidget(self.pick_icon_from_houdini_button)
+        self.pick_from_houdini_button = QPushButton()
+        self.pick_from_houdini_button.setToolTip('Pick icon from Houdini')
+        self.pick_from_houdini_button.setFixedSize(24, 24)
+        self.pick_from_houdini_button.setIcon(hou.qt.Icon('OBJ_hlight', 16, 16))
+        self.pick_from_houdini_button.clicked.connect(self.pickIconFromHoudini)
+        layout.addWidget(self.pick_from_houdini_button)
 
     def text(self):
         return self.text_field.text()
@@ -132,6 +135,8 @@ class IconField(FieldBase):
             self.text_field.setText(icon_file_name)
 
     def pickIconFromHoudini(self):
-        icon_file_name = IconListDialog.getIconName(self, 'Pick Icon', self.text_field.text())
+        from ..icon_list import IconListWindow
+
+        icon_file_name = IconListWindow.getIconName(self, 'Pick Icon', self.text_field.text())
         if icon_file_name:
             self.text_field.setText(icon_file_name)

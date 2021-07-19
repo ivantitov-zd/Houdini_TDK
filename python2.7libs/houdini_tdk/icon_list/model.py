@@ -25,24 +25,16 @@ except ImportError:
 
 import hou
 
+from .. import ui
+
 
 class IconListModel(QAbstractListModel):
     def __init__(self, parent=None):
         super(IconListModel, self).__init__(parent)
 
-        self._icon_size = 64
-
         # Data
         ICON_INDEX_FILE = hou.expandString('$HFS/houdini/config/Icons/SVGIcons.index')
         self.__data = tuple(sorted(hou.loadIndexDataFromFile(ICON_INDEX_FILE).keys()))
-
-    def iconSize(self):
-        return self._icon_size
-
-    def setIconSize(self, size):
-        if size != self._icon_size:
-            self._icon_size = size
-            self.dataChanged.emit(self.index(0, 0), self.index(len(self.__data), 0), [Qt.DecorationRole])
 
     def hasChildren(self, parent):
         return not parent.isValid()
@@ -62,7 +54,7 @@ class IconListModel(QAbstractListModel):
                 label = ' '.join(label.split('_')[1:]).title()  # VOP_wood -> Wood
             return label
         elif role == Qt.DecorationRole:
-            return hou.qt.Icon(icon_name, self._icon_size, self._icon_size)
+            return ui.icon(icon_name, 128)
         elif role == Qt.UserRole or role == Qt.ToolTipRole:
             return icon_name
 

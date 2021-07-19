@@ -117,7 +117,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import houdini_tdk as tdk
 
-hou.session.hda_doctor_window = tdk.HDADoctorWindow()
+hou.session.hda_doctor_window = tdk.HDADoctorWindow(hou.qt.mainWindow())
 hou.session.hda_doctor_window.show()
 ]]></script>
   </tool>

@@ -52,7 +52,12 @@ tdk.showNodeUserData(**kwargs)
                 <context>
                     <expression>
                         node = kwargs['node']
-                        return node.type().definition() is not None
+                        has_definition = node.type().definition() is not None
+                        subnetwork = node.type().name() == 'subnet'
+                        python_source = node.type().category() in (hou.objNodeTypeCategory(), hou.sopNodeTypeCategory()) \
+                                        and node.type().name() in ('pythonscript', 'python')
+                        inline_vex = node.type().category() == hou.vopNodeTypeCategory() and node.type().name() == 'inline'
+                        return has_definition or subnetwork or python_source or inline_vex
                     </expression>
                 </context>
                 <scriptCode>

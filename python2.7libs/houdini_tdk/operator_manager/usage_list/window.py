@@ -30,7 +30,7 @@ except ImportError:
 import hou
 import nodegraphview
 
-from ...widgets import FilterField
+from ...widgets import InputField
 from ...fuzzy_proxy_model import FuzzyProxyModel
 from .view import UsageListView
 from .model import UsageListModel
@@ -39,6 +39,7 @@ from .model import UsageListModel
 class UsageListWindow(QWidget):
     def __init__(self, parent=hou.qt.mainWindow()):
         super(UsageListWindow, self).__init__(parent, Qt.Window)
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
         self._node_type = None
 
@@ -50,7 +51,7 @@ class UsageListWindow(QWidget):
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(4)
 
-        self.filter_field = FilterField()
+        self.filter_field = InputField()
         layout.addWidget(self.filter_field)
 
         self.model = UsageListModel(self)

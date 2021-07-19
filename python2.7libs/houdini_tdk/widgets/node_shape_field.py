@@ -27,25 +27,29 @@ except ImportError:
 
 import hou
 
-from ...node_shapes import NodeShapeListDialog, NodeShapePreview, NodeShape
-from ...widgets import FieldBase, InputField
+from ..node_shapes import NodeShapeListWindow, NodeShapePreview, NodeShape
+from .input_field import InputField
 
 
-class NodeShapeField(FieldBase):
+class NodeShapeField(QWidget):
     def __init__(self, default_shape=None, initial_shape=None):
-        super(NodeShapeField, self).__init__('Shape', 80)
+        super(NodeShapeField, self).__init__()
 
         self._default_shape = default_shape
         initial_shape = initial_shape or default_shape
 
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+
         self.text_field = InputField()
         self.text_field.installEventFilter(self)
-        self.layout().addWidget(self.text_field)
+        layout.addWidget(self.text_field)
 
         self.shape_preview = NodeShapePreview()
         self.shape_preview.setToolTip('Shape preview')
         self.shape_preview.setFixedSize(52, 24)
-        self.layout().addWidget(self.shape_preview)
+        layout.addWidget(self.shape_preview)
         self.text_field.textChanged.connect(self.shape_preview.setShape)
 
         self.pick_shape_button = QPushButton()
@@ -53,9 +57,8 @@ class NodeShapeField(FieldBase):
         self.pick_shape_button.setFixedSize(24, 24)
         self.pick_shape_button.setIcon(hou.qt.Icon('NETVIEW_shape_palette', 16, 16))
         self.pick_shape_button.clicked.connect(self.pickShape)
-        self.layout().addWidget(self.pick_shape_button)
+        layout.addWidget(self.pick_shape_button)
 
-        # Filling
         if initial_shape:
             self.text_field.setText(initial_shape)
 
@@ -91,5 +94,5 @@ class NodeShapeField(FieldBase):
             self.text_field.setText(name)
 
     def pickShape(self):
-        shape_name = NodeShapeListDialog.getShapeName(self, 'Pick Node Shape', self.text_field.text())
+        shape_name = NodeShapeListWindow.getShapeName(self, 'Pick Node Shape', self.text_field.text())
         self.setShape(shape_name)

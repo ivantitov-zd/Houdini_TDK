@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import os
 
 try:
     from PyQt5.QtWidgets import *
@@ -31,12 +30,11 @@ except ImportError:
 
 import hou
 
-from ..widgets import FilterField
+from ..widgets import InputField
 from ..make_hda import MakeHDADialog
-from ..utils import openLocation, removePath
-from ..fuzzy_proxy_model import FuzzyProxyModel
-from .model import OperatorManagerLibraryModel, OperatorManagerNodeTypeModel, TextRole
-from .model.node_type_proxy import NodeTypeProxy
+from ..utils import openLocation
+from ..hda_utils import expandHDA, collapseHDA
+from .model import OperatorManagerLibraryModel, OperatorManagerNodeTypeModel
 from .view import OperatorManagerView
 from .backup_list import BackupListWindow
 from .usage_list import UsageListWindow
@@ -44,41 +42,10 @@ from .usage_list import UsageListWindow
 ICON_SIZE = 16
 
 
-def repackHDA(library_path, expand=True):
-    if not os.path.exists(library_path):
-        return
-
-    library_dir, name = os.path.split(library_path)
-    temp_repack_path = os.path.join(library_dir, 'temp_' + name)
-
-    try:
-        if expand:
-            hou.hda.expandToDirectory(library_path, temp_repack_path)
-        else:
-            hou.hda.collapseFromDirectory(temp_repack_path, library_path)
-
-        backup_library_path = os.path.join(library_dir, 'temp_' + name + '_backup')
-        os.rename(library_path, backup_library_path)
-    except hou.OperationFailed:
-        return
-    except OSError:
-        removePath(temp_repack_path)
-        return
-
-    try:
-        os.rename(temp_repack_path, library_path)
-        removePath(backup_library_path)
-    except OSError:
-        os.rename(backup_library_path, library_path)
-        removePath(temp_repack_path)
-        return
-
-    hou.hda.reloadFile(library_path)
-
-
 class OperatorManagerWindow(QDialog):
     def __init__(self, parent=hou.qt.mainWindow()):
         super(OperatorManagerWindow, self).__init__(parent, Qt.Window)
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
         self.setWindowTitle('TDK: Operator Manager')
         self.setWindowIcon(hou.qt.Icon('MISC_digital_asset', 32, 32))
@@ -88,7 +55,7 @@ class OperatorManagerWindow(QDialog):
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(4)
 
-        self.filter_field = FilterField()
+        self.filter_field = InputField()
         self.filter_field.textChanged.connect(self._onFilterChange)
         layout.addWidget(self.filter_field)
 
@@ -232,7 +199,7 @@ class OperatorManagerWindow(QDialog):
 
         index = self.view.selectedIndex()
         library_path = index.data(Qt.UserRole)
-        repackHDA(library_path, expand=False)
+        collapseHDA(library_path)
         self.updateData()
 
     def _onConvertToUnpacked(self):
@@ -245,7 +212,7 @@ class OperatorManagerWindow(QDialog):
 
         index = self.view.selectedIndex()
         library_path = index.data(Qt.UserRole)
-        repackHDA(library_path)
+        expandHDA(library_path)
         self.updateData()
 
     def _onShowBackups(self):

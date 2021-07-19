@@ -37,6 +37,7 @@ from .utils import versionByTypeName, nextVersionTypeName, incrementHDAVersion
 class NewVersionDialog(QDialog):
     def __init__(self, node, parent=None):
         super(NewVersionDialog, self).__init__(parent, Qt.Window)
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
         self.setWindowTitle('TDK: New HDA Version')
         self.setWindowIcon(hou.qt.Icon('BUTTONS_multi_insertbefore', 32, 32))

@@ -17,15 +17,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 try:
-    from PyQt5.QtWidgets import *
-    from PyQt5.QtGui import *
-    from PyQt5.QtCore import *
+    from PyQt5.QtWidgets import QSlider
+    from PyQt5.QtGui import QMouseEvent
+    from PyQt5.QtCore import Qt, QEvent
 
     Signal = pyqtSignal
 except ImportError:
-    from PySide2.QtWidgets import *
-    from PySide2.QtGui import *
-    from PySide2.QtCore import *
+    from PySide2.QtWidgets import QSlider
+    from PySide2.QtGui import QMouseEvent
+    from PySide2.QtCore import Qt, QEvent
 
 import hou
 

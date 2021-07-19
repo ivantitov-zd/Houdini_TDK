@@ -18,8 +18,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 try:
     from PyQt5.QtWidgets import QDialog, QVBoxLayout
+    from PyQt5.QtCore import Qt
 except ImportError:
     from PySide2.QtWidgets import QDialog, QVBoxLayout
+    from PySide2.QtCore import Qt
 
 import hou
 
@@ -30,6 +32,7 @@ from .model import NetworkStatsModel
 class NetworkStatsWindow(QDialog):
     def __init__(self, parent=hou.qt.mainWindow()):
         super(NetworkStatsWindow, self).__init__(parent)
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
         self.setWindowTitle('TDK: Network Statistics')
 

@@ -17,39 +17,30 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 try:
-    from PyQt5.QtWidgets import *
-    from PyQt5.QtGui import *
-    from PyQt5.QtCore import *
-
-    Signal = pyqtSignal
+    from PyQt5.QtWidgets import QLineEdit
+    from PyQt5.QtGui import QKeySequence
+    from PyQt5.QtCore import Qt, pyqtSignal as Signal
 except ImportError:
-    from PySide2.QtWidgets import *
-    from PySide2.QtGui import *
-    from PySide2.QtCore import *
-
-from .field_base import FieldBase
+    from PySide2.QtWidgets import QLineEdit
+    from PySide2.QtGui import QKeySequence
+    from PySide2.QtCore import Qt, Signal
 
 
-class InputField(FieldBase):
-    def __init__(self, text=None, label_text=None, label_width=None):
-        super(InputField, self).__init__(label_text, label_width)
-
-        self.text_field = QLineEdit()
-        if text:
-            self.text_field.setText(text)
-        self.layout().addWidget(self.text_field)
+class InputField(QLineEdit):
+    # Signals
+    accepted = Signal(str)
 
     def keyPressEvent(self, event):
+        key = event.key()
         if event.matches(QKeySequence.Cancel):
             self.clear()
+        elif key == Qt.Key_Enter or key == Qt.Key_Return:
+            self.accepted.emit(self.text())
         else:
             super(InputField, self).keyPressEvent(event)
 
-    def mousePressEvent(self, event):
+    def mouseReleaseEvent(self, event):
         if event.button() == Qt.MiddleButton and event.modifiers() == Qt.ControlModifier:
             self.clear()
         else:
-            super(InputField, self).mousePressEvent(event)
-
-    def __getattr__(self, attr_name):
-        return self.text_field.__getattribute__(attr_name)
+            super(InputField, self).mouseReleaseEvent(event)

@@ -23,22 +23,26 @@ except ImportError:
 
 import hou
 
-from ...widgets import FieldBase, InputField
+from .input_field import InputField
 
 
-class LocationField(FieldBase):
+class LocationField(QWidget):
     def __init__(self, initial_location=''):
-        super(LocationField, self).__init__('Location', 80)
+        super(LocationField, self).__init__()
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
 
         self.text_field = InputField(initial_location)
         self.layout().addWidget(self.text_field)
 
-        self.pick_location_button = QPushButton()
-        self.pick_location_button.setToolTip('Pick location')
-        self.pick_location_button.setFixedSize(24, 24)
-        self.pick_location_button.setIcon(hou.qt.Icon('BUTTONS_chooser_folder', 16, 16))
-        self.pick_location_button.clicked.connect(self.pickLocation)
-        self.layout().addWidget(self.pick_location_button)
+        self.pick_button = QPushButton()
+        self.pick_button.setToolTip('Pick location')
+        self.pick_button.setFixedSize(24, 24)
+        self.pick_button.setIcon(hou.qt.Icon('BUTTONS_chooser_folder', 16, 16))
+        self.pick_button.clicked.connect(self.pickLocation)
+        self.layout().addWidget(self.pick_button)
 
     def text(self):
         return self.text_field.text()

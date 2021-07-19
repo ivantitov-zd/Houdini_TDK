@@ -29,86 +29,114 @@ except ImportError:
 
 import hou
 
-from ..widgets import InputField
+from .. import ui
+from ..widgets import InputField, LocationField, IconField, ColorField, NodeShapeField
 from ..notification import notify
 from ..icon_list import standardIconExists
 from ..utils import houdiniColorFromQColor, qColorFromHoudiniColor
-from .widgets import LocationField, IconField, ColorField, NodeShapeField
-from .utils import makeHDA, copyHDA, moveHDA
+from ..hda_utils import makeHDA, copyHDA, moveHDA
 
 
 class MakeHDADialog(QDialog):
     def __init__(self, parent=hou.qt.mainWindow()):
         super(MakeHDADialog, self).__init__(parent)
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
         self.resize(400, 250)
 
-        main_layout = QVBoxLayout(self)
+        main_layout = QGridLayout(self)
         main_layout.setContentsMargins(8, 4, 6, 4)
         main_layout.setSpacing(4)
 
+        self.location_field_label = QLabel('Location')
+        main_layout.addWidget(self.location_field_label, 0, 0)
+
         self.location_field = LocationField()
-        main_layout.addWidget(self.location_field)
+        main_layout.addWidget(self.location_field, 0, 1)
 
         self.use_source_file_toggle = QCheckBox('Use source file')
         self.use_source_file_toggle.toggled.connect(self.location_field.setDisabled)
-        main_layout.addWidget(self.use_source_file_toggle)
+        main_layout.addWidget(self.use_source_file_toggle, 1, 0, 1, -1)
 
-        self.label_field = InputField(None, 'Label', 80)
+        self.label_field_label = QLabel('Label')
+        main_layout.addWidget(self.label_field_label, 2, 0)
+
+        self.label_field = InputField()
         self.label_field.textChanged.connect(self._onLabelChanged)
-        main_layout.addWidget(self.label_field)
+        main_layout.addWidget(self.label_field, 2, 1)
 
-        self.name_field = InputField(None, 'Name', 80)
+        self.name_field_label = QLabel('Name')
+        main_layout.addWidget(self.name_field_label, 3, 0)
+
+        self.name_field = InputField()
         self.name_field.textChanged.connect(self._onNameChanged)
-        main_layout.addWidget(self.name_field)
+        main_layout.addWidget(self.name_field, 3, 1)
 
-        self.namespace_field = InputField(None, 'Namespace', 80)
+        self.namespace_field_label = QLabel('Namespace')
+        main_layout.addWidget(self.namespace_field_label, 4, 0)
+
+        self.namespace_field = InputField()
         self.namespace_field.textChanged.connect(self._onNamespaceChanged)
-        main_layout.addWidget(self.namespace_field)
+        main_layout.addWidget(self.namespace_field, 4, 1)
 
-        self.sections = InputField(None, 'Sections', 80)
+        self.sections_label = QLabel('Sections')
+        main_layout.addWidget(self.sections_label, 5, 0)
+
+        self.sections = InputField()
         self.sections.textChanged.connect(self._onSectionsChanged)
-        main_layout.addWidget(self.sections)
+        main_layout.addWidget(self.sections, 5, 1)
 
-        self.version_field = InputField('1.0', 'Version', 80)
-        main_layout.addWidget(self.version_field)
+        self.version_field_label = QLabel('Version')
+        main_layout.addWidget(self.version_field_label, 6, 0)
+
+        self.version_field = InputField('1.0')
+        main_layout.addWidget(self.version_field, 6, 1)
+
+        self.icon_field_label = QLabel('Icon')
+        main_layout.addWidget(self.icon_field_label, 7, 0)
 
         self.icon_field = IconField()
-        main_layout.addWidget(self.icon_field)
+        main_layout.addWidget(self.icon_field, 7, 1)
+
+        self.color_field_label = QLabel('Color')
+        main_layout.addWidget(self.color_field_label, 8, 0)
 
         self.color_field = ColorField()
-        main_layout.addWidget(self.color_field)
+        main_layout.addWidget(self.color_field, 8, 1)
+
+        self.shape_field_label = QLabel('Shape')
+        main_layout.addWidget(self.shape_field_label, 9, 0)
 
         self.shape_field = NodeShapeField()
-        main_layout.addWidget(self.shape_field)
+        main_layout.addWidget(self.shape_field, 9, 1)
 
-        self.inherit_subnetwork_toggle = QCheckBox('Inherit subnetwork')
-        self.inherit_subnetwork_toggle.setChecked(True)
-        main_layout.addWidget(self.inherit_subnetwork_toggle)
+        self.inherit_network_toggle = QCheckBox('Inherit network')
+        self.inherit_network_toggle.setChecked(True)
+        main_layout.addWidget(self.inherit_network_toggle, 10, 0, 1, -1)
 
         self.inherit_parm_template_group_toggle = QCheckBox('Inherit parameters')
         self.inherit_parm_template_group_toggle.setChecked(True)
-        main_layout.addWidget(self.inherit_parm_template_group_toggle)
+        main_layout.addWidget(self.inherit_parm_template_group_toggle, 11, 0, 1, -1)
 
         self.install_toggle = QCheckBox('Install new HDA')
         self.install_toggle.setChecked(True)
-        main_layout.addWidget(self.install_toggle)
+        main_layout.addWidget(self.install_toggle, 12, 0, 1, -1)
 
         self.replace_node_toggle = QCheckBox('Replace template node')
         self.replace_node_toggle.setChecked(True)
         self.install_toggle.toggled.connect(self.replace_node_toggle.setEnabled)
-        main_layout.addWidget(self.replace_node_toggle)
+        main_layout.addWidget(self.replace_node_toggle, 13, 0, 1, -1)
 
         self.open_type_properties_toggle = QCheckBox('Open type properties')
         self.open_type_properties_toggle.setChecked(True)
         self.install_toggle.toggled.connect(self.open_type_properties_toggle.setEnabled)
-        main_layout.addWidget(self.open_type_properties_toggle)
+        main_layout.addWidget(self.open_type_properties_toggle, 14, 0, 1, -1)
 
         spacer = QSpacerItem(0, 0, QSizePolicy.Ignored, QSizePolicy.Expanding)
-        main_layout.addSpacerItem(spacer)
+        main_layout.addItem(spacer, 15, 0, 1, -1)
 
         buttons_layout = QHBoxLayout()
-        main_layout.addLayout(buttons_layout)
+        main_layout.addLayout(buttons_layout, 16, 0, 1, -1)
 
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Ignored)
         buttons_layout.addSpacerItem(spacer)
@@ -130,18 +158,27 @@ class MakeHDADialog(QDialog):
         super(MakeHDADialog, self).setWindowTitle('TDK: ' + text)
 
     def setAllFieldsHidden(self, hide=True):
+        self.location_field_label.setHidden(hide)
         self.location_field.setHidden(hide)
+        self.label_field_label.setHidden(hide)
         self.label_field.setHidden(hide)
+        self.name_field_label.setHidden(hide)
         self.name_field.setHidden(hide)
+        self.namespace_field_label.setHidden(hide)
         self.namespace_field.setHidden(hide)
+        self.sections_label.setHidden(hide)
         self.sections.setHidden(hide)
+        self.icon_field_label.setHidden(hide)
         self.icon_field.setHidden(hide)
+        self.version_field_label.setHidden(hide)
         self.version_field.setHidden(hide)
+        self.color_field_label.setHidden(hide)
         self.color_field.setHidden(hide)
+        self.shape_field_label.setHidden(hide)
         self.shape_field.setHidden(hide)
 
     def setAllOptionsHidden(self, hide=True):
-        self.inherit_subnetwork_toggle.setHidden(hide)
+        self.inherit_network_toggle.setHidden(hide)
         self.inherit_parm_template_group_toggle.setHidden(hide)
         self.install_toggle.setHidden(hide)
         self.replace_node_toggle.setHidden(hide)
@@ -159,14 +196,14 @@ class MakeHDADialog(QDialog):
         self.shape_field.setDisabled(disable)
 
     def setAllOptionsDisabled(self, disable=True):
-        self.inherit_subnetwork_toggle.setDisabled(disable)
+        self.inherit_network_toggle.setDisabled(disable)
         self.inherit_parm_template_group_toggle.setDisabled(disable)
         self.install_toggle.setDisabled(disable)
         self.replace_node_toggle.setDisabled(disable)
         self.open_type_properties_toggle.setDisabled(disable)
 
     def setAllOptionsChecked(self, check=True):
-        self.inherit_subnetwork_toggle.setChecked(check)
+        self.inherit_network_toggle.setChecked(check)
         self.inherit_parm_template_group_toggle.setChecked(check)
         self.install_toggle.setChecked(check)
         self.replace_node_toggle.setChecked(check)
@@ -289,9 +326,17 @@ class MakeHDADialog(QDialog):
     def makeHDA(source):
         window = MakeHDADialog()
         window.setWindowTitle('Make HDA')
-        window.setWindowIcon(hou.qt.Icon('NODEFLAGS_template', 32, 32))
+        window.setWindowIcon(ui.icon('NODEFLAGS_template', 32))
 
-        if isinstance(source, hou.NodeType):
+        if isinstance(source, hou.Node):
+            if source.type().category() in (hou.objNodeTypeCategory(), hou.sopNodeTypeCategory()):
+                if source.type().name() in ('pythonscript', 'python'):
+                    window.inherit_network_toggle.setHidden(True)
+                    window.inherit_parm_template_group_toggle.setHidden(True)
+            elif source.type().category() == hou.vopNodeTypeCategory() and source.type().name() == 'inline':
+                window.inherit_network_toggle.setHidden(True)
+                window.inherit_parm_template_group_toggle.setHidden(True)
+        elif isinstance(source, hou.NodeType):
             window.setAllOptionsHidden()
             window.setAllOptionsChecked(False)
             window.install_toggle.show()
@@ -299,7 +344,6 @@ class MakeHDADialog(QDialog):
             window.open_type_properties_toggle.show()
             window.open_type_properties_toggle.setChecked(True)
         elif isinstance(source, hou.HDADefinition):
-            window.fillFromDefinition(source)
             window.setAllOptionsHidden()
             window.setAllOptionsChecked(False)
             window.install_toggle.show()
@@ -322,7 +366,7 @@ class MakeHDADialog(QDialog):
                              window.sections.text(),
                              window.version_field.text(),
                              window.location_field.path(),
-                             window.inherit_subnetwork_toggle.isChecked(),
+                             window.inherit_network_toggle.isChecked(),
                              window.inherit_parm_template_group_toggle.isChecked(),
                              color,
                              shape)
@@ -354,13 +398,15 @@ class MakeHDADialog(QDialog):
     def copyHDA(source):
         window = MakeHDADialog()
         window.setWindowTitle('Copy HDA')
-        window.setWindowIcon(hou.qt.Icon('BUTTONS_copy', 32, 32))
+        window.setWindowIcon(ui.icon('BUTTONS_copy', 32))
 
         window.setAllFieldsDisabled(True)
         window.location_field.setEnabled(True)
         window.use_source_file_toggle.hide()
 
+        window.color_field_label.hide()
         window.color_field.hide()
+        window.shape_field_label.hide()
         window.shape_field.hide()
 
         window.setAllOptionsDisabled()
@@ -381,13 +427,15 @@ class MakeHDADialog(QDialog):
     def moveHDA(source):
         window = MakeHDADialog()
         window.setWindowTitle('Move HDA')
-        window.setWindowIcon(hou.qt.Icon('BUTTONS_move_to_right', 32, 32))
+        window.setWindowIcon(ui.icon('BUTTONS_move_to_right', 32))
 
         window.setAllFieldsDisabled(True)
         window.location_field.setEnabled(True)
         window.use_source_file_toggle.hide()
 
+        window.color_field_label.hide()
         window.color_field.hide()
+        window.shape_field_label.hide()
         window.shape_field.hide()
 
         window.setAllOptionsDisabled()
@@ -417,7 +465,15 @@ def showMakeHDADialog(**kwargs):
     elif len(nodes) > 1:
         notify('Too much nodes selected', hou.severityType.Error)
         return
-    elif nodes[0].type().definition() is None:
+
+    node = nodes[0]
+    has_definition = node.type().definition() is not None
+    subnetwork = node.type().name() == 'subnet'
+    python_source = node.type().category() in (hou.objNodeTypeCategory(), hou.sopNodeTypeCategory()) \
+                    and node.type().name() in ('pythonscript', 'python')
+    inline_vex = node.type().category() == hou.vopNodeTypeCategory() and node.type().name() == 'inline'
+
+    if not (has_definition or subnetwork or python_source or inline_vex):
         notify('Node cannot be used as a template', hou.severityType.Error)
         return
 

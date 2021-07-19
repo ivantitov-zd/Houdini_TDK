@@ -20,6 +20,8 @@ import os
 
 import hou
 
+from ..hda_utils import findDefinitionInFile
+
 
 def versionByTypeName(name):
     split_count = name.count('::')
@@ -78,7 +80,7 @@ def incrementHDAVersion(node, component, use_original_file):
     definition.copyToHDAFile(new_file_path, new_type_name)
 
     hou.hda.installFile(new_file_path)
-    new_definition = hou.hda.definitionsInFile(new_file_path)[0]  # Todo: fix potential bug
+    new_definition = findDefinitionInFile(new_file_path, new_type_name)
 
     new_definition.updateFromNode(node)
 

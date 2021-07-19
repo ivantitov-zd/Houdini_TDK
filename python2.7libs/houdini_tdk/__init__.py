@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from .icon_list import IconListDialog, findIcon
-from .node_shapes import NodeShapeListDialog, findNodeShape
+from .icon_list import IconListWindow, findIcon
+from .node_shapes import NodeShapeListWindow, findNodeShape
 from .generate_code import showGenerateCode
 from .hda_doctor import HDADoctorWindow
 from .make_hda import MakeHDADialog, showMakeHDADialog

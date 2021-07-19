@@ -42,44 +42,56 @@ def fuzzyMatch(pattern, text):
     except IndexError:
         pass
 
-    if index < len(pattern):
-        return False
-
-    return True
+    return index == len(pattern)
 
 
-def fuzzyMatchWeight(pattern, text, cache={}):
+def fuzzyMatchWeight(pattern, text):
+    try:
+        pos_weight = 1 - text.index(pattern[0]) / 1000.0
+    except ValueError:
+        return 0
+
     pattern_length = len(pattern)
 
-    if pattern_length <= 2:
-        cache_token = pattern + '_' + text
-        if cache_token in cache:
-            return cache[cache_token]
+    if pattern in text:
+        return pattern_length * pattern_length + pos_weight
 
-    if pattern == text:
-        weight = pattern_length * pattern_length + 1
-    else:
+    max_weight = 0
+    start_index = 0
+    text_length = len(text)
+    while start_index != text_length:
+        current_index = start_index
+        prev_token_pos = -1
         weight = 0
         count = 0
-        index = 0
+        first_token = True
         try:
-            for char in text:
-                if char == pattern[index]:
-                    count += 1
-                    index += 1
-                elif count != 0:
-                    weight += count * count
-                    count = 0
-        except IndexError:
-            pass
+            first_token_pos = text.index(pattern[0], start_index)
+        except ValueError:
+            break
+
+        for token in pattern:
+            try:
+                pos = text.index(token, current_index)
+            except ValueError:
+                break
+            if pos == prev_token_pos + 1 or first_token:
+                first_token = False
+                count += 1
+            else:
+                weight += count * count
+                count = 1
+            prev_token_pos = pos
+            current_index = pos + 1
 
         weight += count * count
-        if index >= pattern_length:
-            weight = weight + (1 - text.index(pattern[0]) / 1000.0)
 
-    if pattern_length <= 2:
-        cache[cache_token] = weight
-    return weight
+        if weight > max_weight:
+            max_weight = weight
+
+        start_index = first_token_pos + 1
+
+    return max_weight + pos_weight
 
 
 class FuzzyProxyModel(QSortFilterProxyModel):
@@ -109,7 +121,7 @@ class FuzzyProxyModel(QSortFilterProxyModel):
         return matches
 
     def filterAcceptsRow(self, source_row, source_parent):
-        if not self._pattern:
+        if not self._pattern or len(self._pattern) < 2:
             return True
 
         source_model = self.sourceModel()
@@ -132,7 +144,7 @@ class FuzzyProxyModel(QSortFilterProxyModel):
         return matches
 
     def lessThan(self, source_left, source_right):
-        if not self._pattern:
+        if not self._pattern or len(self._pattern) < 2:
             return source_left.row() > source_right.row()
 
         text1 = source_left.data(self._comp_text_role)

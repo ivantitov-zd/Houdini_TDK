@@ -27,29 +27,32 @@ except ImportError:
 
 import hou
 
-from ...widgets import FieldBase, InputField
+from .input_field import InputField
 
 
-class ColorField(FieldBase):
+class ColorField(QWidget):
     def __init__(self, default_color=None, initial_color=None):
-        super(ColorField, self).__init__('Color', 80)
+        super(ColorField, self).__init__()
 
         self._default_color = default_color
         initial_color = initial_color or default_color
 
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+
         self.text_field = InputField()
         self.text_field.installEventFilter(self)
-        self.layout().addWidget(self.text_field)
+        layout.addWidget(self.text_field)
 
-        self.pick_color_button = hou.qt.ColorSwatchButton()
-        self.pick_color_button.disconnect(self.pick_color_button)
-        self.pick_color_button.setToolTip('Pick color')
-        self.pick_color_button.setFixedSize(52, 24)
-        self.pick_color_button.clicked.connect(self.pickColor)
-        self.layout().addWidget(self.pick_color_button)
+        self.pick_button = hou.qt.ColorSwatchButton()
+        self.pick_button.disconnect(self.pick_button)
+        self.pick_button.setToolTip('Pick color')
+        self.pick_button.setFixedSize(52, 24)
+        self.pick_button.clicked.connect(self.pickColor)
+        layout.addWidget(self.pick_button)
         self.text_field.textChanged.connect(self._onColorNameChanged)
 
-        # Filling
         if initial_color:
             self.text_field.setText(initial_color.name())
 
@@ -86,7 +89,7 @@ class ColorField(FieldBase):
         self.text_field.setText(color.name())
 
     def _onColorNameChanged(self, name):
-        self.pick_color_button.setColor(QColor(name))
+        self.pick_button.setColor(QColor(name))
 
     def pickColor(self):
         color = QColorDialog.getColor()

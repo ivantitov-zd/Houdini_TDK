@@ -31,13 +31,15 @@ except ImportError:
 
 import hou
 
-WARNING_ICON = hou.qt.Icon('STATUS_warning', 16, 16)
-WEAK_WARNING_ICON = QIcon(WARNING_ICON.pixmap(QSize(16, 16), QIcon.Disabled, QIcon.On))
-ERROR_ICON = hou.qt.Icon('STATUS_error', 16, 16)
+from .. import ui
 
-DEFINITION_ICON = hou.qt.Icon('MISC_digital_asset', 16, 16)
-PARAMETERS_ICON = hou.qt.Icon('PANETYPES_parameters', 16, 16)
-NETWORK_ICON = hou.qt.Icon('PANETYPES_network', 16, 16)
+WARNING_ICON = ui.icon('STATUS_warning', 16)
+WEAK_WARNING_ICON = QIcon(WARNING_ICON.pixmap(QSize(16, 16), QIcon.Disabled, QIcon.On))
+ERROR_ICON = ui.icon('STATUS_error', 16)
+
+DEFINITION_ICON = ui.icon('MISC_digital_asset', 16)
+PARAMETERS_ICON = ui.icon('PANETYPES_parameters', 16)
+NETWORK_ICON = ui.icon('PANETYPES_network', 16)
 
 
 class Scope:
@@ -485,8 +487,6 @@ class InspectionsModel(QAbstractItemModel):
 
         if role == Qt.DisplayRole:
             return ('Name', 'Description')[section]
-        elif role == Qt.TextAlignmentRole:
-            return Qt.AlignCenter
 
     def rowCount(self, parent):
         if not parent.isValid():
@@ -690,6 +690,7 @@ class AnalysesView(QTreeView):
         header = self.header()
         header.setSectionsMovable(False)
         header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        header.setDefaultAlignment(Qt.AlignCenter)
         header.hide()
 
         self.setUniformRowHeights(True)
@@ -702,7 +703,7 @@ class HDADoctorWindow(QWidget):
         super(HDADoctorWindow, self).__init__(parent, Qt.Window)
 
         self.setWindowTitle('HDA Doctor Beta')
-        self.setWindowIcon(hou.qt.Icon('SOP_polydoctor', 32, 32))
+        self.setWindowIcon(ui.icon('SOP_polydoctor', 32))
         self.resize(600, 600)
 
         # Layout
@@ -715,8 +716,7 @@ class HDADoctorWindow(QWidget):
         node_layout.setSpacing(4)
         main_layout.addLayout(node_layout)
 
-        # Node Field
-        node_field = hou.qt.InputField(hou.qt.InputField.StringType, 1, 'Node')
+        node_field = hou.qt.InputField(hou.qt.InputField.StringType, 1, 'Node')  # Todo: Grid layout
         node_layout.addWidget(node_field)
 
         choose_node_button = hou.qt.NodeChooserButton()
@@ -731,13 +731,12 @@ class HDADoctorWindow(QWidget):
         self.analyses_model = AnalysesModel()
         choose_node_button.nodeSelected.connect(self.updateData)
         self.analyses_view.setModel(self.analyses_model)
-        # Todo: Fallback for icon in Houdini 18.0-
-        tab_widget.addTab(self.analyses_view, hou.qt.Icon('VOP_usdprimvarreader', 16, 16), 'Analyses')
+        tab_widget.addTab(self.analyses_view, ui.icon('VOP_usdprimvarreader', 16), 'Analyses')
 
         inspections_view = InspectionsView()
         model = InspectionsModel()
         inspections_view.setModel(model)
-        tab_widget.addTab(inspections_view, hou.qt.Icon('STATUS_warning', 16, 16), 'Inspections')
+        tab_widget.addTab(inspections_view, ui.icon('STATUS_warning', 16), 'Inspections')
 
     def updateData(self, node):
         self.analyses_model.updateData(node)

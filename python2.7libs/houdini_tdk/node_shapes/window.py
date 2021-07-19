@@ -32,15 +32,16 @@ except ImportError:
 import hou
 
 from ..fuzzy_proxy_model import FuzzyProxyModel
-from ..widgets.filter_field import FilterField
+from ..widgets import InputField
 from .model import NodeShapeListModel
 from .view import NodeShapeListView
 from .delegate import NodeShapeDelegate
 
 
-class NodeShapeListDialog(QDialog):
+class NodeShapeListWindow(QDialog):
     def __init__(self, parent=None):
-        super(NodeShapeListDialog, self).__init__(parent, Qt.Window)
+        super(NodeShapeListWindow, self).__init__(parent, Qt.Window)
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
         self.setWindowTitle('TDK: Node Shapes')
         self.setWindowIcon(hou.qt.Icon('NETVIEW_shape_palette', 32, 32))
@@ -52,7 +53,7 @@ class NodeShapeListDialog(QDialog):
         main_layout.setSpacing(4)
 
         # Filter
-        self.filter_field = FilterField()
+        self.filter_field = InputField()
         main_layout.addWidget(self.filter_field)
 
         # Node Shape List
@@ -91,7 +92,7 @@ class NodeShapeListDialog(QDialog):
             self.filter_field.setFocus()
             self.filter_field.selectAll()
         else:
-            super(NodeShapeListDialog, self).keyPressEvent(event)
+            super(NodeShapeListWindow, self).keyPressEvent(event)
 
     def enableDialogMode(self):
         self.shape_list_view.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -101,7 +102,7 @@ class NodeShapeListDialog(QDialog):
 
     @classmethod
     def getShapeName(cls, parent=hou.qt.mainWindow(), title='Node Shapes', name=None):
-        window = NodeShapeListDialog(parent)
+        window = NodeShapeListWindow(parent)
         window.setWindowTitle('TDK: ' + title)
         window.enableDialogMode()
 
@@ -118,5 +119,5 @@ class NodeShapeListDialog(QDialog):
 
 
 def findNodeShape(**kwargs):
-    window = NodeShapeListDialog(hou.qt.mainWindow())
+    window = NodeShapeListWindow(hou.qt.mainWindow())
     window.show()
