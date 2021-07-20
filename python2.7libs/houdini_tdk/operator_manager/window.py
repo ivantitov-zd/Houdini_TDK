@@ -33,7 +33,7 @@ import hou
 from ..widgets import InputField
 from ..make_hda import MakeHDADialog
 from ..utils import openLocation
-from ..hda_utils import expandHDA, collapseHDA
+from ..hda import expandHDA, collapseHDA
 from .model import OperatorManagerLibraryModel, OperatorManagerNodeTypeModel
 from .view import OperatorManagerView
 from .backup_list import BackupListWindow
@@ -51,13 +51,14 @@ class OperatorManagerWindow(QDialog):
         self.setWindowIcon(hou.qt.Icon('MISC_digital_asset', 32, 32))
         self.resize(400, 600)
 
-        layout = QVBoxLayout(self)
+        layout = QGridLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(4)
 
-        self.filter_field = InputField()
-        self.filter_field.textChanged.connect(self._onFilterChange)
-        layout.addWidget(self.filter_field)
+        self._search_field = InputField()
+        self._search_field.setPlaceholderText('Search...')
+        self._search_field.textChanged.connect(self._onFilterChange)
+        layout.addWidget(self._search_field, 0, 0)
 
         self.library_model = OperatorManagerLibraryModel(self)
         self.node_type_model = OperatorManagerNodeTypeModel(self)
@@ -68,9 +69,9 @@ class OperatorManagerWindow(QDialog):
         # self._filter_proxy_model.sort(0, Qt.DescendingOrder)
         # self._filter_proxy_model.setSourceModel(self.node_type_model)
 
-        self.view = OperatorManagerView()
-        self.view.setModel(self.node_type_model)
-        layout.addWidget(self.view)
+        self._view = OperatorManagerView()
+        self._view.setModel(self.library_model)
+        layout.addWidget(self._view, 1, 0, 1, -1)
 
         self._createActions()
         self._createContextMenus()
@@ -80,16 +81,16 @@ class OperatorManagerWindow(QDialog):
     def _onFilterChange(self, pattern):
         """Delivers pattern from filter field to filter proxy model."""
         # Pre-collapse all to speed up live filtering
-        self.view.collapseAll()
+        self._view.collapseAll()
         self._filter_proxy_model.setPattern(pattern)
         if pattern:
-            self.view.expandAll()
+            self._view.expandAll()
 
     def updateData(self):
-        self.view.model().updateData()
+        self._view.model().updateData()
 
     def _setSectionsResizeMode(self, model_index):
-        header = self.view.header()
+        header = self._view.header()
         if model_index == 0:
             pass
         elif model_index == 1:
@@ -98,30 +99,30 @@ class OperatorManagerWindow(QDialog):
             raise ValueError
 
     def setCurrentModel(self, model_index):
-        self.view.setModel((self.library_model, self.node_type_model)[model_index])
+        self._view.setModel((self.library_model, self.node_type_model)[model_index])
         self._setSectionsResizeMode(model_index)
 
     def _onExpand(self):
         """Expands selected items."""
-        for index in self.view.selectedIndexes():
-            self.view.expand(index)
+        for index in self._view.selectedIndexes():
+            self._view.expand(index)
 
     def _onCollapse(self):
         """Collapses selected items."""
-        for index in self.view.selectedIndexes():
-            self.view.collapse(index)
+        for index in self._view.selectedIndexes():
+            self._view.collapse(index)
 
     def _onExpandAll(self):
         """Expands all items."""
-        self.view.expandAll()
+        self._view.expandAll()
 
     def _onCollapseAll(self):
         """Collapses all items."""
-        self.view.collapseAll()
+        self._view.collapseAll()
 
     def _onCopyPath(self):
         """Copy library path(s) to the clipboard."""
-        paths = (index.data(Qt.UserRole) for index in self.view.selectedIndexes() if index.column() == 0)
+        paths = (index.data(Qt.UserRole) for index in self._view.selectedIndexes() if index.column() == 0)
         QApplication.clipboard().setText('\n'.join(paths))
 
     def _onOpenLocation(self):
@@ -129,10 +130,10 @@ class OperatorManagerWindow(QDialog):
         Opens location of the selected library or library of the selected node type.
         Currently, supported single selection only. Multiple selection is ignored.
         """
-        if not self.view.isSingleSelection():
+        if not self._view.isSingleSelection():
             return
 
-        index = self.view.selectedIndex()
+        index = self._view.selectedIndex()
         openLocation(index.data(Qt.UserRole))
 
     def _onInstall(self):
@@ -140,10 +141,10 @@ class OperatorManagerWindow(QDialog):
         Install all node types containing in the selected library to the current Houdini session.
         Currently, supported single selection only. Multiple selection is ignored.
         """
-        if not self.view.isSingleSelection():
+        if not self._view.isSingleSelection():
             return
 
-        index = self.view.selectedIndex()
+        index = self._view.selectedIndex()
         library_path = index.data(Qt.UserRole)
         hou.hda.installFile(library_path)
         # Todo: Change item state to installed
@@ -154,10 +155,10 @@ class OperatorManagerWindow(QDialog):
         Uninstall all node types containing in the selected library from the current Houdini session.
         Currently, supported single selection only. Multiple selection is ignored.
         """
-        if not self.view.isSingleSelection():
+        if not self._view.isSingleSelection():
             return
 
-        index = self.view.selectedIndex()
+        index = self._view.selectedIndex()
         library_path = index.data(Qt.UserRole)
         hou.hda.uninstallFile(library_path)
         # Todo: Change item state to uninstalled
@@ -165,7 +166,7 @@ class OperatorManagerWindow(QDialog):
 
     def _onReload(self):
         """Reload the contents of an HDA file, loading any updated digital asset definitions inside it."""
-        for index in self.view.selectedIndexes():
+        for index in self._view.selectedIndexes():
             if index.column() != 0:
                 continue
 
@@ -194,10 +195,10 @@ class OperatorManagerWindow(QDialog):
         Collapses the contents of the directory into the HDA file.
         Currently, supported single selection only. Multiple selection is ignored.
         """
-        if not self.view.isSingleSelection():
+        if not self._view.isSingleSelection():
             return
 
-        index = self.view.selectedIndex()
+        index = self._view.selectedIndex()
         library_path = index.data(Qt.UserRole)
         collapseHDA(library_path)
         self.updateData()
@@ -207,10 +208,10 @@ class OperatorManagerWindow(QDialog):
         Expands the contents of the HDA file into the directory.
         Currently, supported single selection only. Multiple selection is ignored.
         """
-        if not self.view.isSingleSelection():
+        if not self._view.isSingleSelection():
             return
 
-        index = self.view.selectedIndex()
+        index = self._view.selectedIndex()
         library_path = index.data(Qt.UserRole)
         expandHDA(library_path)
         self.updateData()
@@ -220,10 +221,10 @@ class OperatorManagerWindow(QDialog):
         Shows backup list window for the selected library.
         Currently, supported single selection only. Multiple selection is ignored.
         """
-        if not self.view.isSingleSelection():
+        if not self._view.isSingleSelection():
             return
 
-        index = self.view.selectedIndex()
+        index = self._view.selectedIndex()
         library_path = index.data(Qt.UserRole)
         backup_list = BackupListWindow()
         backup_list.setLibrary(library_path)
@@ -231,10 +232,10 @@ class OperatorManagerWindow(QDialog):
 
     def _onOpenTypeProperties(self):
         """Opens Type Properties window for the selected node type."""
-        if not self.view.isSingleSelection():
+        if not self._view.isSingleSelection():
             return
 
-        index = self.view.selectedIndex()
+        index = self._view.selectedIndex()
         node_type = index.data(Qt.UserRole)
         hou.ui.openTypePropertiesDialog(node_type)
 
@@ -257,8 +258,8 @@ class OperatorManagerWindow(QDialog):
         Shows usages list window for the selected library.
         Currently, supported single selection only. Multiple selection is ignored.
         """
-        if self.view.isSingleSelection():
-            index = self.view.selectedIndex()
+        if self._view.isSingleSelection():
+            index = self._view.selectedIndex()
             node_type = index.data(Qt.UserRole)
             usage_window = UsageListWindow()
             usage_window.setNodeType(node_type)
@@ -268,8 +269,8 @@ class OperatorManagerWindow(QDialog):
         raise NotImplementedError
 
     def _onShowNetworkStatistics(self):
-        if self.view.isSingleSelection():
-            index = self.view.selectedIndex()
+        if self._view.isSingleSelection():
+            index = self._view.selectedIndex()
             node_type = index.data(Qt.UserRole)
             # network_stats_list = NetworkStatisticsWindow()
             # network_stats_list.setSource(node_type)
@@ -283,14 +284,14 @@ class OperatorManagerWindow(QDialog):
         Creates instance of the selected node type and select it.
         Currently, supported single selection only. Multiple selection is ignored.
         """
-        if not self.view.isSingleSelection():
+        if not self._view.isSingleSelection():
             return
 
         network = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
         if network is None:  # No active network editor found
             return
 
-        index = self.view.selectedIndex()
+        index = self._view.selectedIndex()
         node_type = index.data(Qt.UserRole)
 
         root_node = network.pwd()
@@ -305,10 +306,10 @@ class OperatorManagerWindow(QDialog):
         instance_node.setPosition(rect.center())
 
     def _onCreateNewHDA(self):
-        if not self.view.isSingleSelection():
+        if not self._view.isSingleSelection():
             return
 
-        index = self.view.selectedIndex()
+        index = self._view.selectedIndex()
         node_type = index.data(Qt.UserRole)
 
         MakeHDADialog.makeHDA(node_type)
@@ -321,20 +322,20 @@ class OperatorManagerWindow(QDialog):
         raise NotImplementedError
 
     def _onCopy(self):
-        if not self.view.isSingleSelection():
+        if not self._view.isSingleSelection():
             return
 
-        index = self.view.selectedIndex()
+        index = self._view.selectedIndex()
         node_type = index.data(Qt.UserRole)
 
         MakeHDADialog.copyHDA(node_type)
         self.updateData()
 
     def _onMove(self):
-        if not self.view.isSingleSelection():
+        if not self._view.isSingleSelection():
             return
 
-        index = self.view.selectedIndex()
+        index = self._view.selectedIndex()
         node_type = index.data(Qt.UserRole)
 
         MakeHDADialog.moveHDA(node_type)
@@ -347,10 +348,10 @@ class OperatorManagerWindow(QDialog):
         raise NotImplementedError
 
     def _onDelete(self):
-        if not self.view.isSingleSelection():
+        if not self._view.isSingleSelection():
             return
 
-        index = self.view.selectedIndex()
+        index = self._view.selectedIndex()
         node_type = index.data(Qt.UserRole)
 
         definition = node_type.definition()
@@ -533,16 +534,16 @@ class OperatorManagerWindow(QDialog):
         # self._definition_edit_menu.addAction(self._hide_action)
         # self._definition_edit_menu.addAction(self._deprecate_action)
 
-        self.view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.view.customContextMenuRequested.connect(self._showContextMenu)
+        self._view.setContextMenuPolicy(Qt.CustomContextMenu)
+        self._view.customContextMenuRequested.connect(self._showContextMenu)
 
     def _showContextMenu(self):
-        index = self.view.currentIndex()
+        index = self._view.currentIndex()
 
         if not index.isValid():
             return
 
-        self.view.deselectDifferingDepth(index)
+        self._view.deselectDifferingDepth(index)
 
         if isinstance(index.data(Qt.UserRole), basestring):
             self._library_menu.exec_(QCursor.pos())

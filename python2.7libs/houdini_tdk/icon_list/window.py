@@ -17,15 +17,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 try:
-    from PyQt5.QtWidgets import *
-    from PyQt5.QtGui import *
-    from PyQt5.QtCore import *
-
-    Signal = pyqtSignal
+    from PyQt5.QtWidgets import (QApplication, QDialog, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy,
+                                 QPushButton, QFileDialog, QAction, QAbstractItemView)
+    from PyQt5.QtGui import QKeySequence
+    from PyQt5.QtCore import Qt
 except ImportError:
-    from PySide2.QtWidgets import *
-    from PySide2.QtGui import *
-    from PySide2.QtCore import *
+    from PySide2.QtWidgets import (QApplication, QDialog, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy,
+                                   QPushButton, QFileDialog, QAction, QAbstractItemView)
+    from PySide2.QtGui import QKeySequence
+    from PySide2.QtCore import Qt
 
 import hou
 
@@ -53,33 +53,33 @@ class IconListWindow(QDialog):
         top_layout.setSpacing(4)
         main_layout.addLayout(top_layout)
 
-        # Icon List
+        # Icon list
         self.icon_list_model = IconListModel(self)
 
-        self.filter_proxy_model = FuzzyProxyModel(self)
-        self.filter_proxy_model.setDynamicSortFilter(True)
-        self.filter_proxy_model.sort(0, Qt.DescendingOrder)
-        self.filter_proxy_model.setSourceModel(self.icon_list_model)
+        self._filter_proxy_model = FuzzyProxyModel(self)
+        self._filter_proxy_model.setDynamicSortFilter(True)
+        self._filter_proxy_model.sort(0, Qt.DescendingOrder)
+        self._filter_proxy_model.setSourceModel(self.icon_list_model)
 
-        self.icon_list_view = IconListView()
-        self.icon_list_view.setModel(self.filter_proxy_model)
-        self.icon_list_view.itemDoubleClicked.connect(self.accept)
-        main_layout.addWidget(self.icon_list_view)
+        self._icon_list_view = IconListView()
+        self._icon_list_view.setModel(self._filter_proxy_model)
+        self._icon_list_view.itemDoubleClicked.connect(self.accept)
+        main_layout.addWidget(self._icon_list_view)
 
-        # Filter
-        self.search_field = InputField()
-        self.search_field.setPlaceholderText('Search...')
-        self.search_field.textChanged.connect(self.filter_proxy_model.setPattern)
-        top_layout.addWidget(self.search_field)
+        # Search
+        self._search_field = InputField()
+        self._search_field.setPlaceholderText('Search...')
+        self._search_field.textChanged.connect(self._filter_proxy_model.setPattern)
+        top_layout.addWidget(self._search_field)
 
         # Scale
-        self.slider = Slider(Qt.Horizontal)
-        self.slider.setFixedWidth(120)
-        self.slider.setDefaultValue(64)
-        self.slider.setRange(48, 128)
-        self.slider.valueChanged.connect(self.setIconSize)
-        self.icon_list_view.iconSizeChanged.connect(lambda size: self.setIconSize(size.width()))
-        top_layout.addWidget(self.slider)
+        self._slider = Slider(Qt.Horizontal)
+        self._slider.setFixedWidth(120)
+        self._slider.setDefaultValue(64)
+        self._slider.setRange(48, 128)
+        self._slider.valueChanged.connect(self.setIconSize)
+        self._icon_list_view.iconSizeChanged.connect(lambda size: self.setIconSize(size.width()))
+        top_layout.addWidget(self._slider)
 
         # Buttons
         buttons_layout = QHBoxLayout()
@@ -88,15 +88,15 @@ class IconListWindow(QDialog):
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Ignored)
         buttons_layout.addSpacerItem(spacer)
 
-        self.ok_button = QPushButton('OK')
-        self.ok_button.setVisible(False)
-        self.ok_button.clicked.connect(self.accept)
-        buttons_layout.addWidget(self.ok_button)
+        self._ok_button = QPushButton('OK')
+        self._ok_button.setVisible(False)
+        self._ok_button.clicked.connect(self.accept)
+        buttons_layout.addWidget(self._ok_button)
 
-        self.cancel_button = QPushButton('Cancel')
-        self.cancel_button.setVisible(False)
-        self.cancel_button.clicked.connect(self.reject)
-        buttons_layout.addWidget(self.cancel_button)
+        self._cancel_button = QPushButton('Cancel')
+        self._cancel_button.setVisible(False)
+        self._cancel_button.clicked.connect(self.reject)
+        buttons_layout.addWidget(self._cancel_button)
 
         # Menu
         self._menu = None
@@ -107,36 +107,36 @@ class IconListWindow(QDialog):
 
         self._createActions()
 
-        self.icon_list_view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.icon_list_view.customContextMenuRequested.connect(self.showContextMenu)
+        self._icon_list_view.setContextMenuPolicy(Qt.CustomContextMenu)
+        self._icon_list_view.customContextMenuRequested.connect(self.showContextMenu)
 
         self.setIconSize(64)
 
     def setIconSize(self, size):
         size = min(max(size, 48), 128)
-        self.slider.setToolTip('Size: ' + str(size))
-        self.slider.setValue(size)
-        self.icon_list_view.setIconSize(size)
+        self._slider.setToolTip('Size: ' + str(size))
+        self._slider.setValue(size)
+        self._icon_list_view.setIconSize(size)
 
     def copySelectedIconName(self):
         names = []
-        for index in self.icon_list_view.selectedIndexes():
+        for index in self._icon_list_view.selectedIndexes():
             names.append(index.data(Qt.ToolTipRole))
 
         QApplication.clipboard().setText('\n'.join(name[:-4] for name in names))
 
     def copySelectedIconFileName(self):
         names = []
-        for index in self.icon_list_view.selectedIndexes():
+        for index in self._icon_list_view.selectedIndexes():
             names.append(index.data(Qt.ToolTipRole))
 
         QApplication.clipboard().setText('\n'.join(names))
 
     def _selectedImage(self):
-        indexes = self.icon_list_view.selectedIndexes()
+        indexes = self._icon_list_view.selectedIndexes()
         if len(indexes) == 1:
             name = indexes[0].data(Qt.UserRole)
-            icon_size = self.icon_list_view.model().iconSize()
+            icon_size = self._icon_list_view.model().iconSize()
             return hou.qt.Icon(name, icon_size, icon_size).pixmap(icon_size, icon_size)
 
     def copySelectedIcon(self):
@@ -146,7 +146,7 @@ class IconListWindow(QDialog):
             clipboard.setPixmap(image)
 
     def saveSelectedIcon(self):
-        indexes = self.icon_list_view.selectedIndexes()
+        indexes = self._icon_list_view.selectedIndexes()
 
         if len(indexes) != 1:
             return
@@ -166,7 +166,7 @@ class IconListWindow(QDialog):
         self._copy_name_action.triggered.connect(self.copySelectedIconName)
         self._copy_name_action.setShortcut(QKeySequence.Copy)
         self._copy_name_action.setShortcutContext(Qt.WidgetWithChildrenShortcut)
-        self.icon_list_view.addAction(self._copy_name_action)
+        self._icon_list_view.addAction(self._copy_name_action)
 
         # Copy File Name
         self._copy_file_name_action = QAction('Copy File Name', self)
@@ -192,7 +192,7 @@ class IconListWindow(QDialog):
         self._menu.addAction(self._save_image_action)
 
     def _updateContextMenu(self):
-        selection_size = len(self.icon_list_view.selectedIndexes())
+        selection_size = len(self._icon_list_view.selectedIndexes())
 
         if selection_size == 0:
             self._menu.setEnabled(False)
@@ -215,10 +215,10 @@ class IconListWindow(QDialog):
         return self._menu.exec_(self.mapToGlobal(local_pos))
 
     def enableDialogMode(self):
-        self.icon_list_view.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.icon_list_view.enableDoubleClickedSignal()
-        self.ok_button.setVisible(True)
-        self.cancel_button.setVisible(True)
+        self._icon_list_view.setSelectionMode(QAbstractItemView.SingleSelection)
+        self._icon_list_view.enableDoubleClickedSignal()
+        self._ok_button.setVisible(True)
+        self._cancel_button.setVisible(True)
 
     @classmethod
     def getIconName(cls, parent=hou.qt.mainWindow(), title='Icons', name=None):
@@ -227,15 +227,15 @@ class IconListWindow(QDialog):
         window.enableDialogMode()
 
         if name:
-            model = window.icon_list_view.model()
+            model = window._icon_list_view.model()
             for row in range(model.rowCount()):
                 index = model.index(row, 0)
                 if index.data(Qt.UserRole) == name + '.svg':
-                    window.icon_list_view.setCurrentIndex(index)
+                    window._icon_list_view.setCurrentIndex(index)
                     break
 
-        if window.exec_() and window.icon_list_view.currentIndex().isValid():
-            return window.icon_list_view.currentIndex().data(Qt.UserRole).replace('.svg', '')
+        if window.exec_() and window._icon_list_view.currentIndex().isValid():
+            return window._icon_list_view.currentIndex().data(Qt.UserRole).replace('.svg', '')
 
 
 def findIcon(**kwargs):

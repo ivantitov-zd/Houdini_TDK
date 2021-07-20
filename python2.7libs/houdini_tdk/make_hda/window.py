@@ -34,7 +34,7 @@ from ..widgets import InputField, LocationField, IconField, ColorField, NodeShap
 from ..notification import notify
 from ..icon_list import standardIconExists
 from ..utils import houdiniColorFromQColor, qColorFromHoudiniColor
-from ..hda_utils import makeHDA, copyHDA, moveHDA
+from ..hda import makeHDA, copyHDA, moveHDA
 
 
 class MakeHDADialog(QDialog):

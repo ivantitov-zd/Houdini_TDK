@@ -20,7 +20,7 @@ import os
 
 import hou
 
-from ..hda_utils import findDefinitionInFile
+from ..hda import findDefinitionInFile
 
 
 def versionByTypeName(name):
