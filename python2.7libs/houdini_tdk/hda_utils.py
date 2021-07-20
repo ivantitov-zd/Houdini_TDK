@@ -41,31 +41,70 @@ class SourceType:
     VEX = 3
 
 
-def injectInlineVEXCode(definition, code, outer_code=None):
-    if not definition.hasSection('DialogScript'):
-        raise hou.OperationFailed
+def dialogScriptForInlineVEX(node, name, label):
+    # Auto
+    template = '# Dialog script for {} automatically generated\n\n'.format(name)
 
-    injection = ''
+    # Open brace
+    template += '{'
+
+    # Main
+    template += '''
+    name\t{name}
+    script\t{name}
+    label\t"{label}"
+'''.format(name=name, label=label)
+
+    # Outer code
+    outer_code = node.parm('outercode').eval()
     if outer_code:
-        injection += '    outercode {'
-        injection += '\n'.join('\t"{}"'.format(line.replace('"', '\\"')) for line in outer_code.splitlines(False))
-        injection += '\n    }\n'
+        template += '    outercode {\n'
+        for line in outer_code.splitlines(False):
+            line = line.replace('"', '\\"')
+            template += '\t"{}"'.format(line)
+        template += '\n    }\n\n'
 
-    injection += '\n    code {\n'
-    injection += '\n'.join('\t"{}"'.format(line.replace('"', '\\"')) for line in code.splitlines(False))
-    injection += '\n    }\n'
+    # Code
+    code = node.parm('code').rawValue()
+    if code:
+        template += '    code {\n'
+        for line in code.splitlines(False):
+            line = line.replace('"', '\\"')
+            template += '\t"{}"'.format(line)
+        template += '\n    }\n\n'
 
-    ds_section = definition.sections()['DialogScript']
-    content = ds_section.contents()
-    lines = content.splitlines(False)
-    lines.insert(7, injection)
-    content = '\n'.join(lines)
-    print(content)  # Todo: Remove
-    ds_section.setContents(content)
+    io_types = []  # Used for signatures below
 
+    # Inputs
+    for input_type, input_name in zip(node.inputDataTypes(), node.inputNames()):
+        if input_type == 'undef':
+            break
+        template += '    input\t{0}\t{1}\t"{1}"\n'.format(input_type, input_name)
+        template += '    inputflags\t{}\t0\n'.format(input_name)
+        io_types.append(input_type)
 
-def injectPythonCode(definition, code):
-    definition.addSection('PythonCook', code)
+    # Outputs
+    for n in range(1, 65):
+        num = str(n)
+        output_type = node.parm('outtype' + num).eval()
+        if output_type == 'undef':
+            break
+        output_name = node.parm('outname' + num).eval()
+        output_label = node.parm('outlabel' + num).eval()
+        template += '    output\t{}\t{}\t"{}"\n'.format(output_type, output_name, output_label)
+        io_types.append(output_type)
+
+    # Signatures
+    template += '    signature\t"Default Inputs"\tdefault\t{ ' + ' '.join(io_types) + ' }\n'
+
+    template += '\n'
+
+    # Parameters
+    # Todo with help of ParmTemplateGroup
+
+    # Closing brace
+    template += '\n}'
+    return template
 
 
 def makeHDA(
@@ -148,17 +187,16 @@ def makeHDA(
     if isinstance(source, hou.Node):
         if source_type == SourceType.Python:
             code = source.parm('python').eval()
-            injectPythonCode(new_def, code)
-        elif source_type == SourceType.VEX:
-            code = source.parm('code').rawValue()
-            injectInlineVEXCode(new_def, code)
+            new_def.addSection('PythonCook', code)
 
         if inherit_network and source_type not in (SourceType.Python, SourceType.VEX):
             new_def.updateFromNode(source)
 
         if inherit_parm_template_group:
             if source_type == SourceType.VEX:
-                pass  # Todo
+                ds_section = new_def.sections()['DialogScript']
+                script = dialogScriptForInlineVEX(source, new_type_name, label)
+                ds_section.setContents(script)
             else:
                 parm_template_group = source.parmTemplateGroup()
                 if source_type == SourceType.Python:
