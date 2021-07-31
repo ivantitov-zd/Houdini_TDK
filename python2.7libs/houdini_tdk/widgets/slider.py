@@ -35,9 +35,11 @@ def isRevertToDefaultEvent(event):
 
 
 class Slider(QSlider):
-    def __init__(self, orientation=Qt.Horizontal, parent=None):
+    def __init__(self, minimum=0, maximum=100, default=0, orientation=Qt.Horizontal, parent=None):
         super(Slider, self).__init__(orientation, parent)
-        self._default_value = 0
+        self.setRange(minimum, maximum)
+        self._default_value = default
+        self.setValue(default)
         self._value_ladder_active = False
 
     def revertToDefault(self):

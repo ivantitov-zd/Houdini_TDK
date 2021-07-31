@@ -30,11 +30,11 @@ except ImportError:
 import hou
 
 from .. import ui
+from .. import hda
 from ..widgets import InputField, LocationField, IconField, ColorField, NodeShapeField
 from ..notification import notify
 from ..icon_list import standardIconExists
 from ..utils import houdiniColorFromQColor, qColorFromHoudiniColor
-from ..hda import makeHDA, copyHDA, moveHDA
 
 
 class MakeHDADialog(QDialog):
@@ -358,18 +358,18 @@ class MakeHDADialog(QDialog):
 
         color = window.color_field.color()
         shape = window.shape_field.shape()
-        definition = makeHDA(source,
-                             window.label_field.text(),
-                             window.name_field.text(),
-                             window.namespace_field.text(),
-                             window.icon_field.text(),
-                             window.sections.text(),
-                             window.version_field.text(),
-                             window.location_field.path(),
-                             window.inherit_network_toggle.isChecked(),
-                             window.inherit_parm_template_group_toggle.isChecked(),
-                             color,
-                             shape)
+        definition = hda.makeHDA(source,
+                                 window.label_field.text(),
+                                 window.name_field.text(),
+                                 window.namespace_field.text(),
+                                 window.icon_field.text(),
+                                 window.sections.text(),
+                                 window.version_field.text(),
+                                 window.location_field.path(),
+                                 window.inherit_network_toggle.isChecked(),
+                                 window.inherit_parm_template_group_toggle.isChecked(),
+                                 color,
+                                 shape)
         if window.install_toggle.isChecked():
             hou.hda.installFile(definition.libraryFilePath())
 
@@ -421,7 +421,7 @@ class MakeHDADialog(QDialog):
         if not window.exec_():
             return
 
-        copyHDA(source, window.location_field.path())
+        hda.copyHDA(source, window.location_field.path())
 
     @staticmethod
     def moveHDA(source):
@@ -450,7 +450,7 @@ class MakeHDADialog(QDialog):
         if not window.exec_():
             return
 
-        moveHDA(source, window.location_field.path())
+        hda.moveHDA(source, window.location_field.path())
 
 
 def showMakeHDADialog(**kwargs):

@@ -22,3 +22,4 @@ from .icon_field import IconField
 from .location_field import LocationField
 from .node_shape_field import NodeShapeField
 from .color_field import ColorField
+from .file_path_field import FilePathField

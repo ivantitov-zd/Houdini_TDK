@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 try:
     from PyQt5.QtWidgets import *
     from PyQt5.QtGui import *
@@ -30,10 +29,11 @@ except ImportError:
 
 import hou
 
+from .. import ui
+from .. import hda
 from ..widgets import InputField
 from ..make_hda import MakeHDADialog
 from ..utils import openLocation
-from ..hda import expandHDA, collapseHDA
 from .model import OperatorManagerLibraryModel, OperatorManagerNodeTypeModel
 from .view import OperatorManagerView
 from .backup_list import BackupListWindow
@@ -60,8 +60,31 @@ class OperatorManagerWindow(QDialog):
         self._search_field.textChanged.connect(self._onFilterChange)
         layout.addWidget(self._search_field, 0, 0)
 
-        self.library_model = OperatorManagerLibraryModel(self)
-        self.node_type_model = OperatorManagerNodeTypeModel(self)
+        view_mode_button_group = QButtonGroup(self)
+        view_mode_button_group.setExclusive(True)
+        view_mode_button_group.buttonClicked['int'].connect(self._switchMode)
+
+        self._library_mode_button = QPushButton()
+        self._library_mode_button.setFixedWidth(24)
+        self._library_mode_button.setCheckable(True)
+        self._library_mode_button.setToolTip('Library mode')
+        self._library_mode_button.setIcon(ui.icon('DATATYPES_file', ICON_SIZE))
+        self._library_mode_button.toggle()
+        view_mode_button_group.addButton(self._library_mode_button)
+        view_mode_button_group.setId(self._library_mode_button, 0)
+        layout.addWidget(self._library_mode_button, 0, 1)
+
+        self._node_type_mode_button = QPushButton()
+        self._node_type_mode_button.setFixedWidth(24)
+        self._node_type_mode_button.setCheckable(True)
+        self._node_type_mode_button.setToolTip('Node type mode')
+        self._node_type_mode_button.setIcon(ui.icon('DATATYPES_node_list', ICON_SIZE))
+        view_mode_button_group.addButton(self._node_type_mode_button)
+        view_mode_button_group.setId(self._node_type_mode_button, 1)
+        layout.addWidget(self._node_type_mode_button, 0, 2)
+
+        self._library_model = OperatorManagerLibraryModel(self)
+        self._node_type_model = OperatorManagerNodeTypeModel(self)
 
         # self._filter_proxy_model = FuzzyProxyModel(self, TextRole, TextRole)
         # self._filter_proxy_model.setDynamicSortFilter(True)
@@ -70,7 +93,7 @@ class OperatorManagerWindow(QDialog):
         # self._filter_proxy_model.setSourceModel(self.node_type_model)
 
         self._view = OperatorManagerView()
-        self._view.setModel(self.library_model)
+        self._view.setModel(self._library_model)
         layout.addWidget(self._view, 1, 0, 1, -1)
 
         self._createActions()
@@ -78,8 +101,15 @@ class OperatorManagerWindow(QDialog):
 
         self.updateData()
 
+    def _switchMode(self, index):
+        if index == 0:
+            self._view.setModel(self._library_model)
+        else:
+            self._view.setModel(self._node_type_model)
+        self.updateData()
+
     def _onFilterChange(self, pattern):
-        """Delivers pattern from filter field to filter proxy model."""
+        """Delivers pattern from search field to proxy model."""
         # Pre-collapse all to speed up live filtering
         self._view.collapseAll()
         self._filter_proxy_model.setPattern(pattern)
@@ -87,10 +117,12 @@ class OperatorManagerWindow(QDialog):
             self._view.expandAll()
 
     def updateData(self):
-        self._view.model().updateData()
+        model = self._view.model()
+        if model:
+            model.updateData()
 
     def _setSectionsResizeMode(self, model_index):
-        header = self._view.header()
+        header = self._view.header()  # Todo
         if model_index == 0:
             pass
         elif model_index == 1:
@@ -99,7 +131,7 @@ class OperatorManagerWindow(QDialog):
             raise ValueError
 
     def setCurrentModel(self, model_index):
-        self._view.setModel((self.library_model, self.node_type_model)[model_index])
+        self._view.setModel((self._library_model, self._node_type_model)[model_index])
         self._setSectionsResizeMode(model_index)
 
     def _onExpand(self):
@@ -172,7 +204,7 @@ class OperatorManagerWindow(QDialog):
 
             library_path = index.data(Qt.UserRole)
             hou.hda.reloadFile(library_path)
-            self.updateData()
+        self.updateData()
 
     def _onReloadAll(self):
         """Reload the HDA files and update node type definitions in the current Houdini session."""
@@ -200,7 +232,7 @@ class OperatorManagerWindow(QDialog):
 
         index = self._view.selectedIndex()
         library_path = index.data(Qt.UserRole)
-        collapseHDA(library_path)
+        hda.collapseHDA(library_path)
         self.updateData()
 
     def _onConvertToUnpacked(self):
@@ -213,7 +245,7 @@ class OperatorManagerWindow(QDialog):
 
         index = self._view.selectedIndex()
         library_path = index.data(Qt.UserRole)
-        expandHDA(library_path)
+        hda.expandHDA(library_path)
         self.updateData()
 
     def _onShowBackups(self):
@@ -537,6 +569,55 @@ class OperatorManagerWindow(QDialog):
         self._view.setContextMenuPolicy(Qt.CustomContextMenu)
         self._view.customContextMenuRequested.connect(self._showContextMenu)
 
+    def _updateActionStates(self):
+        if self._view.isMultipleSelection():
+            self._open_location_action.setDisabled(True)
+            self._install_library_action.setDisabled(True)  # Todo
+            self._uninstall_library_action.setDisabled(True)  # Todo
+            self._merge_with_library_action.setDisabled(True)  # Todo
+            self._convert_to_packed_action.setDisabled(True)  # Todo
+            self._convert_to_unpacked_action.setDisabled(True)  # Todo
+            self._show_backups_action.setDisabled(True)
+            self._open_type_properties_action.setDisabled(True)
+            self._change_instances_to_action.setDisabled(True)  # Todo
+            self._run_hda_doctor_action.setDisabled(True)  # Todo
+            self._find_usages_action.setDisabled(True)  # Todo?
+            self._show_network_statistics_action.setDisabled(True)
+            self._create_instance_action.setDisabled(True)  # Todo
+            self._create_new_hda_action.setDisabled(True)
+            self._create_new_version_action.setDisabled(True)
+            self._create_black_box_action.setDisabled(True)
+            self._copy_action.setDisabled(True)  # Todo
+            self._move_action.setDisabled(True)  # Todo
+            self._delete_action.setDisabled(True)  # Todo
+        else:
+            self._collapse_action.setEnabled(True)
+            self._expand_all_action.setEnabled(True)
+            self._collapse_all_action.setEnabled(True)
+            self._copy_path_action.setEnabled(True)
+            self._open_location_action.setEnabled(True)
+            self._install_library_action.setEnabled(True)
+            self._uninstall_library_action.setEnabled(True)
+            self._reload_library_action.setEnabled(True)
+            self._reload_all_libraries_action.setEnabled(True)
+            self._rescan_and_reload_all_action.setEnabled(True)
+            self._merge_with_library_action.setEnabled(True)
+            self._convert_to_packed_action.setEnabled(True)
+            self._convert_to_unpacked_action.setEnabled(True)
+            self._show_backups_action.setEnabled(True)
+            self._open_type_properties_action.setEnabled(True)
+            self._change_instances_to_action.setEnabled(True)
+            self._run_hda_doctor_action.setEnabled(True)
+            self._find_usages_action.setEnabled(True)
+            self._show_network_statistics_action.setEnabled(True)
+            self._create_instance_action.setEnabled(True)
+            self._create_new_hda_action.setEnabled(True)
+            self._create_new_version_action.setEnabled(True)
+            self._create_black_box_action.setEnabled(True)
+            self._copy_action.setEnabled(True)
+            self._move_action.setEnabled(True)
+            self._delete_action.setEnabled(True)
+
     def _showContextMenu(self):
         index = self._view.currentIndex()
 
@@ -544,6 +625,7 @@ class OperatorManagerWindow(QDialog):
             return
 
         self._view.deselectDifferingDepth(index)
+        self._updateActionStates()
 
         if isinstance(index.data(Qt.UserRole), basestring):
             self._library_menu.exec_(QCursor.pos())

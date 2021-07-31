@@ -65,8 +65,7 @@ class NewVersionDialog(QDialog):
         form_layout.addRow('Source Name', src_name_label)
 
         # Component
-        self.comp_slider = Slider(Qt.Horizontal)
-        self.comp_slider.setMaximum(max(3, self.src_version.count('.')))
+        self.comp_slider = Slider(maximum=max(3, self.src_version.count('.')))
         self.comp_slider.valueChanged.connect(self._updateDestFields)
         form_layout.addRow('Component', self.comp_slider)
 

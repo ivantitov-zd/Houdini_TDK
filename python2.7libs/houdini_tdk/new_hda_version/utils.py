@@ -20,7 +20,7 @@ import os
 
 import hou
 
-from ..hda import findDefinitionInFile
+from .. import hda
 
 
 def versionByTypeName(name):
@@ -80,7 +80,7 @@ def incrementHDAVersion(node, component, use_original_file):
     definition.copyToHDAFile(new_file_path, new_type_name)
 
     hou.hda.installFile(new_file_path)
-    new_definition = findDefinitionInFile(new_file_path, new_type_name)
+    new_definition = hda.findDefinitionInFile(new_file_path, new_type_name)
 
     new_definition.updateFromNode(node)
 

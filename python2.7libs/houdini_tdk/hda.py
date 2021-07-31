@@ -324,8 +324,8 @@ def repackHDA(library_path, expand=True):
 
 
 def expandHDA(library_path):
-    return repackHDA(library_path, expand=True)
+    return repackHDA(library_path)
 
 
 def collapseHDA(library_path):
-    return repackHDA(library_path)
+    return repackHDA(library_path, expand=False)

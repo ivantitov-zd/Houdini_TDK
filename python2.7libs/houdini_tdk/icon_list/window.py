@@ -73,10 +73,8 @@ class IconListWindow(QDialog):
         top_layout.addWidget(self._search_field)
 
         # Scale
-        self._slider = Slider(Qt.Horizontal)
+        self._slider = Slider(48, 128, 64)
         self._slider.setFixedWidth(120)
-        self._slider.setDefaultValue(64)
-        self._slider.setRange(48, 128)
         self._slider.valueChanged.connect(self.setIconSize)
         self._icon_list_view.iconSizeChanged.connect(lambda size: self.setIconSize(size.width()))
         top_layout.addWidget(self._slider)

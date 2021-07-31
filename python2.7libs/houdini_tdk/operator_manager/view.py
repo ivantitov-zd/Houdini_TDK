@@ -39,6 +39,9 @@ class OperatorManagerView(QTreeView):
         header.setSectionResizeMode(QHeaderView.Stretch)
         header.hide()
 
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+
         self.setUniformRowHeights(True)
         self.setIconSize(QSize(16, 16))
 

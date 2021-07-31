@@ -27,6 +27,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
             <parent>root_menu</parent>
             <insertAfter>opmenu.actions_menu</insertAfter>
 
+            <scriptItem id="opmenu.tdk_obfuscate">
+                <label>Obfuscate</label>
+                <scriptCode>
+from houdini_tdk.black_box.obfuscation import obfuscateNetwork
+
+obfuscateNetwork(kwargs['node'])
+                </scriptCode>
+            </scriptItem>
+
             <scriptItem id="opmenu.tdk_generate_code">
                 <label>Generate Code...</label>
                 <scriptCode>
@@ -64,6 +73,22 @@ tdk.showNodeUserData(**kwargs)
 import houdini_tdk as tdk
 
 tdk.showMakeHDADialog(**kwargs)
+                </scriptCode>
+            </scriptItem>
+
+            <scriptItem id="opmenu.tdk_make_black_box_hda">
+                <label>Make black box HDA...</label>
+                <context>
+                    <expression>
+                        node = kwargs['node']
+                        return node.type().definition() is not None
+                    </expression>
+                </context>
+                <scriptCode>
+from houdini_tdk.black_box.make_black_box_window import MakeBlackBoxWindow
+
+window = MakeBlackBoxWindow()
+window.open()
                 </scriptCode>
             </scriptItem>
 
