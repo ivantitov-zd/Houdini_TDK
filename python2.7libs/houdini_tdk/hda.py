@@ -185,6 +185,13 @@ def makeHDA(
     new_def = findDefinitionInFile(new_hda_file_path, new_type_name)
 
     if isinstance(source, hou.Node):
+        input_count = len(source.inputs())
+        last_used_indirect_input_number = 0
+        for indirect_input in source.indirectInputs():
+            if indirect_input.outputs():
+                last_used_indirect_input_number = indirect_input.number()
+        new_def.setMaxNumInputs(max(1, input_count, last_used_indirect_input_number))
+
         if source_type == SourceType.Python:
             code = source.parm('python').eval()
             new_def.addSection('PythonCook', code)
