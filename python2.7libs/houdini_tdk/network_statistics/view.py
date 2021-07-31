@@ -29,11 +29,11 @@ class NetworkStatsView(QTreeView):
         header = self.header()
         header.setSectionsMovable(False)
         header.setSectionResizeMode(QHeaderView.ResizeToContents)
-        header.setResizeContentsPrecision(1)
+        header.setResizeContentsPrecision(50)
         header.hide()
 
         self.setUniformRowHeights(True)
 
         self.setRootIsDecorated(False)
-        self.setStyleSheet('QTreeView::branch {border-image: none; image: none;}')
+        self.setStyleSheet('QTreeView::branch { border-image: none; image: none; }')
         self.setItemsExpandable(False)

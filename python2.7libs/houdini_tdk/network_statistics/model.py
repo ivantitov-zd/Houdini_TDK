@@ -23,76 +23,40 @@ except ImportError:
     from PySide2.QtCore import QAbstractItemModel, QModelIndex
     from PySide2.QtGui import Qt
 
-from .gather import gatherNetworkStats
-
-
-class StatItem:
-    def __init__(self, text=None, value=None, child_items=()):
-        self.text = text
-        self.value = str(value) if value is not None else None
-        self._index = None
-        self.parent = None
-        self._child_items = child_items or ()
-        for index, item in enumerate(self._child_items):
-            item.index = index
-            item.parent = self
-
-    def __getitem__(self, item):
-        return self._child_items[item]
-
-    def __len__(self):
-        return len(self._child_items)
+from .gather import gatherNetworkStats, CounterGroup, Counter
 
 
 class NetworkStatsModel(QAbstractItemModel):
     def __init__(self, parent=None):
         super(NetworkStatsModel, self).__init__(parent)
 
-        self._data = StatItem()
+        self._data = ()
 
     def updateData(self, node):
         self.beginResetModel()
-        data = gatherNetworkStats(node)
-        self._data = StatItem(None, None,
-                              [
-                                  StatItem('Nodes', None,
-                                           [
-                                               StatItem('Total', data['nodes']['total']),
-                                               StatItem('Subnetworks', data['nodes']['subnetworks']),
-                                               StatItem('Inside Locked', data['nodes']['inside_locked']),
-                                               StatItem('Maximum Depth', data['nodes']['max_depth'])
-                                           ]),
-                                  StatItem('Parameters', None,
-                                           [
-                                               StatItem('Animated', data['parms']['animated']),
-                                               StatItem('Links to', None,
-                                                        [
-                                                            StatItem('parameters', data['parms']['links_to']['parms']),
-                                                            StatItem('nodes', data['parms']['links_to']['nodes']),
-                                                            StatItem('folders', data['parms']['links_to']['folders']),
-                                                            StatItem('files', data['parms']['links_to']['files']),
-                                                            StatItem('web', data['parms']['links_to']['web'])
-                                                        ])
-                                           ])
-                                  # Todo: code stats section
-                              ])
+        self._data = gatherNetworkStats(node)
         self.endResetModel()
 
     def hasChildren(self, parent):
         if not parent.isValid():
             return True
 
-        return bool(parent.internalPointer())
+        return isinstance(parent.internalPointer(), CounterGroup)
 
     def parent(self, index):
         if not index.isValid():
             return QModelIndex()
 
         item = index.internalPointer()
-        if item.text is None:
+        if item.parent is None:
             return QModelIndex()
 
-        return self.createIndex(item.index, 0, item.parent)
+        if item.parent.parent is None:
+            parent_item_index = self._data.index(item.parent)
+        else:
+            parent_item_index = item.parent.children.index(item)
+
+        return self.createIndex(parent_item_index, 0, item.parent)
 
     def columnCount(self, parent):
         return 2
@@ -101,8 +65,8 @@ class NetworkStatsModel(QAbstractItemModel):
         if not parent.isValid():
             return len(self._data)
 
-        item = parent.internalPointer()
-        return len(item)
+        parent_item = parent.internalPointer()
+        return len(parent_item.children)
 
     def index(self, row, column, parent):
         if not self.hasIndex(row, column, parent):
@@ -111,7 +75,8 @@ class NetworkStatsModel(QAbstractItemModel):
         if not parent.isValid():
             item = self._data[row]
         else:
-            item = parent.internalPointer()[row]
+            parent_item = parent.internalPointer()
+            item = parent_item.children[row]
 
         return self.createIndex(row, column, item)
 
@@ -127,8 +92,7 @@ class NetworkStatsModel(QAbstractItemModel):
 
         if column == 0:
             if role == Qt.DisplayRole:
-                return item.text
-        elif column == 1:
+                return item.name
+        elif column == 1 and isinstance(item, Counter):
             if role == Qt.DisplayRole:
                 return item.value
-        # Todo: column 3 - percentage
