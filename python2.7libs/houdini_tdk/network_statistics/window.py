@@ -35,6 +35,7 @@ class NetworkStatsWindow(QDialog):
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
         self.setWindowTitle('TDK: Network Statistics')
+        self.resize(300, 500)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
