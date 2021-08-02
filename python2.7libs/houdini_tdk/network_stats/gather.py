@@ -15,6 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 import os
 
 import hou
@@ -161,7 +162,7 @@ def gatherNetworkStats(root_node):
     nodes_group = CounterGroup('Nodes', predicate=lambda i: isinstance(i, hou.Node))
     stats.append(nodes_group)
     Counter('Total', nodes_group)
-    Counter('Subnetworks', nodes_group, predicate=lambda i: i.isNetwork())  # Fixme?
+    Counter('Subnetworks', nodes_group, predicate=hou.Node.isNetwork)  # Fixme?
     Counter('Inside Locked', nodes_group, predicate=lambda i: not i.isEditable())
     Counter('Maximum Depth', nodes_group, converter=lambda i, v: max(i.path().count('/') - root_depth, v))
 
@@ -176,7 +177,7 @@ def gatherNetworkStats(root_node):
     Counter('Files', parms_links_group, predicate=lambda i: os.path.isfile(i.evalAsString()))
     Counter('Web', parms_links_group, predicate=lambda i: i.evalAsString().startswith('http'))
 
-    code_group = CounterGroup('Code', parent=parms_group, predicate=lambda i: parmHasCode(i))
+    code_group = CounterGroup('Code', parent=parms_group, predicate=parmHasCode)
     code_python_group = CounterGroup('Python', code_group, predicate=parmHasPythonCode)
     Counter('Total', code_python_group)
     Counter('Lines', code_python_group, converter=lambda i, v: v + i.eval().count('\n'))

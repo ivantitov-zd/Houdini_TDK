@@ -25,4 +25,4 @@ from .new_hda_version import NewVersionDialog, showNewVersionDialog
 from .show_user_data import UserDataWindow, showNodeUserData
 from .utils import openLocation
 from .operator_manager import OperatorManagerWindow
-from .network_statistics import showStatsForNode
+from .network_stats import showStatsForNode

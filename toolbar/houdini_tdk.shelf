@@ -5,16 +5,42 @@
  Note, that two definitions of the same element are not allowed in
  a single file. -->
 
-  <toolshelf name="houdini_tdk" label="Tool Development Kit">
-    <memberTool name="houdini_tdk::find_icon::1.0"/>
-    <memberTool name="houdini_tdk::generate_code::1.1"/>
-    <memberTool name="houdini_tdk::new_hda_version::1.0"/>
-    <memberTool name="houdini_tdk::show_node_user_data::1.0"/>
-    <memberTool name="houdini_tdk::make_hda::1.0"/>
-    <memberTool name="houdini_tdk::hda_doctor::1.0"/>
+  <toolshelf name="houdini_tdk" label="TDK">
+    <memberTool name="tdk::find_icon::1.0"/>
+    <memberTool name="tdk::generate_code::1.1"/>
+    <memberTool name="tdk::new_hda_version::1.0"/>
+    <memberTool name="tdk::show_node_user_data::1.0"/>
+    <memberTool name="tdk::make_hda::1.0"/>
+    <memberTool name="tdk::hda_doctor::1.0"/>
+    <memberTool name="tdk::network_statistics::1.0"/>
   </toolshelf>
 
-  <tool name="houdini_tdk::find_icon::1.0" label="Find Icon" icon="MISC_m">
+  <tool name="tdk::network_statistics::1.0" label="Show Network Statistics" icon="BUTTONS_info">
+    <script scriptType="python"><![CDATA["""
+Tool Development Kit for SideFX Houdini
+Copyright (C) 2021 Ivan Titov
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+import houdini_tdk as tdk
+
+tdk.showStatsForNode(**kwargs)
+]]></script>
+  </tool>
+
+  <tool name="tdk::find_icon::1.0" label="Find Icon" icon="MISC_m">
     <helpText><![CDATA["""Show Find Icon window"""]]></helpText>
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
@@ -40,34 +66,7 @@ tdk.findIcon(**kwargs)
 ]]></script>
   </tool>
 
-  <tool name="houdini_tdk::show_node_user_data::1.0" label="Show Node User Data" icon="NETVIEW_hasdata_badge">
-    <helpText><![CDATA["""Show all user data of the selected node"""
-]]></helpText>
-    <script scriptType="python"><![CDATA["""
-Tool Development Kit for SideFX Houdini
-Copyright (C) 2021 Ivan Titov
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
-import houdini_tdk as tdk
-
-tdk.showNodeUserData(cached=kwargs['shiftclick'])
-]]></script>
-  </tool>
-
-  <tool name="houdini_tdk::generate_code::1.1" label="Generate Code" icon="MISC_python">
+  <tool name="tdk::generate_code::1.1" label="Generate Code" icon="MISC_python">
     <helpText><![CDATA["""Generate Python code for selected nodes and copy to clipboard.
 Use Ctrl+Click to show generated code in Code Editor instead of copying.
 Use Shift+Click to show in your default external Code Editor.
@@ -96,7 +95,8 @@ tdk.showGenerateCode(**kwargs)
 ]]></script>
   </tool>
 
-  <tool name="houdini_tdk::hda_doctor::1.0" label="HDA Doctor" icon="SOP_polydoctor">
+  <tool name="tdk::new_hda_version::1.0" label="New HDA Version" icon="BUTTONS_multi_insertbefore">
+    <helpText><![CDATA["""Increment HDA version of the selected node"""]]></helpText>
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
 Copyright (C) 2021 Ivan Titov
@@ -117,12 +117,38 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import houdini_tdk as tdk
 
-hou.session.hda_doctor_window = tdk.HDADoctorWindow(hou.qt.mainWindow())
-hou.session.hda_doctor_window.show()
+tdk.showNewVersionDialog(**kwargs)
 ]]></script>
   </tool>
 
-  <tool name="houdini_tdk::make_hda::1.0" label="Make HDA" icon="SOP_compile_begin">
+  <tool name="tdk::show_node_user_data::1.0" label="Show Node User Data" icon="NETVIEW_hasdata_badge">
+    <helpText><![CDATA["""Show all user data of the selected node"""
+]]></helpText>
+    <script scriptType="python"><![CDATA["""
+Tool Development Kit for SideFX Houdini
+Copyright (C) 2021 Ivan Titov
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+import houdini_tdk as tdk
+
+tdk.showNodeUserData(cached=kwargs['shiftclick'])
+]]></script>
+  </tool>
+
+  <tool name="tdk::make_hda::1.0" label="Make HDA" icon="SOP_compile_begin">
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
 Copyright (C) 2021 Ivan Titov
@@ -147,8 +173,7 @@ tdk.showMakeHDADialog(**kwargs)
 ]]></script>
   </tool>
 
-  <tool name="houdini_tdk::new_hda_version::1.0" label="New HDA Version" icon="BUTTONS_multi_insertbefore">
-    <helpText><![CDATA["""Increment HDA version of the selected node"""]]></helpText>
+  <tool name="tdk::hda_doctor::1.0" label="HDA Doctor" icon="SOP_polydoctor">
     <script scriptType="python"><![CDATA["""
 Tool Development Kit for SideFX Houdini
 Copyright (C) 2021 Ivan Titov
@@ -169,7 +194,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import houdini_tdk as tdk
 
-tdk.showNewVersionDialog(**kwargs)
+window = tdk.HDADoctorWindow(hou.qt.mainWindow())
+window.show()
 ]]></script>
   </tool>
 </shelfDocument>

@@ -7,7 +7,6 @@
 
   <toolshelf name="houdini_tdk_dev" label="TDK Dev">
     <memberTool name="tdk_dev::operator_manager"/>
-    <memberTool name="tdk_dev::network_statistics"/>
   </toolshelf>
 
   <tool name="tdk_dev::operator_manager" label="Operator Manager" icon="MISC_digital_asset">
@@ -15,15 +14,6 @@
 
 window = tdk.OperatorManagerWindow()
 window.show()
-]]></script>
-  </tool>
-
-  <tool name="tdk_dev::network_statistics" label="Show Network Statistics" icon="BUTTONS_info">
-    <script scriptType="python"><![CDATA[import houdini_tdk as tdk
-
-nodes = hou.selectedNodes()
-if nodes:
-    tdk.showStatsForNode(nodes[0])
 ]]></script>
   </tool>
 </shelfDocument>

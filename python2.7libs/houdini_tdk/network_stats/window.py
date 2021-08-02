@@ -25,6 +25,7 @@ except ImportError:
 
 import hou
 
+from ..notification import notify
 from .view import NetworkStatsView
 from .model import NetworkStatsModel
 
@@ -52,8 +53,25 @@ class NetworkStatsWindow(QDialog):
         self._stats_view.expandAll()
 
 
-def showStatsForNode(node, **kwargs):
+def showStatsForNode(**kwargs):
+    if 'node' in kwargs:
+        nodes = kwargs['node'],
+    else:
+        nodes = hou.selectedNodes()
+
+    if not nodes:
+        notify('No node selected', hou.severityType.Error)
+        return
+    elif len(nodes) > 1:
+        notify('Too much nodes selected', hou.severityType.Error)
+        return
+
+    node = nodes[0]
+    if not node.isNetwork():
+        notify('Node not a network', hou.severityType.Error)
+        return
+
     window = NetworkStatsWindow()
-    window.setWindowTitle('TDK: Network Statistics: ' + node.path())
+    window.setWindowTitle('TDK: Network Stats: ' + node.path())
     window.updateData(node)
     window.show()
