@@ -189,7 +189,8 @@ def makeHDA(
         last_used_indirect_input_number = 0
         for indirect_input in source.indirectInputs():
             if indirect_input.outputs():
-                last_used_indirect_input_number = indirect_input.number()
+                # Bug reported: SubnetIndirectInput.number() returns index instead of number
+                last_used_indirect_input_number = max(last_used_indirect_input_number, indirect_input.number() + 1)
         new_def.setMaxNumInputs(max(1, input_count, last_used_indirect_input_number))
 
         if source_type == SourceType.Python:
