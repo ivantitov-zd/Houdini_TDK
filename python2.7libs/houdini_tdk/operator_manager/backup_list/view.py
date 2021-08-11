@@ -42,7 +42,7 @@ class BackupListView(QTreeView):
         self.setUniformRowHeights(True)
 
         self.setItemDelegate(BackupListDelegate())
-        self.setStyleSheet('QTreeView::item {padding: 0 10px;}')
+        self.setStyleSheet(' QTreeView::item {padding: 0 10px; }')
         self.setAlternatingRowColors(True)
         self.setRootIsDecorated(False)
 

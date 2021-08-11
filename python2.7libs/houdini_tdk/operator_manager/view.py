@@ -36,7 +36,8 @@ class OperatorManagerView(QTreeView):
 
         header = self.header()
         header.setSectionsMovable(False)
-        header.setSectionResizeMode(QHeaderView.Stretch)
+        header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        header.setResizeContentsPrecision(10)
         header.hide()
 
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -47,7 +48,7 @@ class OperatorManagerView(QTreeView):
 
         self.setItemDelegate(OperatorManagerLibraryDelegate())
         self.setAlternatingRowColors(True)
-        self.setStyleSheet('QTreeView::item {padding: 0 10px;}')
+        self.setStyleSheet('QTreeView::item { padding: 0 10px; }')
 
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)

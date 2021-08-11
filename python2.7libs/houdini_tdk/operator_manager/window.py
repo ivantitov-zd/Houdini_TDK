@@ -28,6 +28,7 @@ except ImportError:
     from PySide2.QtCore import *
 
 import hou
+from digitalassetsupport import create_instance
 
 from .. import ui
 from .. import hda
@@ -38,6 +39,8 @@ from .model import OperatorManagerLibraryModel, OperatorManagerNodeTypeModel
 from .view import OperatorManagerView
 from .backup_list import BackupListWindow
 from .usage_list import UsageListWindow
+from ..network_stats.window import NetworkStatsWindow
+from ..notification import notify
 
 ICON_SIZE = 16
 
@@ -62,7 +65,7 @@ class OperatorManagerWindow(QDialog):
 
         view_mode_button_group = QButtonGroup(self)
         view_mode_button_group.setExclusive(True)
-        view_mode_button_group.buttonClicked['int'].connect(self._switchMode)
+        view_mode_button_group.buttonClicked['int'].connect(self.setCurrentModel)
 
         self._library_mode_button = QPushButton()
         self._library_mode_button.setFixedWidth(24)
@@ -100,13 +103,7 @@ class OperatorManagerWindow(QDialog):
         self._createContextMenus()
 
         self.updateData()
-
-    def _switchMode(self, index):
-        if index == 0:
-            self._view.setModel(self._library_model)
-        else:
-            self._view.setModel(self._node_type_model)
-        self.updateData()
+        self.setCurrentModel(0)
 
     def _onFilterChange(self, pattern):
         """Delivers pattern from search field to proxy model."""
@@ -124,15 +121,22 @@ class OperatorManagerWindow(QDialog):
     def _setSectionsResizeMode(self, model_index):
         header = self._view.header()  # Todo
         if model_index == 0:
-            pass
+            header.setSectionResizeMode(QHeaderView.Stretch)
         elif model_index == 1:
-            pass
+            # Todo: Find better solution (more adaptive)
+            header.setSectionResizeMode(0, QHeaderView.Stretch)
+            header.setSectionResizeMode(1, QHeaderView.Fixed)
+            header.resizeSection(1, 80)
+            header.setSectionResizeMode(2, QHeaderView.Fixed)
+            header.resizeSection(2, 50)
+            header.setSectionResizeMode(3, QHeaderView.Stretch)
         else:
             raise ValueError
 
     def setCurrentModel(self, model_index):
         self._view.setModel((self._library_model, self._node_type_model)[model_index])
         self._setSectionsResizeMode(model_index)
+        self.updateData()
 
     def _onExpand(self):
         """Expands selected items."""
@@ -300,13 +304,20 @@ class OperatorManagerWindow(QDialog):
     def _onFindDependencies(self):
         raise NotImplementedError
 
-    def _onShowNetworkStatistics(self):
+    def _onShowNetworkStats(self):
         if self._view.isSingleSelection():
             index = self._view.selectedIndex()
             node_type = index.data(Qt.UserRole)
-            # network_stats_list = NetworkStatisticsWindow()
-            # network_stats_list.setSource(node_type)
-            # network_stats_list.show()
+            window = NetworkStatsWindow()
+            window.setWindowTitle('TDK: Network Stats: ' + node_type.name())
+            with hou.undos.disabler():
+                node, secondary_node = create_instance(node_type)
+                window.updateData(node)
+                if secondary_node:
+                    secondary_node.destroy()
+                else:
+                    node.destroy()
+            window.show()
 
     def _onCompare(self):
         raise NotImplementedError
@@ -320,7 +331,8 @@ class OperatorManagerWindow(QDialog):
             return
 
         network = hou.ui.paneTabOfType(hou.paneTabType.NetworkEditor)
-        if network is None:  # No active network editor found
+        if network is None:
+            notify('No active network editor found', hou.severityType.Error)
             return
 
         index = self._view.selectedIndex()
@@ -467,9 +479,9 @@ class OperatorManagerWindow(QDialog):
         #                                          'Find dependencies...')
         # self._find_dependencies_action.triggered.connect(self._onFindDependencies)
 
-        self._show_network_statistics_action = QAction(hou.qt.Icon('BUTTONS_info', ICON_SIZE, ICON_SIZE),
-                                                       'Show network statistics...')
-        self._show_network_statistics_action.triggered.connect(self._onShowNetworkStatistics)
+        self._show_network_stats_action = QAction(hou.qt.Icon('BUTTONS_info', ICON_SIZE, ICON_SIZE),
+                                                  'Show network stats...')
+        self._show_network_stats_action.triggered.connect(self._onShowNetworkStats)
 
         # self._compare_action = QAction(hou.qt.Icon('BUTTONS_restore', ICON_SIZE, ICON_SIZE), 'Compare...')
         # self._compare_action.triggered.connect(self._onCompare)
@@ -534,15 +546,15 @@ class OperatorManagerWindow(QDialog):
         self._definition_menu = QMenu(self)
 
         self._definition_menu.addAction(self._open_type_properties_action)
-        self._definition_menu.addAction(self._change_instances_to_action)
+        # self._definition_menu.addAction(self._change_instances_to_action)
 
         self._definition_inspect_menu = QMenu('Inspect', self)
         self._definition_menu.addMenu(self._definition_inspect_menu)
 
-        self._definition_inspect_menu.addAction(self._run_hda_doctor_action)
+        # self._definition_inspect_menu.addAction(self._run_hda_doctor_action)
         self._definition_inspect_menu.addAction(self._find_usages_action)
         # self._definition_inspect_menu.addAction(self._find_dependencies_action)
-        self._definition_inspect_menu.addAction(self._show_network_statistics_action)
+        self._definition_inspect_menu.addAction(self._show_network_stats_action)
         # self._definition_inspect_menu.addAction(self._compare_action)
 
         self._definition_create_menu = QMenu('Create', self)
@@ -582,7 +594,7 @@ class OperatorManagerWindow(QDialog):
             self._change_instances_to_action.setDisabled(True)  # Todo
             self._run_hda_doctor_action.setDisabled(True)  # Todo
             self._find_usages_action.setDisabled(True)  # Todo?
-            self._show_network_statistics_action.setDisabled(True)
+            self._show_network_stats_action.setDisabled(True)
             self._create_instance_action.setDisabled(True)  # Todo
             self._create_new_hda_action.setDisabled(True)
             self._create_new_version_action.setDisabled(True)
@@ -609,7 +621,7 @@ class OperatorManagerWindow(QDialog):
             self._change_instances_to_action.setEnabled(True)
             self._run_hda_doctor_action.setEnabled(True)
             self._find_usages_action.setEnabled(True)
-            self._show_network_statistics_action.setEnabled(True)
+            self._show_network_stats_action.setEnabled(True)
             self._create_instance_action.setEnabled(True)
             self._create_new_hda_action.setEnabled(True)
             self._create_new_version_action.setEnabled(True)

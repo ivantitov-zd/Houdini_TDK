@@ -53,22 +53,23 @@ class NodeShapeListWindow(QDialog):
         main_layout.setSpacing(4)
 
         # Filter
-        self.filter_field = InputField()
-        main_layout.addWidget(self.filter_field)
+        self._search_field = InputField()
+        self._search_field.setPlaceholderText('Search...')
+        main_layout.addWidget(self._search_field)
 
         # Node Shape List
-        self.shape_list_model = NodeShapeListModel(self)
-        self.shape_list_model.updateNodeShapeList()
+        self._shape_list_model = NodeShapeListModel(self)
+        self._shape_list_model.updateNodeShapeList()
 
-        self.filter_proxy_model = FuzzyProxyModel(self, Qt.DisplayRole)
-        self.filter_proxy_model.setSourceModel(self.shape_list_model)
-        self.filter_field.textChanged.connect(self.filter_proxy_model.setPattern)
+        self._filter_proxy_model = FuzzyProxyModel(self, Qt.DisplayRole)
+        self._filter_proxy_model.setSourceModel(self._shape_list_model)
+        self._search_field.textChanged.connect(self._filter_proxy_model.setPattern)
 
-        self.shape_list_view = NodeShapeListView()
-        self.shape_list_view.setModel(self.filter_proxy_model)
-        self.shape_list_view.setItemDelegate(NodeShapeDelegate(self.shape_list_view))
-        self.shape_list_view.itemDoubleClicked.connect(self.accept)
-        main_layout.addWidget(self.shape_list_view)
+        self._shape_list_view = NodeShapeListView()
+        self._shape_list_view.setModel(self._filter_proxy_model)
+        self._shape_list_view.setItemDelegate(NodeShapeDelegate(self._shape_list_view))
+        self._shape_list_view.itemDoubleClicked.connect(self.accept)
+        main_layout.addWidget(self._shape_list_view)
 
         # Buttons
         buttons_layout = QHBoxLayout()
@@ -77,28 +78,28 @@ class NodeShapeListWindow(QDialog):
         spacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Ignored)
         buttons_layout.addSpacerItem(spacer)
 
-        self.ok_button = QPushButton('OK')
-        self.ok_button.setVisible(False)
-        self.ok_button.clicked.connect(self.accept)
-        buttons_layout.addWidget(self.ok_button)
+        self._ok_button = QPushButton('OK')
+        self._ok_button.setVisible(False)
+        self._ok_button.clicked.connect(self.accept)
+        buttons_layout.addWidget(self._ok_button)
 
-        self.cancel_button = QPushButton('Cancel')
-        self.cancel_button.setVisible(False)
-        self.cancel_button.clicked.connect(self.reject)
-        buttons_layout.addWidget(self.cancel_button)
+        self._cancel_button = QPushButton('Cancel')
+        self._cancel_button.setVisible(False)
+        self._cancel_button.clicked.connect(self.reject)
+        buttons_layout.addWidget(self._cancel_button)
 
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.Find) or event.key() == Qt.Key_F3:
-            self.filter_field.setFocus()
-            self.filter_field.selectAll()
+            self._search_field.setFocus()
+            self._search_field.selectAll()
         else:
             super(NodeShapeListWindow, self).keyPressEvent(event)
 
     def enableDialogMode(self):
-        self.shape_list_view.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.shape_list_view.enableDoubleClickedSignal()
-        self.ok_button.setVisible(True)
-        self.cancel_button.setVisible(True)
+        self._shape_list_view.setSelectionMode(QAbstractItemView.SingleSelection)
+        self._shape_list_view.enableDoubleClickedSignal()
+        self._ok_button.setVisible(True)
+        self._cancel_button.setVisible(True)
 
     @classmethod
     def getShapeName(cls, parent=hou.qt.mainWindow(), title='Node Shapes', name=None):
@@ -107,15 +108,15 @@ class NodeShapeListWindow(QDialog):
         window.enableDialogMode()
 
         if name:
-            model = window.shape_list_view.model()
+            model = window._shape_list_view.model()
             for row in range(model.rowCount()):
                 index = model.index(row, 0)
                 if index.data(NodeShapeListModel.ShapeNameRole) == name:
-                    window.shape_list_view.setCurrentIndex(index)
+                    window._shape_list_view.setCurrentIndex(index)
                     break
 
-        if window.exec_() and window.shape_list_view.currentIndex().isValid():
-            return window.shape_list_view.currentIndex().data(NodeShapeListModel.ShapeNameRole)
+        if window.exec_() and window._shape_list_view.currentIndex().isValid():
+            return window._shape_list_view.currentIndex().data(NodeShapeListModel.ShapeNameRole)
 
 
 def findNodeShape(**kwargs):

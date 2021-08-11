@@ -30,27 +30,51 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
             <scriptItem id="opmenu.tdk_obfuscate">
                 <label>Obfuscate</label>
                 <scriptCode>
+                    <![CDATA[
 from houdini_tdk.black_box.obfuscation import obfuscateNetwork
 
 obfuscateNetwork(kwargs['node'])
+                    ]]>
                 </scriptCode>
             </scriptItem>
 
             <scriptItem id="opmenu.tdk_generate_code">
                 <label>Generate Code...</label>
                 <scriptCode>
+                    <![CDATA[
 import houdini_tdk as tdk
 
 tdk.showGenerateCode(**kwargs)
+                    ]]>
                 </scriptCode>
             </scriptItem>
 
             <scriptItem id="opmenu.tdk_show_node_user_data">
                 <label>Show Node User Data...</label>
                 <scriptCode>
+                    <![CDATA[
 import houdini_tdk as tdk
 
 tdk.showNodeUserData(**kwargs)
+                    ]]>
+                </scriptCode>
+            </scriptItem>
+
+            <scriptItem id="opmenu.tdk_show_network_stats">
+                <label>Show Network Stats...</label>
+                <context>
+                    <expression>
+                        <![CDATA[
+return kwargs['node'].isNetwork()
+                        ]]>
+                    </expression>
+                </context>
+                <scriptCode>
+                    <![CDATA[
+import houdini_tdk as tdk
+
+tdk.showStatsForNode(**kwargs)
+                    ]]>
                 </scriptCode>
             </scriptItem>
 
@@ -60,19 +84,23 @@ tdk.showNodeUserData(**kwargs)
                 <label>Make HDA...</label>
                 <context>
                     <expression>
-                        node = kwargs['node']
-                        has_definition = node.type().definition() is not None
-                        subnetwork = node.type().name() == 'subnet'
-                        python_source = node.type().category() in (hou.objNodeTypeCategory(), hou.sopNodeTypeCategory()) \
-                                        and node.type().name() in ('pythonscript', 'python')
-                        inline_vex = node.type().category() == hou.vopNodeTypeCategory() and node.type().name() == 'inline'
-                        return has_definition or subnetwork or python_source or inline_vex
+                        <![CDATA[
+node = kwargs['node']
+has_definition = node.type().definition() is not None
+subnetwork = node.type().name() == 'subnet'
+python_source = node.type().category() in (hou.objNodeTypeCategory(), hou.sopNodeTypeCategory()) \
+                and node.type().name() in ('pythonscript', 'python')
+inline_vex = node.type().category() == hou.vopNodeTypeCategory() and node.type().name() == 'inline'
+return has_definition or subnetwork or python_source or inline_vex
+                        ]]>
                     </expression>
                 </context>
                 <scriptCode>
+                    <![CDATA[
 import houdini_tdk as tdk
 
 tdk.showMakeHDADialog(**kwargs)
+                    ]]>
                 </scriptCode>
             </scriptItem>
 
@@ -80,15 +108,19 @@ tdk.showMakeHDADialog(**kwargs)
                 <label>Make black box HDA...</label>
                 <context>
                     <expression>
-                        node = kwargs['node']
-                        return node.type().definition() is not None
+                        <![CDATA[
+node = kwargs['node']
+return node.type().definition() is not None
+                        ]]>
                     </expression>
                 </context>
                 <scriptCode>
+                    <![CDATA[
 from houdini_tdk.black_box.make_black_box_window import MakeBlackBoxWindow
 
 window = MakeBlackBoxWindow()
 window.open()
+                    ]]>
                 </scriptCode>
             </scriptItem>
 
@@ -96,16 +128,20 @@ window.open()
                 <label>Open HDA Location...</label>
                 <context>
                     <expression>
-                        node = kwargs['node']
-                        return node.type().definition() is not None
+                        <![CDATA[
+node = kwargs['node']
+return node.type().definition() is not None
+                        ]]>
                     </expression>
                 </context>
                 <scriptCode>
+                    <![CDATA[
 import houdini_tdk as tdk
 
 node = kwargs['node']
 path = node.type().definition().libraryFilePath()
 tdk.openLocation(path)
+                    ]]>
                 </scriptCode>
             </scriptItem>
 
@@ -113,14 +149,18 @@ tdk.openLocation(path)
                 <label>New HDA Version...</label>
                 <context>
                     <expression>
-                        node = kwargs['node']
-                        return node.type().definition() is not None
+                        <![CDATA[
+node = kwargs['node']
+return node.type().definition() is not None
+                        ]]>
                     </expression>
                 </context>
                 <scriptCode>
+                    <![CDATA[
 import houdini_tdk as tdk
 
 tdk.showNewVersionDialog(**kwargs)
+                    ]]>
                 </scriptCode>
             </scriptItem>
 
