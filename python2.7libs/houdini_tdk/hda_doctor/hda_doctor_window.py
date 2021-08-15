@@ -702,7 +702,7 @@ class HDADoctorWindow(QWidget):
     def __init__(self, parent=None):
         super(HDADoctorWindow, self).__init__(parent, Qt.Window)
 
-        self.setWindowTitle('HDA Doctor Beta')
+        self.setWindowTitle('HDA Doctor [Beta]')
         self.setWindowIcon(ui.icon('SOP_polydoctor', 32))
         self.resize(600, 600)
 
@@ -716,7 +716,7 @@ class HDADoctorWindow(QWidget):
         node_layout.setSpacing(4)
         main_layout.addLayout(node_layout)
 
-        node_field = hou.qt.InputField(hou.qt.InputField.StringType, 1, 'Node')  # Todo: Grid layout
+        node_field = hou.qt.InputField(hou.qt.InputField.StringType, 1, 'Node')  # Todo: Grid layout (1.8)
         node_layout.addWidget(node_field)
 
         choose_node_button = hou.qt.NodeChooserButton()

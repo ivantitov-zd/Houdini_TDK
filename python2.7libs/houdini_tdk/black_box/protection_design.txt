@@ -1,0 +1,55 @@
+Contexts
+    Obj
+        Supported
+    SOP
+        Supported
+    VOP
+        Partial support
+    DOP
+        Partial support (network obfuscation only)
+    CHOP
+        Supported
+    COP2
+        Partial support
+    ROP
+        Partial support (network obfuscation only)
+    LOP
+        Partial support (network obfuscation only)
+    TOP
+        Partial support (network obfuscation only)
+
+Programming languages
+    HScript
+        Not supported yet
+    Python
+        Removing inline comments
+        Packing with base64
+    VEX
+        Removing inline comments
+        Basic minification
+        Packing with base64
+    OpenCL
+        Removing inline comments
+        Basic minification
+        Packing with base64
+
+Types
+    Subnet-based
+    Python-based
+    VEX-based
+
+Protection Strategies
+    Subnet-based
+        Network obfuscation
+        Guard node
+    Python-based
+        if context has Python *OP (SOP only?)
+            try
+                Recreate as subnet-based
+                Guard node
+        else
+            Obfuscate code and move it to a random gzipped section
+            Generate code for unpacking
+    VEX-based
+        try
+            Recreate as subnet-based

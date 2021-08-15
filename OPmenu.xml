@@ -118,8 +118,7 @@ return node.type().definition() is not None
                     <![CDATA[
 from houdini_tdk.black_box.make_black_box_window import MakeBlackBoxWindow
 
-window = MakeBlackBoxWindow()
-window.open()
+MakeBlackBoxWindow().open()
                     ]]>
                 </scriptCode>
             </scriptItem>

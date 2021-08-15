@@ -5,15 +5,5 @@
  Note, that two definitions of the same element are not allowed in
  a single file. -->
 
-  <toolshelf name="houdini_tdk_dev" label="TDK Dev">
-    <memberTool name="tdk_dev::operator_manager"/>
-  </toolshelf>
-
-  <tool name="tdk_dev::operator_manager" label="Operator Manager" icon="MISC_digital_asset">
-    <script scriptType="python"><![CDATA[import houdini_tdk as tdk
-
-window = tdk.OperatorManagerWindow()
-window.show()
-]]></script>
-  </tool>
+  <toolshelf name="houdini_tdk_dev" label="TDK Dev"/>
 </shelfDocument>

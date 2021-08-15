@@ -31,7 +31,7 @@ from .model import NetworkStatsModel
 
 
 class NetworkStatsWindow(QDialog):
-    def __init__(self, parent=hou.qt.mainWindow()):
+    def __init__(self, parent=None):
         super(NetworkStatsWindow, self).__init__(parent)
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
@@ -71,7 +71,7 @@ def showStatsForNode(**kwargs):
         notify('Node not a network', hou.severityType.Error)
         return
 
-    window = NetworkStatsWindow()
+    window = NetworkStatsWindow(hou.qt.mainWindow())
     window.setWindowTitle('TDK: Network Stats: ' + node.path())
     window.updateData(node)
     window.show()

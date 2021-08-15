@@ -35,7 +35,8 @@ from .. import hda
 from ..widgets import InputField
 from ..make_hda import MakeHDADialog
 from ..utils import openLocation
-from .model import OperatorManagerLibraryModel, OperatorManagerNodeTypeModel
+from ..fuzzy_proxy_model import FuzzyProxyModel
+from .model import OperatorManagerLibraryModel, OperatorManagerNodeTypeModel, TextRole
 from .view import OperatorManagerView
 from .backup_list import BackupListWindow
 from .usage_list import UsageListWindow
@@ -46,11 +47,11 @@ ICON_SIZE = 16
 
 
 class OperatorManagerWindow(QDialog):
-    def __init__(self, parent=hou.qt.mainWindow()):
+    def __init__(self, parent=None):
         super(OperatorManagerWindow, self).__init__(parent, Qt.Window)
         self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
 
-        self.setWindowTitle('TDK: Operator Manager')
+        self.setWindowTitle('TDK: Operator Manager [Beta]')
         self.setWindowIcon(hou.qt.Icon('MISC_digital_asset', 32, 32))
         self.resize(400, 600)
 
@@ -89,20 +90,18 @@ class OperatorManagerWindow(QDialog):
         self._library_model = OperatorManagerLibraryModel(self)
         self._node_type_model = OperatorManagerNodeTypeModel(self)
 
-        # self._filter_proxy_model = FuzzyProxyModel(self, TextRole, TextRole)
-        # self._filter_proxy_model.setDynamicSortFilter(True)
-        # # Order is dictated by the weights of the fuzzy match function (bigger is better)
-        # self._filter_proxy_model.sort(0, Qt.DescendingOrder)
-        # self._filter_proxy_model.setSourceModel(self.node_type_model)
-
         self._view = OperatorManagerView()
-        self._view.setModel(self._library_model)
         layout.addWidget(self._view, 1, 0, 1, -1)
+
+        self._filter_proxy_model = FuzzyProxyModel(self, TextRole, TextRole)
+        self._filter_proxy_model.setDynamicSortFilter(True)
+        # Order is dictated by the weights of the fuzzy match function (bigger is better)
+        self._filter_proxy_model.sort(0, Qt.DescendingOrder)
+        self._view.setModel(self._filter_proxy_model)
 
         self._createActions()
         self._createContextMenus()
 
-        self.updateData()
         self.setCurrentModel(0)
 
     def _onFilterChange(self, pattern):
@@ -119,7 +118,7 @@ class OperatorManagerWindow(QDialog):
             model.updateData()
 
     def _setSectionsResizeMode(self, model_index):
-        header = self._view.header()  # Todo
+        header = self._view.header()
         if model_index == 0:
             header.setSectionResizeMode(QHeaderView.Stretch)
         elif model_index == 1:
@@ -134,7 +133,7 @@ class OperatorManagerWindow(QDialog):
             raise ValueError
 
     def setCurrentModel(self, model_index):
-        self._view.setModel((self._library_model, self._node_type_model)[model_index])
+        self._filter_proxy_model.setSourceModel((self._library_model, self._node_type_model)[model_index])
         self._setSectionsResizeMode(model_index)
         self.updateData()
 
@@ -308,7 +307,7 @@ class OperatorManagerWindow(QDialog):
         if self._view.isSingleSelection():
             index = self._view.selectedIndex()
             node_type = index.data(Qt.UserRole)
-            window = NetworkStatsWindow()
+            window = NetworkStatsWindow(hou.qt.mainWindow())
             window.setWindowTitle('TDK: Network Stats: ' + node_type.name())
             with hou.undos.disabler():
                 node, secondary_node = create_instance(node_type)
